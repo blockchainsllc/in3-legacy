@@ -1,0 +1,128 @@
+$schema: http://json-schema.org/schema#
+description: configuration-data, which represents the structure of the config-file.
+definitions: 
+
+    N3NodeWeight: 
+        description: a local weight of a n3-node.
+        type: object
+        properties:
+            weight:
+                description: factor the weight this noe (default 1.0)
+                type: number
+            responseCount:
+                description: number of uses.
+                type: integer
+            avgResponseTime:
+                description: average time of a response
+                type: number
+            pricePerRequest:
+                description: last price
+                type: integer
+            lastRequest:
+                description: timestamp of the last request in ms
+                type: integer
+            blacklistedUntil: 
+                description: blacklisted because of failed requests until the timestamp
+                type: integer
+
+    N3NodeConfig: 
+        description: a config of a n3-node.
+        type: object
+        required: [ address,url,deposit, chainIds]
+        properties:
+            address:
+                description: the address of the node, which is the public address it iis signing with.
+                type: string
+            url:
+                description: the endpoint to post to
+                type: string
+            chainIds:
+                description: the list of supported chains
+                type: array
+                items:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]+$
+            deposit:
+                description: the deposit of the node
+                type: integer
+            
+
+    N3Config:
+        description: the definition of the config-file.
+        type: object
+        required: [ minDeposit, requestCount, chainId]
+        properties:
+            minDeposit:
+                type: number
+                description: min stake of the server. Only nodes owning at least this amount will be chosen.
+            requestCount:
+                type: number
+                min: 1
+                default: 1
+                description: the number of request send when getting a first answer
+            timeout:
+                type: number
+                min: 1
+                default: 1
+                description: specifies the number of milliseconds before the request times out.
+            chainId:
+                type: string
+                pattern: ^0x[0-9a-fA-F]+$
+                description: servers to filter for the given chain. The chain-id based on EIP-155.
+            nodeList:
+                description: the list of nodes
+                type: array
+                items:
+                    $ref: "#/definitions/N3NodeConfig"
+            nodeAuthorities:
+                description: the list of authority nodes for handling conflicts
+                type: array
+                items:
+                    type: string
+            weights:
+                description: the weights of nodes depending on former performance
+                type: object
+                additionalProperties: 
+                    $ref: "#/definitions/N3NodeWeight"
+
+    RPCRequest:
+        type: object
+        description: a JSONRPC-Request with N3-Extension
+        required: [jsonrpc, method]
+        properties:
+            jsonrpc: 
+                description: the version
+                type: string
+                enum: ["2.0"]
+            method: 
+                description: the method to call
+                type: string
+            id: 
+                description: the id
+                type: [string, number]
+            params: 
+                description: the params
+                type: [ array, object]
+
+    RPCResponse:
+        type: object
+        description: a JSONRPC-Responset with N3-Extension
+        required: [jsonrpc, id]
+        properties:
+            jsonrpc: 
+                description: the version
+                type: string
+                enum: ["2.0"]
+            id: 
+                description: the id matching the request
+                type: [string, number]
+            error: 
+                description: in case of an error this needs to be set
+                type: string
+            result: 
+                description: the params
+                type: [ array, object, string, number]
+            w3Node:
+                description: the node handling this response
+                $ref: "#/definitions/N3NodeConfig"
+

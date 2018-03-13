@@ -1,0 +1,28 @@
+{
+  "name": "n3-ts",
+  "version": "1.0.0",
+  "description": "Typescript-version of the incubed client/server",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "test": "npm test",
+    "updateTypes": "dtsgen src/types/config.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' > src/types/config.ts "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slockit/n3-ts.git"
+  },
+  "author": "Simon Jentzsch",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/slockit/n3-ts/issues"
+  },
+  "homepage": "https://github.com/slockit/n3-ts#readme",
+  "devDependencies": {
+    "dtsgenerator": "^0.9.9",
+    "typescript": "^2.7.2"
+  },
+  "dependencies": {
+    "ajv": "^6.2.1",
+    "axios": "^0.18.0"
+  }
+}
