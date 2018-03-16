@@ -106,6 +106,13 @@ definitions:
             params: 
                 description: the params
                 type: [ array, object]
+            in3ChainId: 
+                description: the requested chainId
+                type: string
+            in3Proof:
+                type: object
+                additionalProperties: 
+                    type:  [ array, object, string, number]
 
     RPCResponse:
         type: object
@@ -125,6 +132,10 @@ definitions:
             result: 
                 description: the params
                 type: [ array, object, string, number]
+                additionalProperties: 
+                    type:  [ array, object, string, number]
+
+
             w3Node:
                 description: the node handling this response
                 $ref: "#/definitions/N3NodeConfig"

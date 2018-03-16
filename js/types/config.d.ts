@@ -107,6 +107,13 @@ export interface RPCRequest {
      * the params
      */
     params?: any[] | {};
+    /**
+     * the requested chainId
+     */
+    in3ChainId?: string;
+    in3Proof?: {
+        [name: string]: any[] | {} | string | number;
+    };
 }
 /**
  * a JSONRPC-Responset with N3-Extension
@@ -127,7 +134,9 @@ export interface RPCResponse {
     /**
      * the params
      */
-    result?: any[] | {} | string | number;
+    result?: any[] | {
+        [name: string]: any[] | {} | string | number;
+    } | string | number;
     /**
      * the node handling this response
      */

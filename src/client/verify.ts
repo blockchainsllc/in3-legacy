@@ -124,7 +124,7 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
 
 
 
-function toHex(val) {
+export function toHex(val): string {
   if (val === undefined) return undefined
   if (typeof val === 'string')
     return val.startsWith('0x') ? val : '0x' + new util.BN(val).toString(16)

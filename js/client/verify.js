@@ -38,12 +38,16 @@ function blockFromHex(hex) {
 }
 exports.blockFromHex = blockFromHex;
 function verifyBlock(b, signature, expectedSigner) {
+    // TODO in the future we are not allowing block verification without signature
+    if (!signature)
+        return;
     const blockHeader = b instanceof Block ? b.header : getBlock(b).header;
     const blockHash = '0x' + blockHeader.hash().toString('hex').toLowerCase();
     const messageHash = util.sha3(blockHash + blockHeader.number.toString('hex').padStart(64, '0')).toString('hex');
     if (messageHash !== signature.msgHash)
         throw new Error('The signature signed the wrong message!');
-    else if (util.erecover(messageHash, signature.v, signature.r, signature.s).toLowerCase() !== expectedSigner.toLowerCase())
+    const signer = '0x' + util.pubToAddress(util.erecover(messageHash, signature.v, signature.r, signature.s)).toString('hex');
+    if (signer.toLowerCase() !== expectedSigner.toLowerCase())
         throw new Error('The signature was not signed by ' + expectedSigner);
     //  if (blockHash !== b.hash.toLowerCase()) throw new Error('BlockHeader invalid! Wrong blockHash!')
 }
@@ -56,8 +60,7 @@ async function createTransactionProof(block, txHash, signature) {
     const trie = new Trie();
     await Promise.all(block.transactions.map(tx => new Promise((resolve, reject) => trie.put(util.rlp.encode(tx.transactionIndex), createTx(tx).serialize(), error => error ? reject(error) : resolve(true)))));
     // check roothash
-    const root = '0x' + trie.root.toString('hex');
-    if (block.transactionsRoot !== root)
+    if (block.transactionsRoot !== '0x' + trie.root.toString('hex'))
         throw new Error('The transactionHash is wrong!');
     // create prove
     return new Promise((resolve, reject) => Trie.prove(trie, util.rlp.encode(txIndex), (err, prove) => {
@@ -66,7 +69,7 @@ async function createTransactionProof(block, txHash, signature) {
         resolve({
             type: 'transactionProof',
             block: blockToHex(block),
-            merkelProve: prove.map(_ => _.toString('hex')),
+            merkelProof: prove.map(_ => _.toString('hex')),
             txIndex, signature
         });
     }));
@@ -74,13 +77,16 @@ async function createTransactionProof(block, txHash, signature) {
 exports.createTransactionProof = createTransactionProof;
 async function verifyTransactionProof(txHash, proof, expectedSigner) {
     const block = blockFromHex(proof.block);
-    //  verifyBlock(block)
+    verifyBlock(block, proof.signature, expectedSigner);
     // since the blockhash is verified, we have the correct root
     return new Promise((resolve, reject) => {
-        Trie.verifyProof(block.header.transactionsTrie, util.rlp.encode(proof.txIndex), proof.merkelProve.map(_ => util.toBuffer('0x' + _)), (err, value) => {
+        Trie.verifyProof(block.header.transactionsTrie, util.rlp.encode(proof.txIndex), proof.merkelProof.map(_ => util.toBuffer('0x' + _)), (err, value) => {
             if (err)
                 return reject(err);
-            resolve(value);
+            if (txHash === '0x' + util.sha3(value).toString('hex'))
+                resolve(value);
+            else
+                reject(new Error('The TransactionHash could not be verified, since the merkel-proof resolved to a different hash'));
         });
     });
 }
@@ -95,6 +101,7 @@ function toHex(val) {
     else
         return util.bufferToHex(val);
 }
+exports.toHex = toHex;
 function createTx(transaction) {
     const txParams = Object.assign({}, transaction, { nonce: toHex(transaction.nonce), gasPrice: toHex(transaction.gasPrice), value: toHex(transaction.value || 0), gasLimit: toHex(transaction.gasLimit === undefined ? transaction.gas : transaction.gasLimit), data: toHex(transaction.gasLimit === undefined ? transaction.input : transaction.data), to: transaction.to ? util.setLengthLeft(util.toBuffer(transaction.to), 20) : null, v: transaction.v < 27 ? transaction.v + 27 : transaction.v });
     const fromAddress = util.toBuffer(txParams.from);

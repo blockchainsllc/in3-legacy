@@ -1,7 +1,7 @@
 export interface Proof {
     type: 'transactionProof';
     block: string;
-    merkelProve?: string[];
+    merkelProof?: string[];
     txIndex?: any;
     signature: {
         msgHash: string;
@@ -16,6 +16,7 @@ export declare function blockFromHex(hex: any): any;
 export declare function verifyBlock(b: any, signature: any, expectedSigner: any): void;
 export declare function createTransactionProof(block: any, txHash: any, signature: any): Promise<Proof>;
 export declare function verifyTransactionProof(txHash: string, proof: Proof, expectedSigner: string): Promise<{}>;
+export declare function toHex(val: any): string;
 export declare const dummy: {
     "difficulty": string;
     "extraData": string;
