@@ -52,6 +52,9 @@ definitions:
         type: object
         required: [ minDeposit, requestCount, chainId]
         properties:
+            contract:
+                type: string
+                description: the address of the registry contract
             minDeposit:
                 type: number
                 description: min stake of the server. Only nodes owning at least this amount will be chosen.

@@ -14,14 +14,69 @@ export class Client {
     this.defConfig = {
       minDeposit: 0,
       requestCount: 3,
-      chainId: '0x01',
+      contract: '0xF88e75205BcD029C897700E8ad03050C78611A37',
+      chainId: '0x2a',
+      nodeList: [
+        {
+          address: '0x01',
+          chainIds: ['0x2a'],
+          url: 'https://rpc-kovan.slock.it',
+          deposit: 0
+
+        },
+        {
+          address: '0x02',
+          chainIds: ['0x2a'],
+          url: 'https://kovan.infura.io/HVtVmCIHVgqHGUgihfhX',
+          deposit: 0
+        },
+        {
+          address: '0x03',
+          chainIds: ['0x2a'],
+          url: 'https://kovan.infura.io/HVtVmCIHVsqHGUgihfhX',
+          deposit: 0
+        },
+        {
+          address: '0x04',
+          chainIds: ['0x2a'],
+          url: 'https://kovan.infura.io/HVtVmCIHVaqHGUgihfhX',
+          deposit: 0
+        },
+        {
+          address: '0x05',
+          chainIds: ['0x2a'],
+          url: 'https://koasdfjojoi.com',
+          deposit: 0
+        }],
       ... (config || {})
     }
   }
 
   public async updateNodeList() {
-    throw new Error('updateNodeList is not implemented yet')
+    const count = await this.call(prepareCall(this.defConfig.contract, '0x15625c5e')).then(parseInt)
+
+    const req: RPCRequest[] = []
+    for (let i = 0; i < count; i++)
+      req.push(prepareCall(this.defConfig.contract, '0x5cf0f357', (i).toString(16).padStart(64, '0')))
+
+    const nodes = await this.send(req, null, { minDeposit: 0 }) as RPCResponse[]
+    console.log('nodes:', nodes.map(_ => _.result.toString().substr(2)))
+    this.defConfig.nodeList = nodes.map(_ => _.result.toString().substr(2)).map(data => ({
+      address: '0x' + data.substr(24, 40),
+      owner: '0x' + data.substr(64 + 24, 40),
+      deposit: parseInt('0x' + data.substr(64 * 2, 64)),
+      unregisterRequestTime: parseInt('0x' + data.substr(64 * 3, 64)),
+      chainIds: [('0x' + data.substr(64 * 4, 64)).replace(/0x0+/, '0x')],
+      url: decodeURIComponent(data.substr(64 * 7, 2 * parseInt('0x' + data.substr(64 * 6, 64))).replace(/[0-9a-f]{2}/g, '%$&'))
+    })
+    )
   }
+
+  public async call(request: RPCRequest, config?: Partial<N3Config>): Promise<string> {
+    return (this.send(request, null, { minDeposit: 0 }) as Promise<RPCResponse>)
+      .then(_ => _.result + '')
+  }
+
 
 
   /**
@@ -51,20 +106,36 @@ export class Client {
     const responses = await Promise.all(nodes.map(_ => handleRequest(requests, _, conf, excludes)))
 
     // now compare the result
-    const result = await Promise.all(requests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf)))
-    return result
-
+    return await Promise.all(requests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf))).then(_ => _.map(cleanResult))
   }
 
 
 }
 
 
+let idCount = 1
+
+function prepareCall(contract: string, methodHash: string, params?: string): RPCRequest {
+  return {
+    method: 'eth_call',
+    params: [{
+      to: contract,
+      data: methodHash + (params || '')
+    }, 'latest']
+  } as any
+}
+
+
+/**
+ * merges the results of all responses to one valid one.
+ */
 async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: N3Config) {
   if (responses.length == 1) return responses[0]
+
+  // for blocknumbers, we simply ake the highest! 
+  // TODO check error and maybe even blocknumbers in the future
   if (request.method === 'eth_blockNumber')
-    // we take the highest!
-    return { ...responses[0], result: '0x' + responses.map(_ => parseInt(_.result as any)).reduce((p, v) => v > p ? v : p, 0).toString(16) }
+    return { ...responses[0], result: '0x' + Math.max(...responses.map(_ => parseInt(_.result as any))).toString(16) }
 
   // how many different results do we have?
   const groups = responses.reduce((g, r) => {
@@ -91,21 +162,36 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   return responses[0]
 }
 
+/**
+ * handles a one single request and updates the stats
+ */
 async function handleRequest(request: RPCRequest[], node: N3NodeConfig, conf: N3Config, excludes?: string[]): Promise<RPCResponse[]> {
   const start = Date.now()
   const weights = conf.weights || (conf.weights = {})
   const stats: N3NodeWeight = weights[node.address] || (weights[node.address] = {})
 
   try {
+    // make sure the requests are valid
+    request.forEach(r => {
+      r.jsonrpc = r.jsonrpc || '2.0'
+      r.id = r.id || idCount++
+    })
+
+    // send the request to the server with a timeout
     const res = await axios.post(node.url, request, { timeout: conf.timeout || 1000 })
     const responses = (Array.isArray(res.data) ? res.data : [res.data]) as RPCResponse[]
+
+    // update stats
     stats.responseCount = (stats.responseCount || 0) + 1
-    stats.avgResponseTime = ((stats.avgResponseTime || 0) * (stats.responseCount - 1) + Date.now()) / stats.responseCount
+    stats.avgResponseTime = ((stats.avgResponseTime || 0) * (stats.responseCount - 1) + Date.now() - start) / stats.responseCount
     stats.lastRequest = start
     responses.forEach(_ => _.w3Node = node)
     return responses
   }
   catch (err) {
+    // locally blacklist this node for one hour
+    stats.blacklistedUntil = Date.now() + 3600000
+
     // so the node did not answer, let's find a different one
     const other = getNodes(conf, 1, excludes)
     if (!other.length)
@@ -116,24 +202,39 @@ async function handleRequest(request: RPCRequest[], node: N3NodeConfig, conf: N3
 
 
 
-
+/**
+ * calculates the weight of a node 
+ */
 function getWeight(weight: N3NodeWeight, node: N3NodeConfig) {
   return (weight.weight === undefined ? 1 : weight.weight)
     * (node.deposit || 1)
     * (weight.avgResponseTime ? 1 / (weight.avgResponseTime / 500) : 1)
 }
 
+/**
+ * finds nodes based on the config
+ */
 function getNodes(config: N3Config, count: number, excludes?: string[]) {
-  // prefilter for chain && minDeposit && excludes
-  const nodes = config.nodeList.filter(n => n.chainIds.indexOf(config.chainId) >= 0 && n.deposit >= config.minDeposit && (!excludes || excludes.indexOf(n.address) === -1))
+  const now = Date.now()
 
+  // prefilter for chain && minDeposit && excludes
+  const nodes = config.nodeList.filter(n =>
+    n.chainIds.indexOf(config.chainId) >= 0 && // check chain
+    n.deposit >= config.minDeposit &&  // check deposit
+    (!excludes || excludes.indexOf(n.address) === -1) && // check excluded addresses (because of recursive calls)
+    (!config.weights || ((config.weights[n.address] || {}).blacklistedUntil || 0) < now) // check blacklist
+  )
+
+  // in case we don't have enough nodes to randomize, we just need to accept the list as is
   if (nodes.length <= count)
     return nodes
 
+  // create weights for the nodes
   const weights = nodes.map(_ => ({ s: 0, w: getWeight((config.weights && config.weights[_.address]) || {}, _) }))
   weights.forEach((_, i) => _.s = i && weights[i - 1].s + weights[i - 1].w)
   const total = weights[nodes.length - 1].s + weights[nodes.length - 1].w
 
+  // fill from random picks
   const res: N3NodeConfig[] = []
   for (let i = 0; i < count; i++) {
     let r = Math.random() * total
@@ -146,4 +247,10 @@ function getNodes(config: N3Config, count: number, excludes?: string[]) {
   }
 
   return res
+}
+
+function cleanResult(r: RPCResponse) {
+  return r.error
+    ? { jsonrpc: r.jsonrpc, id: r.id, error: r.error }
+    : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
 }

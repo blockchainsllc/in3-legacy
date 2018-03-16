@@ -3,6 +3,10 @@
      */
     export interface N3Config {
         /**
+         * the address of the registry contract
+         */
+        contract?: string;
+        /**
          * min stake of the server. Only nodes owning at least this amount will be chosen.
          */
         minDeposit: number;
