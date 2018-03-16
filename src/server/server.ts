@@ -6,6 +6,7 @@ import * as Router from 'koa-router'
 import * as logger from 'winston'
 import * as rpc from './rpc'
 import { RPCRequest } from '../types/config'
+import config from './config'
 
 export const app = new Koa()
 const router = new Router()
@@ -23,3 +24,8 @@ router.post('/', async ctx => {
 
 })
 
+app.use(router.routes()).use(router.allowedMethods())
+
+
+
+app.listen(config.port || 8500, () => logger.info(`http server listening on ${config.port || 8500}`))

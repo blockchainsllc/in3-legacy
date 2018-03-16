@@ -109,10 +109,6 @@ definitions:
             in3ChainId: 
                 description: the requested chainId
                 type: string
-            in3Proof:
-                type: object
-                additionalProperties: 
-                    type:  [ array, object, string, number]
 
     RPCResponse:
         type: object
@@ -132,6 +128,10 @@ definitions:
             result: 
                 description: the params
                 type: [ array, object, string, number]
+                additionalProperties: 
+                    type:  [ array, object, string, number]
+            in3Proof:
+                type: object
                 additionalProperties: 
                     type:  [ array, object, string, number]
 

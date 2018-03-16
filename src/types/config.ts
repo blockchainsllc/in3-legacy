@@ -112,10 +112,6 @@
          * the requested chainId
          */
         in3ChainId?: string;
-        in3Proof?: {
-            [name: string]: any[] | {
-            } | string | number;
-        };
     }
     /**
      * a JSONRPC-Responset with N3-Extension
@@ -140,6 +136,10 @@
             [name: string]: any[] | {
             } | string | number;
         } | string | number;
+        in3Proof?: {
+            [name: string]: any[] | {
+            } | string | number;
+        };
         /**
          * the node handling this response
          */

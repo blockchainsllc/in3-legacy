@@ -10,7 +10,7 @@ export interface Proof {
   txIndex?,
   signature: {
     msgHash: string,
-    v: string
+    v: number
     r: string
     s: string
   }
@@ -60,7 +60,7 @@ export function verifyBlock(b, signature, expectedSigner) {
   const messageHash = util.sha3(blockHash + blockHeader.number.toString('hex').padStart(64, '0')).toString('hex')
   if (messageHash !== signature.msgHash)
     throw new Error('The signature signed the wrong message!')
-  const signer = '0x' + util.pubToAddress(util.erecover(messageHash, signature.v, signature.r, signature.s)).toString('hex')
+  const signer = '0x' + util.pubToAddress(util.erecover(messageHash, signature.v, util.toBuffer(signature.r), util.toBuffer(signature.s))).toString('hex')
   if (signer.toLowerCase() !== expectedSigner.toLowerCase())
     throw new Error('The signature was not signed by ' + expectedSigner)
 
@@ -76,7 +76,7 @@ export async function createTransactionProof(block, txHash, signature): Promise<
   const trie = new Trie()
   await Promise.all(block.transactions.map(tx => new Promise((resolve, reject) =>
     trie.put(
-      util.rlp.encode(tx.transactionIndex),
+      util.rlp.encode(parseInt(tx.transactionIndex)),
       createTx(tx).serialize(),
       error => error ? reject(error) : resolve(true)
     )
@@ -84,7 +84,7 @@ export async function createTransactionProof(block, txHash, signature): Promise<
 
   // check roothash
   if (block.transactionsRoot !== '0x' + trie.root.toString('hex'))
-    throw new Error('The transactionHash is wrong!')
+    throw new Error('The transactionHash is wrong! : ' + block.transactionsRoot + '!==0x' + trie.root.toString('hex'))
 
   // create prove
   return new Promise<Proof>((resolve, reject) =>

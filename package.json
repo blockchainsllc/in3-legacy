@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p .",
     "test": "npm test",
+    "start": "node --inspect js/server/server",
     "updateTypes": "dtsgen src/types/config.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' > src/types/config.ts "
   },
   "repository": {
