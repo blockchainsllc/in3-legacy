@@ -2,6 +2,7 @@ import * as util from 'ethereumjs-util'
 import * as Transaction from 'ethereumjs-tx'
 import * as Block from 'ethereumjs-block'
 import * as Trie from 'merkle-patricia-tree'
+import { RPCRequest, RPCResponse } from '../types/config';
 
 export interface Proof {
   type: 'transactionProof',
@@ -161,7 +162,16 @@ function createTx(transaction) {
   return tx
 }
 
-
+export async function verifyProof(request: RPCRequest, response: RPCResponse): Promise<boolean> {
+  const proof = response.in3Proof as any as Proof
+  if (!proof) return false
+  switch (proof.type) {
+    case 'transactionProof':
+      return verifyTransactionProof(request.params[0], proof, response.w3Node.address).then(_ => true, _ => false)
+    default:
+      return false
+  }
+}
 
 
 

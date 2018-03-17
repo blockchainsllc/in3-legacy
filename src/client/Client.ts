@@ -1,5 +1,6 @@
 import { N3Config, RPCRequest, RPCResponse, N3NodeConfig, N3NodeWeight } from '../types/config';
 import axios from 'axios';
+import { verifyProof } from './verify'
 
 
 /**
@@ -137,6 +138,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   if (request.method === 'eth_blockNumber')
     return { ...responses[0], result: '0x' + Math.max(...responses.map(_ => parseInt(_.result as any))).toString(16) }
 
+
   // how many different results do we have?
   const groups = responses.reduce((g, r) => {
     const k = JSON.stringify(r.result || (r.error && 'error'))
@@ -145,7 +147,12 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
     return g
   }, {})
 
-  if (Object.keys(groups).length > 1) {
+  // if a result contains a proof, we need to verify it
+  // TODO handle wrong verification and maybe accept the first verifiable response
+  const verified = (await Promise.all(responses.filter(_ => _.in3Proof).map(r => verifyProof(request, r)))).reduce((p, v) => p && v, true)
+
+
+  if (Object.keys(groups).length > 1 || !verified) {
     // there are more then one answers!
     // how are we going to handle the conflict?
     if (conf.nodeAuthorities && conf.nodeAuthorities.length) {

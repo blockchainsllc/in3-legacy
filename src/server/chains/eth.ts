@@ -20,12 +20,16 @@ function getFromServer(request: Partial<RPCRequest>): Promise<RPCResponse> {
 }
 
 async function handeGetTransaction(request: RPCRequest): Promise<RPCResponse> {
+  // ask the server for the tx
   const response = await getFromServer(request)
-  const result = response && response.result as any
-  if (result.blockNumber) {
-    const block = await getFromServer({ method: 'eth_getBlockByNumber', params: [verify.toHex(result.blockNumber), true] }).then(_ => _ && _.result as any)
+  const tx = response && response.result as any
+  // if we have a blocknumber, it is mined and we can provide a proof over the blockhash
+  if (tx.blockNumber) {
+    // get the block including all transactions from the server
+    const block = await getFromServer({ method: 'eth_getBlockByNumber', params: [verify.toHex(tx.blockNumber), true] }).then(_ => _ && _.result as any)
     if (block)
-      response.in3Proof = await verify.createTransactionProof(block, request.params[0] as string, sign(block.hash, result.blockNumber)) as any
+      // create the proof
+      response.in3Proof = await verify.createTransactionProof(block, request.params[0] as string, sign(block.hash, tx.blockNumber)) as any
   }
   return response
 }
