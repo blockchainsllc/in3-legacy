@@ -1,7 +1,7 @@
     /**
      * the definition of the config-file.
      */
-    export interface N3Config {
+    export interface IN3Config {
         /**
          * the address of the registry contract
          */
@@ -25,7 +25,7 @@
         /**
          * the list of nodes
          */
-        nodeList?: N3NodeConfig[];
+        nodeList?: IN3NodeConfig[];
         /**
          * the list of authority nodes for handling conflicts
          */
@@ -34,13 +34,13 @@
          * the weights of nodes depending on former performance
          */
         weights?: {
-            [name: string]: N3NodeWeight;
+            [name: string]: IN3NodeWeight;
         };
     }
     /**
      * a config of a n3-node.
      */
-    export interface N3NodeConfig {
+    export interface IN3NodeConfig {
         /**
          * the address of the node, which is the public address it iis signing with.
          */
@@ -61,7 +61,7 @@
     /**
      * a local weight of a n3-node.
      */
-    export interface N3NodeWeight {
+    export interface IN3NodeWeight {
         /**
          * factor the weight this noe (default 1.0)
          */
@@ -143,5 +143,5 @@
         /**
          * the node handling this response
          */
-        w3Node?: N3NodeConfig;
+        in3Node?: IN3NodeConfig;
     }

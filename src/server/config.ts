@@ -1,7 +1,8 @@
 import * as fs from 'fs'
 
 const config = {
-  rpcUrl: 'https://mainnet.infura.io/HVtVmCIHVgqHGUgihfhX',
+  //  rpcUrl: 'https://mainnet.infura.io/HVtVmCIHVgqHGUgihfhX',
+  rpcUrl: 'http://localhost:8545',
   privateKey: '',
   port: 8500
 }

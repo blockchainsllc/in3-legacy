@@ -38,7 +38,7 @@ export function getBlock(b) {
     }
   })
 
-  if (b.transactions)
+  if (b.transactions && typeof b.transactions[0] === 'object')
     block.transactions = b.transactions.map(createTx)
 
   return block
@@ -167,7 +167,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse): P
   if (!proof) return false
   switch (proof.type) {
     case 'transactionProof':
-      return verifyTransactionProof(request.params[0], proof, response.w3Node.address).then(_ => true, _ => false)
+      return verifyTransactionProof(request.params[0], proof, response.in3Node.address).then(_ => true, _ => false)
     default:
       return false
   }

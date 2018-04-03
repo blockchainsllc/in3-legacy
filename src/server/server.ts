@@ -24,8 +24,7 @@ router.post('/', async ctx => {
 
 })
 
-app.use(router.routes()).use(router.allowedMethods())
-
-
-
-app.listen(config.port || 8500, () => logger.info(`http server listening on ${config.port || 8500}`))
+app
+  .use(router.routes())
+  .use(router.allowedMethods())
+  .listen(config.port || 8500, () => logger.info(`http server listening on ${config.port || 8500}`))

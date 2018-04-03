@@ -1,4 +1,4 @@
-import { N3Config, RPCRequest, RPCResponse, N3NodeConfig, N3NodeWeight } from '../types/config';
+import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight } from '../types/config';
 import axios from 'axios';
 import { verifyProof } from './verify'
 
@@ -9,9 +9,9 @@ import { verifyProof } from './verify'
  */
 export class Client {
 
-  private defConfig: N3Config
+  private defConfig: IN3Config
 
-  public constructor(config?: Partial<N3Config>) {
+  public constructor(config?: Partial<IN3Config>) {
     this.defConfig = {
       minDeposit: 0,
       requestCount: 3,
@@ -73,7 +73,7 @@ export class Client {
     )
   }
 
-  public async call(request: RPCRequest, config?: Partial<N3Config>): Promise<string> {
+  public async call(request: RPCRequest, config?: Partial<IN3Config>): Promise<string> {
     return (this.send(request, null, { minDeposit: 0 }) as Promise<RPCResponse>)
       .then(_ => _.result + '')
   }
@@ -84,7 +84,7 @@ export class Client {
    * sends a request.
    * If the callback is given it will be called with the response, if not a Promise will be returned.
    */
-  public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<N3Config>): void | Promise<RPCResponse | RPCResponse[]> {
+  public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): void | Promise<RPCResponse | RPCResponse[]> {
     const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...config } : this.defConfig)
     if (callback)
       p.then(_ => callback(null, Array.isArray(request) ? _ : _[0]), callback as any)
@@ -93,7 +93,7 @@ export class Client {
   }
 
 
-  private async sendIntern(requests: RPCRequest[], conf: N3Config, prevExcludes?: string[]): Promise<RPCResponse[]> {
+  private async sendIntern(requests: RPCRequest[], conf: IN3Config, prevExcludes?: string[]): Promise<RPCResponse[]> {
 
     // check nodeList
     if (!this.defConfig.nodeList || !this.defConfig.nodeList.length)
@@ -130,7 +130,7 @@ function prepareCall(contract: string, methodHash: string, params?: string): RPC
 /**
  * merges the results of all responses to one valid one.
  */
-async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: N3Config) {
+async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: IN3Config) {
   if (responses.length == 1) return responses[0]
 
   // for blocknumbers, we simply ake the highest! 
@@ -172,10 +172,10 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 /**
  * handles a one single request and updates the stats
  */
-async function handleRequest(request: RPCRequest[], node: N3NodeConfig, conf: N3Config, excludes?: string[]): Promise<RPCResponse[]> {
+async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, excludes?: string[]): Promise<RPCResponse[]> {
   const start = Date.now()
   const weights = conf.weights || (conf.weights = {})
-  const stats: N3NodeWeight = weights[node.address] || (weights[node.address] = {})
+  const stats: IN3NodeWeight = weights[node.address] || (weights[node.address] = {})
 
   try {
     // make sure the requests are valid
@@ -192,7 +192,7 @@ async function handleRequest(request: RPCRequest[], node: N3NodeConfig, conf: N3
     stats.responseCount = (stats.responseCount || 0) + 1
     stats.avgResponseTime = ((stats.avgResponseTime || 0) * (stats.responseCount - 1) + Date.now() - start) / stats.responseCount
     stats.lastRequest = start
-    responses.forEach(_ => _.w3Node = node)
+    responses.forEach(_ => _.in3Node = node)
     return responses
   }
   catch (err) {
@@ -212,7 +212,7 @@ async function handleRequest(request: RPCRequest[], node: N3NodeConfig, conf: N3
 /**
  * calculates the weight of a node 
  */
-function getWeight(weight: N3NodeWeight, node: N3NodeConfig) {
+function getWeight(weight: IN3NodeWeight, node: IN3NodeConfig) {
   return (weight.weight === undefined ? 1 : weight.weight)
     * (node.deposit || 1)
     * (weight.avgResponseTime ? 1 / (weight.avgResponseTime / 500) : 1)
@@ -221,7 +221,7 @@ function getWeight(weight: N3NodeWeight, node: N3NodeConfig) {
 /**
  * finds nodes based on the config
  */
-function getNodes(config: N3Config, count: number, excludes?: string[]) {
+function getNodes(config: IN3Config, count: number, excludes?: string[]) {
   const now = Date.now()
 
   // prefilter for chain && minDeposit && excludes
@@ -242,7 +242,7 @@ function getNodes(config: N3Config, count: number, excludes?: string[]) {
   const total = weights[nodes.length - 1].s + weights[nodes.length - 1].w
 
   // fill from random picks
-  const res: N3NodeConfig[] = []
+  const res: IN3NodeConfig[] = []
   for (let i = 0; i < count; i++) {
     let r = Math.random() * total
     const index = weights.findIndex(_ => _.s > r) - 1

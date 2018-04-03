@@ -2,7 +2,7 @@ $schema: http://json-schema.org/schema#
 description: configuration-data, which represents the structure of the config-file.
 definitions: 
 
-    N3NodeWeight: 
+    IN3NodeWeight: 
         description: a local weight of a n3-node.
         type: object
         properties:
@@ -25,7 +25,7 @@ definitions:
                 description: blacklisted because of failed requests until the timestamp
                 type: integer
 
-    N3NodeConfig: 
+    IN3NodeConfig: 
         description: a config of a n3-node.
         type: object
         required: [ address,url,deposit, chainIds]
@@ -47,7 +47,7 @@ definitions:
                 type: integer
             
 
-    N3Config:
+    IN3Config:
         description: the definition of the config-file.
         type: object
         required: [ minDeposit, requestCount, chainId]
@@ -76,7 +76,7 @@ definitions:
                 description: the list of nodes
                 type: array
                 items:
-                    $ref: "#/definitions/N3NodeConfig"
+                    $ref: "#/definitions/IN3NodeConfig"
             nodeAuthorities:
                 description: the list of authority nodes for handling conflicts
                 type: array
@@ -86,7 +86,7 @@ definitions:
                 description: the weights of nodes depending on former performance
                 type: object
                 additionalProperties: 
-                    $ref: "#/definitions/N3NodeWeight"
+                    $ref: "#/definitions/IN3NodeWeight"
 
     RPCRequest:
         type: object
@@ -136,7 +136,7 @@ definitions:
                     type:  [ array, object, string, number]
 
 
-            w3Node:
+            in3Node:
                 description: the node handling this response
-                $ref: "#/definitions/N3NodeConfig"
+                $ref: "#/definitions/IN3NodeConfig"
 
