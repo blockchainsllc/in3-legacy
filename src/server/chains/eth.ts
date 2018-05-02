@@ -4,15 +4,32 @@ import axios from 'axios'
 import * as util from 'ethereumjs-util'
 import *  as verify from '../../client/verify'
 import * as evm from './evm'
+import * as request from 'request';
+import { RPCHandler } from '../rpc';
+
+
+
 let counter = 1
+
+
+/**
+ * main function to handle rpc-calls
+ */
 export async function handle(request: RPCRequest): Promise<RPCResponse> {
-  if (request.method === 'eth_getTransactionByHash')
-    return handeGetTransaction(request)
-  if (request.method === 'eth_call')
-    return handleCall(request)
+  const proof = request.in3Verification || 'never'
+  if (proof === 'proof' || proof === 'proofWithSignature') {
+
+    if (request.method === 'eth_getTransactionByHash')
+      return handeGetTransaction(request)
+    if (request.method === 'eth_call')
+      return handleCall(request)
+    if (request.method === 'eth_getCode' || request.method === 'eth_getBalance' || request.method === 'eth_getTransactionCount' || request.method === 'eth_getStorageAt')
+      return handleAccount(request)
+  }
 
   return getFromServer(request)
 }
+
 
 function getFromServer(request: Partial<RPCRequest>): Promise<RPCResponse> {
   if (!request.id) request.id = counter++
@@ -22,7 +39,9 @@ function getFromServer(request: Partial<RPCRequest>): Promise<RPCResponse> {
 
 function getAllFromServer(request: Partial<RPCRequest>[]): Promise<RPCResponse[]> {
   console.log('req:', JSON.stringify(request, null, 2))
-  return axios.post(config.rpcUrl, request.map(_ => ({ id: counter++, jsonrpc: '2.0', ..._ }))).then(_ => _.data)
+  return request.length
+    ? axios.post(config.rpcUrl, request.filter(_ => _).map(_ => ({ id: counter++, jsonrpc: '2.0', ..._ }))).then(_ => _.data)
+    : Promise.resolve([])
 }
 
 async function handeGetTransaction(request: RPCRequest): Promise<RPCResponse> {
@@ -89,6 +108,14 @@ async function handleCall(request: RPCRequest): Promise<RPCResponse> {
     { method: 'eth_getProof', params: [toHex(adr, 20), Object.keys(neededProof.accounts[adr].storage).map(_ => toHex(_, 32)), block.number] }
   )))
 
+  // add the codes to the accounts
+  if (request.in3IncludeCode) {
+    const accounts = accountProofs
+      .filter(a => (a.result as any).codeHash !== '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470')
+    const codes = await getAllFromServer(accounts.map(a => ({ method: 'eth_getCode', params: [toHex((a.result as any).address, 20), request.params[1] || 'latest'] })))
+    accounts.forEach((r, i) => (accounts[i].result as any).code = codes[i])
+  }
+
   // bundle the answer
   return {
     ...response,
@@ -97,6 +124,51 @@ async function handleCall(request: RPCRequest): Promise<RPCResponse> {
       block: verify.blockToHex(block),
       signature: sign(block.hash, block.number),
       accounts: Object.keys(neededProof.accounts).reduce((p, v, i) => { p[v] = accountProofs[i].result; return p }, {})
+    }
+  }
+}
+
+
+async function handleAccount(request: RPCRequest): Promise<RPCResponse> {
+
+  const address = request.params[0] as string
+  const blockNr = request.params[request.method === 'eth_getStorageAt' ? 2 : 1] || 'latest'
+  const storage = request.method === 'eth_getStorageAt' ? [request.params[1]] : []
+
+  // read the response,blockheader and trace from server
+  const [blockResponse, proof, code] = await getAllFromServer([
+    { method: 'eth_getBlockByNumber', params: [blockNr, false] },
+    { method: 'eth_getProof', params: [toHex(address, 20), storage.map(_ => toHex(_, 32)), blockNr] },
+    request.method === 'eth_getCode' ? request : null
+  ])
+
+  // error checking
+  if (blockResponse.error) throw new Error('Could not get the block for ' + request.params[1] + ':' + blockResponse.error)
+  if (proof.error) throw new Error('Could not get the proof :' + proof.error)
+
+  // anaylse the transaction in order to find all needed storage
+  const block = blockResponse.result as any
+  const account = proof.result as any
+  let result;
+  if (request.method === 'eth_getBalance')
+    result = account.balance
+  else if (request.method === 'eth_getCode')
+    result = code.result
+  else if (request.method === 'eth_getTransactionCount')
+    result = account.nonce
+  else if (request.method === 'eth_getStorageAt')
+    result = account.storageProof[0].value
+
+  // bundle the answer
+  return {
+    id: request.id,
+    jsonrpc: '2.0',
+    result,
+    in3Proof: {
+      type: 'accountProof',
+      block: verify.blockToHex(block),
+      signature: sign(block.hash, block.number),
+      account: proof.result
     }
   }
 } 

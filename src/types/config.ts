@@ -112,6 +112,18 @@
          * the requested chainId
          */
         in3ChainId?: string;
+        /**
+         * if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+         */
+        in3IncludeCode?: boolean;
+        /**
+         * defines the kind of proof the client is asking for
+         */
+        in3Verification?: "never" | "proof" | "proofWithSignature";
+        /**
+         * a list of addresses requested to sign the blockhash
+         */
+        in3Signatures?: string /* ^0x[0-9a-fA-F]+$ */ [];
     }
     /**
      * a JSONRPC-Responset with N3-Extension

@@ -109,6 +109,19 @@ definitions:
             in3ChainId: 
                 description: the requested chainId
                 type: string
+            in3IncludeCode: 
+                description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+                type: boolean
+            in3Verification: 
+                description: defines the kind of proof the client is asking for
+                type: string
+                enum: [ never, proof, proofWithSignature ]
+            in3Signatures: 
+                description: a list of addresses requested to sign the blockhash
+                type: array
+                items:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]+$
 
     RPCResponse:
         type: object
