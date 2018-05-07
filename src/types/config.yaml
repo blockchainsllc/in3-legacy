@@ -45,7 +45,73 @@ definitions:
             deposit:
                 description: the deposit of the node
                 type: integer
+
+
+    IN3RPCRequestConfig:
+        description: additional config for a IN§ RPC-Request
+        properties:
+            chainId: 
+                description: the requested chainId
+                type: string
+            includeCode: 
+                description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+                type: boolean
+            verification: 
+                description: defines the kind of proof the client is asking for
+                type: string
+                enum: [ never, proof, proofWithSignature ]
+            signatures: 
+                description: a list of addresses requested to sign the blockhash
+                type: array
+                items:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]+$
+
+    Signature:
+        type: object
+        properties:
+            address:
+                type: string
+                description: the address of the signing node
+            block:
+                type: number
+                description: the blocknumber
+            blockHash:
+                type: string
+                description: the hash of the block
+            msgHash:
+                type: string
+                description: hash of the message
+                format: bytes32
+            r: 
+                type: string
+                description: Positive non-zero Integer signature.r
+                format: hex
+            s: 
+                type: string
+                description: Positive non-zero Integer signature.s
+                format: hex
+            v: 
+                type: string
+                description: Calculated curve point, or identity element O.
+                format: hex
             
+    IN3ResponseConfig:
+        type: object
+        description: additional config for a IN§ RPC-Request
+        properties:
+            proof:
+                type: object
+                additionalProperties: 
+                    type:  [ array, object, string, number]
+            lastNodeList: 
+                description: the blocknumber for the last block updating the nodelist
+                type: number
+            signatures: 
+                description: a list of addresses requested to sign the blockhash
+                type: array
+                items:
+                    $ref: "#/definitions/Signature"
 
     IN3Config:
         description: the definition of the config-file.
@@ -106,22 +172,9 @@ definitions:
             params: 
                 description: the params
                 type: [ array, object]
-            in3ChainId: 
-                description: the requested chainId
-                type: string
-            in3IncludeCode: 
-                description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
-                type: boolean
-            in3Verification: 
-                description: defines the kind of proof the client is asking for
-                type: string
-                enum: [ never, proof, proofWithSignature ]
-            in3Signatures: 
-                description: a list of addresses requested to sign the blockhash
-                type: array
-                items:
-                    type: string
-                    pattern: ^0x[0-9a-fA-F]+$
+            in3: 
+                description: the IN3-Config 
+                $ref: "#/definitions/IN3RPCRequestConfig"
 
     RPCResponse:
         type: object
@@ -143,13 +196,11 @@ definitions:
                 type: [ array, object, string, number]
                 additionalProperties: 
                     type:  [ array, object, string, number]
-            in3Proof:
-                type: object
-                additionalProperties: 
-                    type:  [ array, object, string, number]
-
+            in3: 
+                description: the IN3-Result
+                $ref: "#/definitions/IN3ResponseConfig"
 
             in3Node:
-                description: the node handling this response
+                description: the node handling this response (internal only)
                 $ref: "#/definitions/IN3NodeConfig"
 

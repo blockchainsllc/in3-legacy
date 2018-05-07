@@ -1,6 +1,7 @@
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight } from '../types/config';
-import axios from 'axios';
+import axios from 'axios'
 import { verifyProof } from './verify'
+import NodeList from './nodeList'
 
 
 /**
@@ -149,7 +150,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 
   // if a result contains a proof, we need to verify it
   // TODO handle wrong verification and maybe accept the first verifiable response
-  const verified = (await Promise.all(responses.filter(_ => _.in3Proof).map(r => verifyProof(request, r)))).reduce((p, v) => p && v, true)
+  const verified = (await Promise.all(responses.filter(_ => _.in3 && _.in3.proof).map(r => verifyProof(request, r)))).reduce((p, v) => p && v, true)
 
 
   if (Object.keys(groups).length > 1 || !verified) {

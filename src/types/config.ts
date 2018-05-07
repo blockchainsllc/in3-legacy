@@ -88,6 +88,44 @@
         blacklistedUntil?: number;
     }
     /**
+     * additional config for a IN§ RPC-Request
+     */
+    export interface IN3RPCRequestConfig {
+        /**
+         * the requested chainId
+         */
+        chainId?: string;
+        /**
+         * if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+         */
+        includeCode?: boolean;
+        /**
+         * defines the kind of proof the client is asking for
+         */
+        verification?: "never" | "proof" | "proofWithSignature";
+        /**
+         * a list of addresses requested to sign the blockhash
+         */
+        signatures?: string /* ^0x[0-9a-fA-F]+$ */ [];
+    }
+    /**
+     * additional config for a IN§ RPC-Request
+     */
+    export interface IN3ResponseConfig {
+        proof?: {
+            [name: string]: any[] | {
+            } | string | number;
+        };
+        /**
+         * the blocknumber for the last block updating the nodelist
+         */
+        lastNodeList?: number;
+        /**
+         * a list of addresses requested to sign the blockhash
+         */
+        signatures?: Signature[];
+    }
+    /**
      * a JSONRPC-Request with N3-Extension
      */
     export interface RPCRequest {
@@ -109,21 +147,9 @@
         params?: any[] | {
         };
         /**
-         * the requested chainId
+         * the IN3-Config
          */
-        in3ChainId?: string;
-        /**
-         * if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
-         */
-        in3IncludeCode?: boolean;
-        /**
-         * defines the kind of proof the client is asking for
-         */
-        in3Verification?: "never" | "proof" | "proofWithSignature";
-        /**
-         * a list of addresses requested to sign the blockhash
-         */
-        in3Signatures?: string /* ^0x[0-9a-fA-F]+$ */ [];
+        in3?: IN3RPCRequestConfig;
     }
     /**
      * a JSONRPC-Responset with N3-Extension
@@ -148,12 +174,42 @@
             [name: string]: any[] | {
             } | string | number;
         } | string | number;
-        in3Proof?: {
-            [name: string]: any[] | {
-            } | string | number;
-        };
         /**
-         * the node handling this response
+         * the IN3-Result
+         */
+        in3?: IN3ResponseConfig;
+        /**
+         * the node handling this response (internal only)
          */
         in3Node?: IN3NodeConfig;
+    }
+    export interface Signature {
+        /**
+         * the address of the signing node
+         */
+        address?: string;
+        /**
+         * the blocknumber
+         */
+        block?: number;
+        /**
+         * the hash of the block
+         */
+        blockHash?: string;
+        /**
+         * hash of the message
+         */
+        msgHash?: string; // bytes32
+        /**
+         * Positive non-zero Integer signature.r
+         */
+        r?: string; // hex
+        /**
+         * Positive non-zero Integer signature.s
+         */
+        s?: string; // hex
+        /**
+         * Calculated curve point, or identity element O.
+         */
+        v?: string; // hex
     }

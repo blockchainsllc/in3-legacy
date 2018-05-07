@@ -3,18 +3,14 @@ import * as Transaction from 'ethereumjs-tx'
 import * as Block from 'ethereumjs-block'
 import * as Trie from 'merkle-patricia-tree'
 import { RPCRequest, RPCResponse } from '../types/config';
+import { Signature } from '../types/config';
 
 export interface Proof {
   type: 'transactionProof',
   block: string,
   merkelProof?: string[],
   txIndex?,
-  signature: {
-    msgHash: string,
-    v: number
-    r: string
-    s: string
-  }
+  signatures: Signature[]
 }
 
 export function getBlock(b) {
@@ -51,25 +47,29 @@ export function blockFromHex(hex) {
   return new Block({ header: util.rlp.decode(util.toBuffer(toHex('0x' + hex))) })
 }
 
-export function verifyBlock(b, signature, expectedSigner) {
+export function verifyBlock(b, signatures: Signature[], expectedSigners: string[]) {
 
   // TODO in the future we are not allowing block verification without signature
-  if (!signature) return
+  if (!signatures) return
 
   const blockHeader = b instanceof Block ? b.header : getBlock(b).header
   const blockHash = '0x' + blockHeader.hash().toString('hex').toLowerCase()
   const messageHash = util.sha3(blockHash + blockHeader.number.toString('hex').padStart(64, '0')).toString('hex')
-  if (messageHash !== signature.msgHash)
-    throw new Error('The signature signed the wrong message!')
-  const signer = '0x' + util.pubToAddress(util.erecover(messageHash, signature.v, util.toBuffer(signature.r), util.toBuffer(signature.s))).toString('hex')
-  if (signer.toLowerCase() !== expectedSigner.toLowerCase())
-    throw new Error('The signature was not signed by ' + expectedSigner)
+  if (!signatures.reduce((p, signature, i) => {
+    if (messageHash !== signature.msgHash)
+      throw new Error('The signature signed the wrong message!')
+    const signer = '0x' + util.pubToAddress(util.erecover(messageHash, signature.v, util.toBuffer(signature.r), util.toBuffer(signature.s))).toString('hex')
+    if (signer.toLowerCase() !== expectedSigners[i].toLowerCase())
+      throw new Error('The signature was not signed by ' + expectedSigners[i])
+    return true
+  }, true))
+    throw new Error('No valid signature')
 
 
   //  if (blockHash !== b.hash.toLowerCase()) throw new Error('BlockHeader invalid! Wrong blockHash!')
 }
 
-export async function createTransactionProof(block, txHash, signature): Promise<Proof> {
+export async function createTransactionProof(block, txHash, signatures: Signature[]): Promise<Proof> {
   const txIndex = block.transactions.findIndex(_ => _.hash === txHash)
   if (txIndex < 0) throw new Error('tx not found')
 
@@ -95,15 +95,15 @@ export async function createTransactionProof(block, txHash, signature): Promise<
         type: 'transactionProof',
         block: blockToHex(block),
         merkelProof: prove.map(_ => _.toString('hex')),
-        txIndex, signature
+        txIndex, signatures
       })
     }))
 }
 
-export async function verifyTransactionProof(txHash: string, proof: Proof, expectedSigner: string) {
+export async function verifyTransactionProof(txHash: string, proof: Proof, expectedSigners: string[]) {
   const block = blockFromHex(proof.block)
 
-  verifyBlock(block, proof.signature, expectedSigner)
+  verifyBlock(block, proof.signatures, expectedSigners)
 
   // since the blockhash is verified, we have the correct root
   return new Promise((resolve, reject) => {
@@ -163,11 +163,11 @@ function createTx(transaction) {
 }
 
 export async function verifyProof(request: RPCRequest, response: RPCResponse): Promise<boolean> {
-  const proof = response.in3Proof as any as Proof
+  const proof = response.in3.proof as any as Proof
   if (!proof) return false
   switch (proof.type) {
     case 'transactionProof':
-      return verifyTransactionProof(request.params[0], proof, response.in3Node.address).then(_ => true, _ => false)
+      return verifyTransactionProof(request.params[0], proof, [response.in3Node.address]).then(_ => true, _ => false)
     default:
       return false
   }
