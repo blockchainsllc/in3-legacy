@@ -118,9 +118,6 @@ definitions:
         type: object
         required: [ minDeposit, requestCount, chainId]
         properties:
-            contract:
-                type: string
-                description: the address of the registry contract
             minDeposit:
                 type: number
                 description: min stake of the server. Only nodes owning at least this amount will be chosen.
@@ -138,21 +135,41 @@ definitions:
                 type: string
                 pattern: ^0x[0-9a-fA-F]+$
                 description: servers to filter for the given chain. The chain-id based on EIP-155.
-            nodeList:
-                description: the list of nodes
-                type: array
-                items:
-                    $ref: "#/definitions/IN3NodeConfig"
-            nodeAuthorities:
-                description: the list of authority nodes for handling conflicts
-                type: array
-                items:
-                    type: string
-            weights:
-                description: the weights of nodes depending on former performance
+            chainRegistry:
+                type: string
+                pattern: ^0x[0-9a-fA-F]+$
+                description: main chain-registry contract
+            mainChain:
+                type: string
+                pattern: ^0x[0-9a-fA-F]+$
+                description: main chain-id, where the chain registry is running.
+            servers:
                 type: object
-                additionalProperties: 
-                    $ref: "#/definitions/IN3NodeWeight"
+                description: the nodelist per chain
+                additionalProperties:
+                    type: object
+                    properties:
+                        contract:
+                            type: string
+                            description: the address of the registry contract
+                        contractChain:
+                            type: string
+                            description: the chainid for the contract
+                        nodeList:
+                            description: the list of nodes
+                            type: array
+                            items:
+                                $ref: "#/definitions/IN3NodeConfig"
+                        nodeAuthorities:
+                            description: the list of authority nodes for handling conflicts
+                            type: array
+                            items:
+                                type: string
+                        weights:
+                            description: the weights of nodes depending on former performance
+                            type: object
+                            additionalProperties: 
+                                $ref: "#/definitions/IN3NodeWeight"
 
     RPCRequest:
         type: object

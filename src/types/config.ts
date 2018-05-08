@@ -3,10 +3,6 @@
      */
     export interface IN3Config {
         /**
-         * the address of the registry contract
-         */
-        contract?: string;
-        /**
          * min stake of the server. Only nodes owning at least this amount will be chosen.
          */
         minDeposit: number;
@@ -23,18 +19,41 @@
          */
         chainId: string; // ^0x[0-9a-fA-F]+$
         /**
-         * the list of nodes
+         * main chain-registry contract
          */
-        nodeList?: IN3NodeConfig[];
+        chainRegistry?: string; // ^0x[0-9a-fA-F]+$
         /**
-         * the list of authority nodes for handling conflicts
+         * main chain-id, where the chain registry is running.
          */
-        nodeAuthorities?: string[];
+        mainChain?: string; // ^0x[0-9a-fA-F]+$
         /**
-         * the weights of nodes depending on former performance
+         * the nodelist per chain
          */
-        weights?: {
-            [name: string]: IN3NodeWeight;
+        servers?: {
+            [name: string]: {
+                /**
+                 * the address of the registry contract
+                 */
+                contract?: string;
+                /**
+                 * the chainid for the contract
+                 */
+                contractChain?: string;
+                /**
+                 * the list of nodes
+                 */
+                nodeList?: IN3NodeConfig[];
+                /**
+                 * the list of authority nodes for handling conflicts
+                 */
+                nodeAuthorities?: string[];
+                /**
+                 * the weights of nodes depending on former performance
+                 */
+                weights?: {
+                    [name: string]: IN3NodeWeight;
+                };
+            };
         };
     }
     /**

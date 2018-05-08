@@ -125,14 +125,18 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
 
 
 
-export function toHex(val): string {
+export function toHex(val: any, bytes?: number): string {
   if (val === undefined) return undefined
+  let hex: string
   if (typeof val === 'string')
-    return val.startsWith('0x') ? val : '0x' + new util.BN(val).toString(16)
+    hex = val.startsWith('0x') ? val.substr(2) : new util.BN(val).toString(16)
   else if (typeof val === 'number')
-    return '0x' + val.toString(16)
+    hex = val.toString(16)
   else
-    return util.bufferToHex(val)
+    hex = util.bufferToHex(val).substr(2)
+  if (bytes)
+    hex = hex.padStart(bytes * 2, '0')
+  return '0x' + hex
 }
 
 

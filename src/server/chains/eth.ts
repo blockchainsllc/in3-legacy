@@ -1,6 +1,6 @@
 import { RPCRequest, RPCResponse, Signature } from '../../types/config'
-//import config from '../config'
 import axios from 'axios'
+//import config from '../config'
 import * as util from 'ethereumjs-util'
 import *  as verify from '../../client/verify'
 import * as evm from './evm'
@@ -8,6 +8,7 @@ import * as request from 'request';
 import { RPCHandler } from '../rpc';
 import NodeList from '../../client/nodeList'
 import { checkNodeList, getNodeListProof } from '../nodeListUpdater'
+import { Transport, AxiosTransport } from '../../types/transport';
 
 const NOT_SUPPORTED = {
   eth_sign: 'a in3-node can not sign Messages, because the no unlocked key is allowed!',
@@ -21,9 +22,11 @@ export default class EthHandler {
   counter: number
   config: any
   nodeList: NodeList
+  transport: Transport
 
-  constructor(config: any) {
+  constructor(config: any, transport?: Transport) {
     this.config = config
+    this.transport = transport || new AxiosTransport()
   }
 
   async handle(request: RPCRequest): Promise<RPCResponse> {
@@ -71,7 +74,8 @@ export default class EthHandler {
     return Promise.all(addresses.map(address => {
       const config = nodes.getAddress(address)
       if (config)
-        return axios.post(config.url, { id: this.counter++, jsonrpc: '2.0', method: 'in3_sign', params: [blockNumber] }).then(_ => _.data.error ? Promise.reject(_.data.error) as any : _.data.result as Signature).catch(_ => '')
+        return this.transport.handle(config.url, { id: this.counter++, jsonrpc: '2.0', method: 'in3_sign', params: [blockNumber] })
+          .then((_: RPCResponse) => _.error ? Promise.reject(_.error) as any : _.result as Signature).catch(_ => '')
     })).then(a => a.filter(_ => _))
   }
 
