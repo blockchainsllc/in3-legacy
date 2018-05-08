@@ -132,3 +132,10 @@ export async function waitForReceipt(url: string, txHash: string, timeout = 100,
 
 
 }
+
+export function getAddress(pk: string) {
+  const key = toBuffer(pk)
+  return toChecksumAddress(privateToAddress(key).toString('hex'))
+
+
+}

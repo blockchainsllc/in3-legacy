@@ -8,7 +8,7 @@ export async function callContract(client: Client, contract: string, chainId: st
   return simpleDecode(signature, toBuffer(await client.call({
     method: 'eth_call', params: [{
       to: contract,
-      data: simpleEncode(signature, ...args)
+      data: '0x' + simpleEncode(signature, ...args).toString('hex')
     },
       'latest']
   } as any, { chainId })))

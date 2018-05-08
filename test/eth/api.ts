@@ -3,7 +3,9 @@ import { assert, expect, should } from 'chai'
 import 'mocha'
 import Client from '../../src/client/Client'
 import { TestTransport } from '../utils/transport'
-import { deployChainRegistry } from '../../src/server/registry';
+import { deployChainRegistry, registerServers } from '../../src/server/registry';
+import { getChainData } from '../../src/client/abi'
+import * as tx from '../../src/server/tx'
 
 describe('ETH Standard JSON-RPC', () => {
   it('eth_blockNumber', async () => {
@@ -31,9 +33,39 @@ describe('ETH Standard JSON-RPC', () => {
 
   })
 
-  it('deploy', async () => {
+  it('deploy and register servers', async () => {
     const pk = '0xb903239f8543d04b5dc1ba6579132b143087c68db1b2168786408fcbce568238'
-    console.log('chainRegistry:', await deployChainRegistry(pk))
+    const registers = await registerServers(pk, null, [{
+      url: '#1',
+      pk,
+      props: '0xFF',
+      deposit: 0
+    }], '0x99', null)
+
+    const client = new Client({
+      chainId: '0x99',
+      mainChain: '0x99',
+      chainRegistry: registers.chainRegistry,
+      servers: {
+        '0x99': {
+          contract: registers.registry,
+          contractChain: '0x99',
+          nodeList: [{
+            address: tx.getAddress(pk),
+            url: 'http://localhost:8545',
+            chainIds: ['0x99'],
+            deposit: 0
+          }]
+        }
+      }
+    })
+
+    const data = await getChainData(client, '0x99')
+
+
+
+    console.log('registers:', registers)
+    console.log('data:', data)
   })
 })
 

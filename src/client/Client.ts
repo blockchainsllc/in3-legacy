@@ -96,7 +96,7 @@ export default class Client {
 
   public async call(request: RPCRequest, config?: Partial<IN3Config>): Promise<string> {
     return (this.send(request, null, { minDeposit: 0 }) as Promise<RPCResponse>)
-      .then(_ => _.result + '')
+      .then(_ => _.error ? Promise.reject(new Error('Error handling ' + JSON.stringify(request) + ':' + JSON.stringify(_.error))) as any : _.result + '')
   }
 
   public async sendRPC(method: string, params: any, chain = '0x01', config?: Partial<IN3Config>) {
