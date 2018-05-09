@@ -5,7 +5,7 @@
   "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc -p . && cp src/types/registry.json js/src/types/registry.json",
-    "test": "tsc -p . && mocha --timeout 5000 js/test/*/*.js",
+    "test": "tsc -p . && mocha --timeout 5000 -R $(pwd)/js/test/utils/mochaReporter js/test/*/*.js",
     "updateContract": "solc --optimize --combined-json abi,bin,bin-runtime,compact-format,hashes,interface,metadata contracts/*.sol > src/types/registry.json",
     "start": "node --inspect js/server/server",
     "updateTypes": "dtsgen src/types/config.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' > src/types/config.ts "

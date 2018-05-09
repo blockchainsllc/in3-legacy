@@ -1,23 +1,25 @@
 import * as tx from './tx'
+import { toChecksumAddress } from 'ethereumjs-util'
 import { toHex } from '../client/verify';
+import { Transport } from '../types/transport';
 
 const bin = require('../types/registry.json')
 
-export function deployChainRegistry(pk: string, url = 'http://localhost:8545') {
+export function deployChainRegistry(pk: string, url = 'http://localhost:8545', transport?: Transport) {
   return tx.deployContract(url, '0x' + bin.contracts['contracts/ChainRegistry.sol:ChainRegistry'].bin, {
     privateKey: pk,
     gas: 3000000,
     confirm: true
-  }).then(_ => _.contractAddress as string)
+  }, transport).then(_ => toChecksumAddress(_.contractAddress) as string)
 
 }
 
-export function deployServerRegistry(pk: string, url = 'http://localhost:8545') {
+export function deployServerRegistry(pk: string, url = 'http://localhost:8545', transport?: Transport) {
   return tx.deployContract(url, '0x' + bin.contracts['contracts/ServerRegistry.sol:ServerRegistry'].bin, {
     privateKey: pk,
     gas: 3000000,
     confirm: true
-  }).then(_ => _.contractAddress as string)
+  }, transport).then(_ => toChecksumAddress(_.contractAddress) as string)
 
 }
 
@@ -27,9 +29,9 @@ export async function registerServers(pk: string, registry: string, data: {
   pk: string
   props: string
   deposit: number
-}[], chainId: string, chainRegistry?: string, url = 'http://localhost:8545') {
+}[], chainId: string, chainRegistry?: string, url = 'http://localhost:8545', transport?: Transport) {
   if (!registry)
-    registry = await deployServerRegistry(pk, url)
+    registry = await deployServerRegistry(pk, url, transport)
 
   for (const c of data)
     await tx.callContract(url, registry, 'registerServer(string,uint)', [
@@ -40,7 +42,7 @@ export async function registerServers(pk: string, registry: string, data: {
         gas: 3000000,
         confirm: true,
         value: c.deposit
-      })
+      }, transport)
 
   chainRegistry = await registerChains(pk, chainRegistry, [{
     chainId,
@@ -48,7 +50,7 @@ export async function registerServers(pk: string, registry: string, data: {
     meta: 'dummy',
     registryContract: registry,
     contractChain: chainId
-  }], url)
+  }], url, transport)
 
   return {
     chainRegistry,
@@ -65,9 +67,9 @@ export async function registerChains(pk: string, chainRegistry: string, data: {
   meta: string,
   registryContract: string,
   contractChain: string
-}[], url = 'http://localhost:8545') {
+}[], url = 'http://localhost:8545', transport?: Transport) {
   if (!chainRegistry)
-    chainRegistry = await deployChainRegistry(pk, url)
+    chainRegistry = await deployChainRegistry(pk, url, transport)
 
   for (const c of data)
     await tx.callContract(url, chainRegistry, 'registerChain(bytes32,string,string,address,bytes32)', [
@@ -81,7 +83,7 @@ export async function registerChains(pk: string, chainRegistry: string, data: {
         gas: 3000000,
         confirm: true,
         value: 0
-      })
+      }, transport)
 
 
 

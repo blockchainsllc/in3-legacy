@@ -19,6 +19,9 @@ install:
 services:
   - docker
 
+after_script:
+        - scp -i ~/.ssh/travis -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r test/report/* "travis@46.38.250.122:in3-ts/" 
+
 notifications:
   slack:
       rooms:
