@@ -15,3 +15,11 @@ export default class NodeList {
   }
 
 }
+
+export function canProof(node: IN3NodeConfig) {
+  return (node.props & 0x01) > 0
+}
+
+export function canMultiChain(node: IN3NodeConfig) {
+  return (node.props & 0x02) > 0
+}

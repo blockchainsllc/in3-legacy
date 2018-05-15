@@ -1,0 +1,120 @@
+import * as ethUtil from 'ethereumjs-util'
+import * as Tx from 'ethereumjs-tx'
+import * as Trie from 'merkle-patricia-tree'
+import * as Transaction from 'ethereumjs-tx'
+
+const BN = ethUtil.BN
+const rlp = ethUtil.rlp
+
+export default class Block {
+
+
+  raw: Buffer[]
+  transactions: Transaction[]
+
+  get parentHash() { return this.raw[0] }
+  get uncleHash() { return this.raw[1] }
+  get coinbase() { return this.raw[2] }
+  get stateRoot() { return this.raw[3] }
+  get transactionsTrie() { return this.raw[4] }
+  get receiptTrie() { return this.raw[5] }
+  get bloom() { return this.raw[6] }
+  get difficulty() { return this.raw[7] }
+  get number() { return this.raw[8] }
+  get gasLimit() { return this.raw[9] }
+  get gasUsed() { return this.raw[10] }
+  get timestamp() { return this.raw[11] }
+  get extra() { return this.raw[12] }
+  get sealedFields() { return this.raw.slice(13) }
+
+  constructor(data: any) {
+    this.raw = []
+    if (typeof data === 'string')
+      this.raw = ethUtil.rlp.decode(Buffer.from(data.replace('0x', ''), 'hex'))
+    else if (typeof data === 'object') {
+      ['parentHash:32', 'sha3Uncles', 'miner,coinbase:20', 'stateRoot:32', 'transactionsRoot:32', 'receiptsRoot,receiptRoot', 'logsBloom', 'difficulty', 'number', 'gasLimit', 'gasUsed', 'timestamp', 'extraData:-1'].forEach(field => {
+        this.raw.push(toBuffer(field.split(':')[0].split(',').map(_ => data[_]).find(_ => _) || ethUtil.SHA3_NULL, parseInt(field.split(':')[1] || '0')))
+      })
+      if (data.sealFields)
+        data.sealFields.forEach(_ => this.raw.push(toBuffer(_)))
+      else {
+        if (data.mixHash !== undefined)
+          this.raw.push(toBuffer(data.mixHash))
+        if (data.nonce !== undefined)
+          this.raw.push(toBuffer(data.nonce, 8))
+      }
+
+      if (data.transactions && typeof data.transactions[0] === 'object')
+        this.transactions = data.transactions.map(createTx)
+
+    }
+
+  }
+
+  hash(): Buffer {
+    return ethUtil.rlphash(this.raw)
+  }
+
+  serializeHeader(): Buffer {
+    return ethUtil.rlp.encode(this.raw)
+  }
+
+}
+
+export function toHex(val: any, bytes?: number): string {
+  if (val === undefined) return undefined
+  let hex: string
+  if (typeof val === 'string')
+    hex = val.startsWith('0x') ? val.substr(2) : new BN(val).toString(16)
+  else if (typeof val === 'number')
+    hex = val.toString(16)
+  else
+    hex = ethUtil.bufferToHex(val).substr(2)
+  if (bytes)
+    hex = hex.padStart(bytes * 2, '0')
+  return '0x' + hex
+}
+
+
+export function toBuffer(val, len = 32) {
+  if (typeof val == 'string')
+    val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toBuffer()
+  if (typeof val == 'number')
+    val = Buffer.from(val.toString(16), 'hex')
+
+  if (len == 0 && val.toString('hex') === '00')
+    return Buffer.allocUnsafe(0)
+  if (len > 0 && Buffer.isBuffer(val) && val.length < len)
+    val = Buffer.concat([Buffer.alloc(len - val.length), val])
+
+  return val as Buffer
+
+}
+
+
+export function createTx(transaction) {
+  const txParams = {
+    ...transaction,
+    nonce: toHex(transaction.nonce),
+    gasPrice: toHex(transaction.gasPrice),
+    value: toHex(transaction.value || 0),
+    gasLimit: toHex(transaction.gasLimit === undefined ? transaction.gas : transaction.gasLimit),
+    data: toHex(transaction.gasLimit === undefined ? transaction.input : transaction.data),
+    to: transaction.to ? ethUtil.setLengthLeft(ethUtil.toBuffer(transaction.to), 20) : null,
+    v: transaction.v < 27 ? transaction.v + 27 : transaction.v
+  }
+  const fromAddress = ethUtil.toBuffer(txParams.from)
+  delete txParams.from
+  const tx = new Transaction(txParams)
+  tx._from = fromAddress
+  tx.getSenderAddress = function () { return fromAddress }
+  if (txParams.hash !== '0x' + ethUtil.sha3(tx.serialize()).toString('hex')) {
+    console.log('raw', tx.raw.map(_ => _.toString('hex')))
+    throw new Error('wrong txhash! : ' + (txParams.hash + '!== 0x' + ethUtil.sha3(tx.serialize()).toString('hex')) + '  full tx=' + tx.serialize().toString('hex'))
+  }
+  // override hash
+  const txHash = ethUtil.toBuffer(txParams.hash)
+  tx.hash = function () { return txHash }
+  return tx
+}
+

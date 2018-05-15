@@ -1,6 +1,6 @@
-import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight } from '../types/config';
+import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig } from '../types/config';
 import { verifyProof } from './verify'
-import NodeList from './nodeList'
+import NodeList, { canMultiChain, canProof } from './nodeList'
 import { Transport, AxiosTransport } from '../types/transport';
 import { getChainData } from './abi'
 import { toChecksumAddress } from 'ethereumjs-util';
@@ -20,6 +20,8 @@ export default class Client {
   public constructor(config?: Partial<IN3Config>, transport?: Transport) {
     this.transport = transport || new AxiosTransport()
     this.defConfig = {
+      proof: false,
+      signatureCount: 0,
       minDeposit: 0,
       requestCount: 3,
       chainId: '0x2a',
@@ -145,7 +147,7 @@ export default class Client {
     const responses = await Promise.all(nodes.map(_ => handleRequest(requests, _, conf, this.transport, excludes)))
 
     // now compare the result
-    return await Promise.all(requests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))).then(_ => _.map(cleanResult))
+    return await Promise.all(requests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))).then(_ => conf.keepIn3 ? _ : _.map(cleanResult))
   }
 
 
@@ -220,6 +222,22 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     request.forEach(r => {
       r.jsonrpc = r.jsonrpc || '2.0'
       r.id = r.id || idCount++
+
+      const in3: IN3RPCRequestConfig = {}
+      if (conf.chainId && canMultiChain(node))
+        in3.chainId = conf.chainId
+
+      // if we request proof ...
+      if (conf.proof && canProof(node)) {
+        // .. we set the verificationtype
+        in3.verification = conf.signatureCount ? 'proofWithSignature' : 'proof'
+        if (conf.signatureCount)
+          // if signatures are requested, we choose some random nodes and create a list of their addresses
+          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => _.address)
+      }
+
+      if (Object.keys(in3).length)
+        r.in3 = { ...in3, ...(r.in3 || {}) }
     })
 
     // send the request to the server with a timeout

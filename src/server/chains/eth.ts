@@ -41,7 +41,7 @@ export default class EthHandler {
     if (proof === 'proof' || proof === 'proofWithSignature') {
       if (request.method === 'eth_getTransactionByHash')
         return this.handeGetTransaction(request)
-      if (request.method === 'eth_call')
+      if (request.method === 'eth_call' && this.config.client === 'parity_proofed')
         return this.handleCall(request)
       if (request.method === 'eth_getCode' || request.method === 'eth_getBalance' || request.method === 'eth_getTransactionCount' || request.method === 'eth_getStorageAt')
         return this.handleAccount(request)
@@ -57,13 +57,12 @@ export default class EthHandler {
   getFromServer(request: Partial<RPCRequest>): Promise<RPCResponse> {
     if (!request.id) request.id = this.counter++
     if (!request.jsonrpc) request.jsonrpc = '2.0'
-    return axios.post(this.config.rpcUrl, request).then(_ => _.data)
+    return axios.post(this.config.rpcUrl, toCleanRequest(request)).then(_ => _.data)
   }
 
   getAllFromServer(request: Partial<RPCRequest>[]): Promise<RPCResponse[]> {
-    console.log('req:', JSON.stringify(request, null, 2))
     return request.length
-      ? axios.post(this.config.rpcUrl, request.filter(_ => _).map(_ => ({ id: this.counter++, jsonrpc: '2.0', ..._ }))).then(_ => _.data)
+      ? axios.post(this.config.rpcUrl, request.filter(_ => _).map(_ => toCleanRequest({ id: this.counter++, jsonrpc: '2.0', ..._ }))).then(_ => _.data)
       : Promise.resolve([])
   }
 
@@ -142,6 +141,7 @@ export default class EthHandler {
 
 
   async  handleCall(request: RPCRequest): Promise<RPCResponse> {
+    console.log('handle call', this.config)
     // read the response,blockheader and trace from server
     const [response, blockResponse, trace] = await this.getAllFromServer([
       request,
@@ -250,3 +250,11 @@ function toHex(adr: string, len: number) {
 
 
 
+function toCleanRequest(request: Partial<RPCRequest>): RPCRequest {
+  return {
+    id: request.id,
+    method: request.method,
+    params: request.params,
+    jsonrpc: request.jsonrpc
+  }
+}

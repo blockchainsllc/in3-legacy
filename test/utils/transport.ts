@@ -8,14 +8,15 @@ import * as request from 'request'
 import Client from '../../src/client/Client'
 import { IN3Config } from '../../src/types/config'
 import * as logger from './memoryLogger'
+import * as crypto from 'crypto'
+import { getAddress, sendTransaction } from '../../src/server/tx';
 
-
-
+export const devPk = '0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7'
 export class TestTransport implements Transport {
-
   handlers: {
     [url: string]: RPCHandler
   }
+  url: string
 
   nodeList: NodeList
   randomList: number[][]
@@ -40,13 +41,15 @@ export class TestTransport implements Transport {
         address: toChecksumAddress('0x' + privateToAddress(toBuffer(privateKey)).toString('hex')),
         url: url,
         chainIds: ['0x01'],
-        deposit: i
+        deposit: i,
+        props: 255
       })
       this.handlers['#' + (i + 1)] = new EthHandler({
         rpcUrl: 'http://localhost:8545',
         privateKey
       }, this)
     }
+    this.url = 'http://localhost:8545'
 
     this.nodeList.update(nodes, 0)
   }
@@ -126,6 +129,30 @@ export class TestTransport implements Transport {
     }, this)
     await client.updateNodeList()
     return client
+  }
+
+  /** creates a random private key and transfers some ether to this address */
+  async createAccount(seed?: string, eth = 100000): Promise<string> {
+    const pkBuffer = seed
+      ? seed.startsWith('0x')
+        ? Buffer.from(seed.substr(2).padStart(64, '0'), 'hex')
+        : Buffer.from(seed.padStart(64, '0'), 'hex')
+      : crypto.randomBytes(32)
+
+    const pk = '0x' + pkBuffer.toString('hex')
+    const adr = getAddress(pk)
+
+    if (eth)
+      await sendTransaction('http://localhost:8545', {
+        privateKey: devPk,
+        gas: 222000,
+        to: adr,
+        data: '',
+        value: eth,
+        confirm: true
+      })
+
+    return pk
   }
 
 

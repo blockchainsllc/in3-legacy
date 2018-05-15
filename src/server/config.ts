@@ -6,7 +6,8 @@ const config = {
   privateKey: '',
   port: 8500,
   minBlockHeight: 6,
-  registry: '' // registry-contract
+  registry: '', // registry-contract
+  client: 'parity' // parity_proofed
 }
 
 try {

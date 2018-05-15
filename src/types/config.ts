@@ -3,6 +3,22 @@
      */
     export interface IN3Config {
         /**
+         * if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data.
+         */
+        keepIn3?: boolean;
+        /**
+         * if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+         */
+        includeCode?: boolean;
+        /**
+         * if true the nodes should send a proof of the response
+         */
+        proof?: boolean;
+        /**
+         * number of signatures requested
+         */
+        signatureCount?: number;
+        /**
          * min stake of the server. Only nodes owning at least this amount will be chosen.
          */
         minDeposit: number;
@@ -76,6 +92,10 @@
          * the deposit of the node
          */
         deposit: number;
+        /**
+         * the properties of the node
+         */
+        props?: number;
     }
     /**
      * a local weight of a n3-node.

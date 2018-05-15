@@ -55,7 +55,19 @@ export async function sendTransaction(url: string, txargs: {
   data: string
   value: number
   confirm?: boolean
-}, transport?: Transport) {
+}, transport?: Transport): Promise<{
+  blockHash: string,
+  blockNumber: string,
+  contractAddress: string,
+  cumulativeGasUsed: string,
+  gasUsed: string,
+  logs: string[],
+  logsBloom: string,
+  root: string,
+  status: string,
+  transactionHash: string,
+  transactionIndex: string
+}> {
 
   if (!transport) transport = new AxiosTransport()
   const key = toBuffer(txargs.privateKey)
@@ -96,7 +108,7 @@ export async function sendTransaction(url: string, txargs: {
     id: idCount++,
     method: 'eth_sendRawTransaction',
     params: [toHex(tx.serialize())]
-  }).then((_: RPCResponse) => _.result + '')
+  }).then((_: RPCResponse) => _.error ? Promise.reject(new Error('Error sending the tx ' + JSON.stringify(txargs) + ':' + JSON.stringify(_.error))) as any : _.result + '')
 
   return txargs.confirm ? waitForReceipt(url, txHash, 100, txargs.gas, transport) : txHash
 }
@@ -115,7 +127,7 @@ export async function waitForReceipt(url: string, txHash: string, timeout = 100,
       params: [txHash]
     }) as RPCResponse
 
-    if (r.error) throw new Error('Error fetching the receipt for ' + txHash + ' : ' + r.error)
+    if (r.error) throw new Error('Error fetching the receipt for ' + txHash + ' : ' + JSON.stringify(r.error))
     if (r.result) {
       const receipt = r.result as any
       if (sentGas && parseInt(sentGas as any) === parseInt(receipt.gasUsed))
