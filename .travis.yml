@@ -8,7 +8,7 @@ node_js:
   - "8.3.0"
 
 before_install:
-  - docker pull parity/parity:v1.7.0
+  - docker pull slockit/parity-in3:latest
   - docker run -dti --network="host" -p 8180:8180 -p 8545:8545 -p 30303:30303 -p 8546:8546 parity/parity:v1.7.0 --chain dev
   - while ! echo exit | nc localhost 8546; do sleep 1; done
   

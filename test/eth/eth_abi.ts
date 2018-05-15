@@ -89,26 +89,20 @@ describe('ETH Standard JSON-RPC', () => {
     logger.info('result', res)
 
 
-    // now manipulate the result
-    test.injectResponse({ method: 'eth_getTransactionByHash' }, (req, re: RPCResponse) => {
-      // we change a property
-      (re.result as any).to = (re.result as any).from
-      return re
-    })
-
-
     let failed = false
     try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getTransactionByHash' }, (req, re: RPCResponse) => {
+        // we change a property
+        (re.result as any).to = (re.result as any).from
+        return re
+      })
       await client.sendRPC('eth_getTransactionByHash', [receipt.transactionHash])
     }
     catch {
       failed = true
     }
     assert.isTrue(failed, 'The manipulated transaction must fail!')
-
-
-
-
   })
 
 })

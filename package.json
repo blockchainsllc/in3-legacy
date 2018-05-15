@@ -8,7 +8,8 @@
     "test": "tsc -p . && mocha --timeout 5000 -R $(pwd)/js/test/utils/mochaReporter js/test/*/*.js",
     "updateContract": "solc --optimize --combined-json abi,bin,bin-runtime,compact-format,hashes,interface,metadata contracts/*.sol > src/types/registry.json",
     "start": "node --inspect js/server/server",
-    "updateTypes": "dtsgen src/types/config.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' > src/types/config.ts "
+    "updateTypes": "dtsgen src/types/config.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' > src/types/config.ts ",
+    "parity": "docker run -p 8180:8180 -p 8545:8545 -p 8546:8546 slockit/parity-in3:latest --jsonrpc-apis all --logging=3 --jsonrpc-interface=all --ws-interface=all ---chain dev --gas-cap=8000000 --gasprice 0  --reseal-min-period 0   --gas-floor-target 8700000  --tracing on"
   },
   "repository": {
     "type": "git",

@@ -6,9 +6,10 @@ import { Signature } from '../types/config';
 import Block, { toHex, createTx, BlockData } from './block'
 
 export interface Proof {
-  type: 'transactionProof',
-  block: string,
+  type: 'transactionProof' | 'blockProof',
+  block?: string,
   merkelProof?: string[],
+  transactions?: any[]
   txIndex?,
   signatures: Signature[]
 }
@@ -45,6 +46,8 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
   }, true))
     throw new Error('No valid signature')
 }
+
+
 
 /** creates the merkle-proof for a transation */
 export async function createTransactionProof(block: BlockData, txHash: string, signatures: Signature[]): Promise<Proof> {
@@ -117,6 +120,36 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
 
 
 
+/** verifies a TransactionProof */
+export async function verifyBlockProof(blockData: BlockData, proof: Proof, expectedSigners: string[]) {
+
+  if (!blockData) throw new Error('No Blockdata!')
+
+  // decode the blockheader
+  const block = new Block(proof.block || blockData)
+  if (proof.transactions) block.transactions = proof.transactions
+  if (!blockData.hash) blockData.hash = toHex(block.hash(), 32)
+
+  // verify the blockhash and the signatures
+  verifyBlock(block, proof.signatures, expectedSigners, blockData.hash)
+
+  // verify the transactions
+  if (block.transactions) {
+    const trie = new Trie()
+    await Promise.all(block.transactions.map((tx, i) =>
+      promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
+    ))
+    var txT = block.transactionsTrie.toString('hex')
+    const thash = block.transactions.length ? trie.root.toString('hex') : util.SHA3_RLP.toString('hex')
+    if (thash !== block.transactionsTrie.toString('hex'))
+      throw new Error('The Transaction of do not hash to the given transactionHash!')
+  }
+
+
+}
+
+
+
 /** general verification-function which handles it according to its given type. */
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true): Promise<boolean> {
   const proof = response && response.in3 && response.in3.proof as any as Proof
@@ -124,8 +157,25 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
   switch (proof.type) {
     case 'transactionProof':
       return verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any).then(_ => true, _ => false)
+    case 'blockProof':
+      return verifyBlockProof(response.result as any, proof, request.in3 && request.in3.signatures).then(_ => true, _ => false)
     default:
       return false
   }
 }
 
+
+
+
+function promisify(self, fn, ...args: any[]): Promise<any> {
+  return new Promise((resolve, reject) => {
+    promisify.apply(self, [...args, (res, err) => {
+      if (err)
+        reject(err)
+      else
+        resolve(res)
+    }])
+  })
+
+
+}

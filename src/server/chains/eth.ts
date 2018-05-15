@@ -9,7 +9,7 @@ import { RPCHandler } from '../rpc';
 import NodeList from '../../client/nodeList'
 import { checkNodeList, getNodeListProof } from '../nodeListUpdater'
 import { Transport, AxiosTransport } from '../../types/transport'
-import { toHex } from '../../client/block'
+import { toHex, BlockData } from '../../client/block';
 
 const NOT_SUPPORTED = {
   eth_sign: 'a in3-node can not sign Messages, because the no unlocked key is allowed!',
@@ -40,6 +40,8 @@ export default class EthHandler {
 
     // handle special jspn-rpc
     if (proof === 'proof' || proof === 'proofWithSignature') {
+      //      if (request.method === 'eth_getBlockByNumber' || request.method === 'eth_getBlockByHash')
+      //        return this.handleBlock(request)
       if (request.method === 'eth_getTransactionByHash')
         return this.handeGetTransaction(request)
       if (request.method === 'eth_call' && this.config.client === 'parity_proofed')
@@ -120,6 +122,33 @@ export default class EthHandler {
   }
 
 
+  async  handleBlock(request: RPCRequest): Promise<RPCResponse> {
+    // ask the server for the block
+    const response = await this.getFromServer({ ...request, params: [request.params[0], true] })
+
+    const blockData = response && response.result as any as BlockData
+
+    // if we found the block....
+    if (blockData && blockData.number) {
+
+      // create the proof
+      response.in3 = {
+        proof: {
+          type: 'blockProof',
+          signatures: await this.collectSignatures(request.in3.signatures, parseInt(blockData.number as any, 10), blockData.hash) as any
+        }
+      }
+
+      const transactions = blockData.transactions
+      if (!request.params[1]) {
+        // since we fetched the block with all transactions, but the request said, we only want hashes, we put the full ransactions in the proof and only the hashes in the result.
+        (response.in3.proof as any).transactions = transactions
+        blockData.transactions = transactions.map(_ => _.hash)
+      }
+    }
+
+    return response
+  }
 
   async  handeGetTransaction(request: RPCRequest): Promise<RPCResponse> {
     // ask the server for the tx

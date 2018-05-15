@@ -7,6 +7,7 @@ const BN = ethUtil.BN
 const rlp = ethUtil.rlp
 
 export interface BlockData {
+  hash: string
   parentHash: string
   sha3Uncles: string
   miner: string
