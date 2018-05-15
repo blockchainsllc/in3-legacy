@@ -78,31 +78,12 @@ describe('ETH Standard JSON-RPC', () => {
 
     const b = await client.sendRPC('eth_getBlockByNumber', [result.blockNumber, true], null, { keepIn3: true })
     logger.info('found Block:', b.result)
-    const h2 = verify.getBlock(b.result).header
-    const blockHeader = verify.blockFromHex(proof.block).header
+    const block = new Block(b.result)
 
-
-    logger.info('FROM block ', '0x' + h2.hash().toString('hex').toLowerCase())
-    logger.info('FROM blockNew ', '0x' + new Block(b).hash().toString('hex').toLowerCase())
-    logger.info('FROM blockblockNew ', '0x' + new Block(new Block(b).serializeHeader()).hash().toString('hex').toLowerCase())
-    logger.info('FROM header ', '0x' + blockHeader.hash().toString('hex').toLowerCase())
-    logger.info('FROM headerNew ', '0x' + new Block(proof.block).hash().toString('hex').toLowerCase())
-    logger.info('FROM result ', (res.result as any).blockHash)
-
-    assert.equal('0x' + h2.hash().toString('hex').toLowerCase(), (res.result as any).blockHash, 'AAAA the hash of the blockheader in the proof must be the same as the blockHash in the Transactiondata')
-
-
+    assert.equal('0x' + block.hash().toString('hex').toLowerCase(), (res.result as any).blockHash, 'the hash of the blockheader in the proof must be the same as the blockHash in the Transactiondata')
 
     // check blocknumber
-    assert.equal(parseInt('0x' + blockHeader.number.toString('hex')), parseInt(result.blockNumber), 'we must use the same blocknumber as in the transactiondata')
-
-    assert.equal('0x' + blockHeader.hash().toString('hex').toLowerCase(), (res.result as any).blockHash, 'the hash of the blockheader in the proof must be the same as the blockHash in the Transactiondata')
-
-
-
-
-
-
+    assert.equal(parseInt('0x' + block.number.toString('hex')), parseInt(result.blockNumber), 'we must use the same blocknumber as in the transactiondata')
 
     logger.info('result', res)
 

@@ -8,7 +8,8 @@ import * as request from 'request';
 import { RPCHandler } from '../rpc';
 import NodeList from '../../client/nodeList'
 import { checkNodeList, getNodeListProof } from '../nodeListUpdater'
-import { Transport, AxiosTransport } from '../../types/transport';
+import { Transport, AxiosTransport } from '../../types/transport'
+import { toHex } from '../../client/block'
 
 const NOT_SUPPORTED = {
   eth_sign: 'a in3-node can not sign Messages, because the no unlocked key is allowed!',
@@ -79,7 +80,7 @@ export default class EthHandler {
   }
 
   sign(blockHash: string, blockNumber: number): Signature {
-    const msgHash = util.sha3('0x' + verify.toHex(blockHash).substr(2).padStart(64, '0') + verify.toHex(blockNumber).substr(2).padStart(64, '0'))
+    const msgHash = util.sha3('0x' + toHex(blockHash).substr(2).padStart(64, '0') + toHex(blockNumber).substr(2).padStart(64, '0'))
     const sig = util.ecsign(msgHash, util.toBuffer(this.config.privateKey))
     return {
       blockHash,
@@ -127,7 +128,7 @@ export default class EthHandler {
     // if we have a blocknumber, it is mined and we can provide a proof over the blockhash
     if (tx && tx.blockNumber) {
       // get the block including all transactions from the server
-      const block = await this.getFromServer({ method: 'eth_getBlockByNumber', params: [verify.toHex(tx.blockNumber), true] }).then(_ => _ && _.result as any)
+      const block = await this.getFromServer({ method: 'eth_getBlockByNumber', params: [toHex(tx.blockNumber), true] }).then(_ => _ && _.result as any)
       if (block)
         // create the proof
         response.in3 = {
@@ -239,14 +240,6 @@ export default class EthHandler {
   }
 }
 
-
-function toHex(adr: string, len: number) {
-  let a = adr.startsWith('0x') ? adr.substr(2) : adr
-  if (a.length > len * 2) a = a.substr(0, len * 2)
-  while (a.length < len * 2)
-    a += '0'
-  return '0x' + a
-}
 
 
 

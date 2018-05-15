@@ -1,6 +1,6 @@
 import * as tx from './tx'
 import { toChecksumAddress } from 'ethereumjs-util'
-import { toHex } from '../client/verify';
+import { toHex } from '../client/block';
 import { Transport } from '../types/transport';
 
 const bin = require('../types/registry.json')

@@ -4,7 +4,6 @@ import 'mocha'
 import * as logger from '../utils/memoryLogger'
 import Block, { toHex } from '../../src/client/block'
 import * as ethUtil from 'ethereumjs-util'
-import { getBlock } from '../../src/client/verify';
 const BN = ethUtil.BN
 
 describe('Util-Functions', () => {

@@ -1,6 +1,6 @@
 import { simpleEncode, simpleDecode } from 'ethereumjs-abi'
 import { toBuffer, toChecksumAddress, privateToAddress } from 'ethereumjs-util'
-import { toHex } from '../client/verify'
+import { toHex } from '../client/block'
 import { Transport, AxiosTransport } from '../types/transport';
 import { RPCResponse } from '../types/config';
 import * as ETx from 'ethereumjs-tx'

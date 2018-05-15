@@ -1,7 +1,7 @@
 import Client from './Client'
 import { simpleEncode, simpleDecode } from 'ethereumjs-abi'
 import { toBuffer, toChecksumAddress } from 'ethereumjs-util'
-import { toHex } from './verify'
+import { toHex } from './block'
 
 
 export async function callContract(client: Client, contract: string, chainId: string, signature: string, args: any[]) {
