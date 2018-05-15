@@ -6,10 +6,36 @@ import * as Transaction from 'ethereumjs-tx'
 const BN = ethUtil.BN
 const rlp = ethUtil.rlp
 
+export interface BlockData {
+  parentHash: string
+  sha3Uncles: string
+  miner: string
+  stateRoot: string
+  transactionsRoot: string
+  receiptsRoot: string
+  logsBloom: string
+  difficulty: string | number
+  number: string | number
+  gasLimit: string | number
+  gasUsed: string | number
+  timestamp: string | number
+  extraData: string
+  sealFields?: string[]
+  mixHash?: string
+  nonce?: string | number
+  transactions?: any[]
+
+}
+
+/**
+ * encodes and decodes the blockheader
+ */
 export default class Block {
 
-
+  /** the raw Buffer fields of the BlockHeader */
   raw: Buffer[]
+
+  /** the transaction-Object (if given) */
   transactions: Transaction[]
 
   get parentHash() { return this.raw[0] }
@@ -27,9 +53,12 @@ export default class Block {
   get extra() { return this.raw[12] }
   get sealedFields() { return this.raw.slice(13) }
 
+  /** creates a Block-Onject from either the block-data as returned from rpc, a buffer or a hex-string of the encoded blockheader */
   constructor(data: any) {
     this.raw = []
-    if (typeof data === 'string')
+    if (Buffer.isBuffer(data))
+      this.raw = ethUtil.rlp.decode(data)
+    else if (typeof data === 'string')
       this.raw = ethUtil.rlp.decode(Buffer.from(data.replace('0x', ''), 'hex'))
     else if (typeof data === 'object') {
       ['parentHash:32', 'sha3Uncles', 'miner,coinbase:20', 'stateRoot:32', 'transactionsRoot:32', 'receiptsRoot,receiptRoot', 'logsBloom', 'difficulty', 'number', 'gasLimit', 'gasUsed', 'timestamp', 'extraData:-1'].forEach(field => {
@@ -51,16 +80,19 @@ export default class Block {
 
   }
 
+  /** the blockhash as buffer */
   hash(): Buffer {
     return ethUtil.rlphash(this.raw)
   }
 
+  /** the serialized header as buffer */
   serializeHeader(): Buffer {
     return ethUtil.rlp.encode(this.raw)
   }
 
 }
 
+/** converts any value as hex-string */
 export function toHex(val: any, bytes?: number): string {
   if (val === undefined) return undefined
   let hex: string
@@ -76,7 +108,8 @@ export function toHex(val: any, bytes?: number): string {
 }
 
 
-export function toBuffer(val, len = 32) {
+/** converts any value as Buffer */
+export function toBuffer(val, len = -1) {
   if (typeof val == 'string')
     val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toBuffer()
   if (typeof val == 'number')
@@ -91,7 +124,7 @@ export function toBuffer(val, len = 32) {
 
 }
 
-
+/** creates a Transaction-object from the rpc-transaction-data */
 export function createTx(transaction) {
   const txParams = {
     ...transaction,
@@ -109,7 +142,6 @@ export function createTx(transaction) {
   tx._from = fromAddress
   tx.getSenderAddress = function () { return fromAddress }
   if (txParams.hash !== '0x' + ethUtil.sha3(tx.serialize()).toString('hex')) {
-    console.log('raw', tx.raw.map(_ => _.toString('hex')))
     throw new Error('wrong txhash! : ' + (txParams.hash + '!== 0x' + ethUtil.sha3(tx.serialize()).toString('hex')) + '  full tx=' + tx.serialize().toString('hex'))
   }
   // override hash

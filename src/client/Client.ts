@@ -1,9 +1,9 @@
-import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig } from '../types/config';
+import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig } from '../types/config'
 import { verifyProof } from './verify'
 import NodeList, { canMultiChain, canProof } from './nodeList'
-import { Transport, AxiosTransport } from '../types/transport';
+import { Transport, AxiosTransport } from '../types/transport'
 import { getChainData } from './abi'
-import { toChecksumAddress } from 'ethereumjs-util';
+import { toChecksumAddress } from 'ethereumjs-util'
 
 
 
@@ -147,7 +147,10 @@ export default class Client {
     const responses = await Promise.all(nodes.map(_ => handleRequest(requests, _, conf, this.transport, excludes)))
 
     // now compare the result
-    return await Promise.all(requests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))).then(_ => conf.keepIn3 ? _ : _.map(cleanResult))
+    return await Promise.all(
+      requests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))
+    )
+      .then(_ => conf.keepIn3 ? _ : _.map(cleanResult))
   }
 
 
@@ -166,12 +169,28 @@ function prepareCall(contract: string, methodHash: string, params?: string): RPC
   } as any
 }
 
+/**
+ * 
+ * verifies all responses and removed the invalid ones.
+ */
+async function verifyProofs(request: RPCRequest, responses: RPCResponse[]): Promise<RPCResponse[]> {
+  return Promise.all(responses.map(r => verifyProof(request, r).then(_ => _ ? r : null))).then(r => r.filter(_ => _))
+}
 
 /**
  * merges the results of all responses to one valid one.
  */
-async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: IN3Config, transport: Transport) {
-  if (responses.length == 1) return responses[0]
+async function mergeResults(request: RPCRequest, unverifiedResponses: RPCResponse[], conf: IN3Config, transport: Transport) {
+
+  // verifiy all responses
+  const responses = await verifyProofs(request, unverifiedResponses)
+
+  // if only one left, this is the response
+  if (responses.length === 1) return responses[0]
+
+  // no valid response left, means we can not use it.
+  // TODO maybe we should handle this differently by aquirung different nodes then.
+  if (responses.length === 0) throw new Error('There are no valid responses left')
 
   // for blocknumbers, we simply ake the highest! 
   // TODO check error and maybe even blocknumbers in the future
@@ -187,12 +206,11 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
     return g
   }, {})
 
-  // if a result contains a proof, we need to verify it
-  // TODO handle wrong verification and maybe accept the first verifiable response
-  const verified = (await Promise.all(responses.filter(_ => _.in3 && _.in3.proof).map(r => verifyProof(request, r)))).reduce((p, v) => p && v, true)
+  // do we have responses with proofes?
+  const verifiedResponse = responses.find(_ => _.in3 && !!_.in3.proof)
 
-
-  if (Object.keys(groups).length > 1 || !verified) {
+  // if we have different result and none if them has a proof, we may want to ask the authorities
+  if (Object.keys(groups).length > 1 && !verifiedResponse) {
     // there are more then one answers!
     // how are we going to handle the conflict?
     if (conf.servers[conf.chainId].nodeAuthorities && conf.servers[conf.chainId].nodeAuthorities.length) {
@@ -206,7 +224,9 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
     }
     throw new Error('The nodes responded with ' + Object.keys(groups).length + ' different answers and there is no authroityNode to resolve the conflict! ')
   }
-  return responses[0]
+
+  // if we have a verified Response, we return this, if not, we simply take the first.
+  return verifiedResponse || responses[0]
 }
 
 /**

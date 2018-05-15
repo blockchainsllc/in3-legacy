@@ -11,6 +11,8 @@ import * as logger from './memoryLogger'
 import * as crypto from 'crypto'
 import { getAddress, sendTransaction } from '../../src/server/tx';
 
+export type ResponseModifier = (RPCRequest, RPCResponse) => RPCResponse
+
 export const devPk = '0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7'
 export class TestTransport implements Transport {
   handlers: {
@@ -23,7 +25,7 @@ export class TestTransport implements Transport {
   lastRandom: number
   injectedResponses: {
     request: Partial<RPCRequest>,
-    response: Partial<RPCResponse>,
+    response: Partial<RPCResponse> | ResponseModifier,
     url: string
   }[]
 
@@ -57,7 +59,7 @@ export class TestTransport implements Transport {
   injectRandom(randomVals: number[]) {
     this.randomList.push(randomVals)
   }
-  injectResponse(request: Partial<RPCRequest>, response: Partial<RPCResponse>, url = '') {
+  injectResponse(request: Partial<RPCRequest>, response: (Partial<RPCResponse> | ResponseModifier), url = '') {
     this.injectedResponses.push({
       request, response, url
     })
@@ -76,12 +78,18 @@ export class TestTransport implements Transport {
   async handleRequest(r: RPCRequest, handler: RPCHandler, url: string): Promise<RPCResponse> {
     logger.debug('Request for ' + url + ' : ', r)
 
+    const responseModifiers: ResponseModifier[] = []
+
     for (const ir of this.injectedResponses) {
       if (ir.url && ir.url !== url) continue
       if (ir.request && ir.request.method !== r.method) continue
       if (ir.request && ir.request.params && JSON.stringify(ir.request.params) != JSON.stringify(r.params)) continue
-      logger.debug('Response (injected) : ', { id: r.id, ...ir.response })
-      return { jsonrpc: '2.0', id: r.id, ...ir.response }
+      if (typeof ir.response === 'function')
+        responseModifiers.push(ir.response)
+      else {
+        logger.debug('Response (injected) : ', { id: r.id, ...ir.response })
+        return { jsonrpc: '2.0', id: r.id, ...ir.response }
+      }
     }
 
     let res: RPCResponse
@@ -98,8 +106,7 @@ export class TestTransport implements Transport {
       res = await handler.handle(r)
 
     logger.debug('Response  : ', res)
-
-    return res
+    return responseModifiers.reduce((p, m) => m(r, p), res)
   }
 
   nextRandom() {

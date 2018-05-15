@@ -9,6 +9,7 @@ import * as tx from '../../src/server/tx'
 import * as logger from '../utils/memoryLogger'
 import * as verify from '../../src/client/verify'
 import Block from '../../src/client/block'
+import { RPCResponse } from '../../src/types/config';
 
 // our test private key
 const pk = '0xb903239f8543d04b5dc1ba6579132b143087c68db1b2168786408fcbce568238'
@@ -86,6 +87,25 @@ describe('ETH Standard JSON-RPC', () => {
     assert.equal(parseInt('0x' + block.number.toString('hex')), parseInt(result.blockNumber), 'we must use the same blocknumber as in the transactiondata')
 
     logger.info('result', res)
+
+
+    // now manipulate the result
+    test.injectResponse({ method: 'eth_getTransactionByHash' }, (req, re: RPCResponse) => {
+      // we change a property
+      (re.result as any).to = (re.result as any).from
+      return re
+    })
+
+
+    let failed = false
+    try {
+      await client.sendRPC('eth_getTransactionByHash', [receipt.transactionHash])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated transaction must fail!')
+
 
 
 

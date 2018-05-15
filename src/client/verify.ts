@@ -3,7 +3,7 @@ import * as Transaction from 'ethereumjs-tx'
 import * as Trie from 'merkle-patricia-tree'
 import { RPCRequest, RPCResponse } from '../types/config';
 import { Signature } from '../types/config';
-import Block, { toHex, createTx } from './block'
+import Block, { toHex, createTx, BlockData } from './block'
 
 export interface Proof {
   type: 'transactionProof',
@@ -14,21 +14,27 @@ export interface Proof {
 }
 
 
+/** converts blockdata to a hexstring*/
 export function blockToHex(block) {
   return new Block(block).serializeHeader().toString('hex')
 }
+
+/** converts a hexstring to a block-object */
 export function blockFromHex(hex) {
   return new Block(hex)
 }
 
-export function verifyBlock(b, signatures: Signature[], expectedSigners: string[]) {
+/** verify the signatures of a blockhash */
+export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: string[], expectedBlockHash: string) {
+
+  const blockHash = '0x' + b.hash().toString('hex').toLowerCase()
+  if (expectedBlockHash && blockHash !== expectedBlockHash.toLowerCase())
+    throw new Error('The BlockHash is not the expected one!')
 
   // TODO in the future we are not allowing block verification without signature
   if (!signatures) return
 
-  const blockHeader = b instanceof Block ? b : new Block(b)
-  const blockHash = '0x' + blockHeader.hash().toString('hex').toLowerCase()
-  const messageHash = util.sha3(blockHash + blockHeader.number.toString('hex').padStart(64, '0')).toString('hex')
+  const messageHash = util.sha3(blockHash + b.number.toString('hex').padStart(64, '0')).toString('hex')
   if (!signatures.reduce((p, signature, i) => {
     if (messageHash !== signature.msgHash)
       throw new Error('The signature signed the wrong message!')
@@ -38,21 +44,21 @@ export function verifyBlock(b, signatures: Signature[], expectedSigners: string[
     return true
   }, true))
     throw new Error('No valid signature')
-
-
-  //  if (blockHash !== b.hash.toLowerCase()) throw new Error('BlockHeader invalid! Wrong blockHash!')
 }
 
-export async function createTransactionProof(block, txHash, signatures: Signature[]): Promise<Proof> {
+/** creates the merkle-proof for a transation */
+export async function createTransactionProof(block: BlockData, txHash: string, signatures: Signature[]): Promise<Proof> {
+  // we always need the txIndex, since this is used as path inside the merkle-tree
   const txIndex = block.transactions.findIndex(_ => _.hash === txHash)
   if (txIndex < 0) throw new Error('tx not found')
 
   // create trie
   const trie = new Trie()
+  // fill in all transactions
   await Promise.all(block.transactions.map(tx => new Promise((resolve, reject) =>
     trie.put(
-      util.rlp.encode(parseInt(tx.transactionIndex)),
-      createTx(tx).serialize(),
+      util.rlp.encode(parseInt(tx.transactionIndex)), // path as txIndex
+      createTx(tx).serialize(),  // raw transactions
       error => error ? reject(error) : resolve(true)
     )
   )))
@@ -74,19 +80,31 @@ export async function createTransactionProof(block, txHash, signatures: Signatur
     }))
 }
 
-export async function verifyTransactionProof(txHash: string, proof: Proof, expectedSigners: string[]) {
+/** verifies a TransactionProof */
+export async function verifyTransactionProof(txHash: string, proof: Proof, expectedSigners: string[], txData: any) {
+
+  if (!txData) throw new Error('No TransactionData!')
+
+  // decode the blockheader
   const block = blockFromHex(proof.block)
 
-  verifyBlock(block, proof.signatures, expectedSigners)
+  // verify the blockhash and the signatures
+  verifyBlock(block, proof.signatures, expectedSigners, txData.blockHash)
 
-  // since the blockhash is verified, we have the correct root
+  const txHashofData = '0x' + createTx(txData).hash().toString('hex')
+  if (txHashofData !== txHash)
+    throw new Error('The transactiondata were manipulated')
+
+  // since the blockhash is verified, we have the correct transaction root
   return new Promise((resolve, reject) => {
     Trie.verifyProof(
-      block.transactionsTrie,
-      util.rlp.encode(proof.txIndex),
-      proof.merkelProof.map(_ => util.toBuffer('0x' + _)),
-      (err, value) => {
+      block.transactionsTrie, // expected merkle root
+      util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
+      proof.merkelProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
+      (err, value) => { // callback
         if (err) return reject(err)
+        // the value holds the Buffer of the transaction to proof
+        // we can now simply hash this and compare it to the given txHas
         if (txHash === '0x' + util.sha3(value).toString('hex'))
           resolve(value)
         else
@@ -99,13 +117,13 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
 
 
 
-
-export async function verifyProof(request: RPCRequest, response: RPCResponse): Promise<boolean> {
-  const proof = response.in3.proof as any as Proof
-  if (!proof) return false
+/** general verification-function which handles it according to its given type. */
+export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true): Promise<boolean> {
+  const proof = response && response.in3 && response.in3.proof as any as Proof
+  if (!proof) return allowWithoutProof
   switch (proof.type) {
     case 'transactionProof':
-      return verifyTransactionProof(request.params[0], proof, [response.in3Node.address]).then(_ => true, _ => false)
+      return verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any).then(_ => true, _ => false)
     default:
       return false
   }
