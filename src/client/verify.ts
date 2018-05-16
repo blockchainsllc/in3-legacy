@@ -4,6 +4,7 @@ import * as Trie from 'merkle-patricia-tree'
 import { RPCRequest, RPCResponse } from '../types/config';
 import { Signature } from '../types/config';
 import Block, { toHex, createTx, BlockData } from './block'
+import { toBuffer } from './block';
 
 export interface Proof {
   type: 'transactionProof' | 'blockProof' | 'accountProof',
@@ -198,12 +199,13 @@ export async function verifyAccountProof(request: RPCRequest, value: string, pro
       (err, value) => { // callback
         if (err) return reject(err)
 
-        const account = util.rlp.encode([proof.account.nonce, proof.account.balance, proof.account.storageHash, proof.account.codeHash].map(util.toBuffer))
+        const account = util.rlp.encode([proof.account.nonce, proof.account.balance, proof.account.storageHash, proof.account.codeHash].map(toVariableBuffer))
 
         if (value.toString('hex') === account.toString('hex'))
           resolve(value)
         else
           reject(new Error('The Account could not be verified, since the merkel-proof resolved to a different hash'))
+
       })
   })
 
@@ -242,4 +244,10 @@ function promisify(self, fn, ...args: any[]): Promise<any> {
   })
 
 
+}
+
+function toVariableBuffer(val: string) {
+  if (val == '0x' || val === '0x0' || val === '0x00')
+    return Buffer.alloc(0)
+  return util.toBuffer(val)
 }

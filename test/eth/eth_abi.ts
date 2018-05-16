@@ -274,5 +274,127 @@ describe('ETH Standard JSON-RPC', () => {
 
   })
 
+  it('eth_getTransactionCount', async () => {
+    let test = new TestTransport(1) // create a network of 3 nodes
+    let client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create 2 accounts
+    const pk1 = await test.createAccount('0x01')
+    const adr = getAddress(pk1)
+
+    // get the last Block
+    const b = await client.sendRPC('eth_getTransactionCount', [adr, 'latest'], null, { keepIn3: true })
+    const result = b.result as any as BlockData
+    assert.exists(b.in3)
+    assert.exists(b.in3.proof)
+    const proof = b.in3.proof as any
+    assert.equal(proof.type, 'accountProof')
+    assert.exists(proof.block)
+    assert.exists(proof.account)
+
+
+    let failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getTransactionCount' }, (req, re: RPCResponse) => {
+        // we change the returned balance
+        re.result = re.result + '00'
+        return re
+      })
+      await client.sendRPC('eth_getTransactionCount', [adr, 'latest'])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated nonce must fail!')
+    test.clearInjectedResponsed()
+
+    // we need to create a new client since the old node is blacklisted
+    test = new TestTransport(1) // create a network of 3 nodes
+    client = await test.createClient({ proof: true, requestCount: 1 })
+
+    failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getTransactionCount' }, (req, re: RPCResponse) => {
+        // we change the returned balance and the value in the proof
+        (re.in3.proof as any).account.balance = re.result + '00';
+        re.result = re.result + '00'
+        return re
+      })
+      await client.sendRPC('eth_getTransactionCount', [adr, 'latest'])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated nonce must fail!')
+
+
+
+  })
+
+
+
+  it('eth_getCode', async () => {
+    let test = new TestTransport(1) // create a network of 3 nodes
+    let client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create 2 accounts
+    const pk1 = await test.createAccount('0x01')
+
+    // check empty code
+    await client.sendRPC('eth_getCode', [getAddress(pk1), 'latest'], null, { keepIn3: true })
+
+    // check deployed code
+    const adr = await deployChainRegistry(pk1)
+    const b = await client.sendRPC('eth_getCode', [adr, 'latest'], null, { keepIn3: true })
+    const result = b.result as any as BlockData
+    assert.exists(b.in3)
+    assert.exists(b.in3.proof)
+    const proof = b.in3.proof as any
+    assert.equal(proof.type, 'accountProof')
+    assert.exists(proof.block)
+    assert.exists(proof.account)
+
+
+    let failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getCode' }, (req, re: RPCResponse) => {
+        // we change the returned balance
+        re.result = re.result + '00'
+        return re
+      })
+      await client.sendRPC('eth_getCode', [adr, 'latest'])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated nonce must fail!')
+    test.clearInjectedResponsed()
+
+    // we need to create a new client since the old node is blacklisted
+    test = new TestTransport(1) // create a network of 3 nodes
+    client = await test.createClient({ proof: true, requestCount: 1 })
+
+    failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getCode' }, (req, re: RPCResponse) => {
+        // we change the returned balance and the value in the proof
+        (re.in3.proof as any).account.balance = re.result + '00';
+        re.result = re.result + '00'
+        return re
+      })
+      await client.sendRPC('eth_getCode', [adr, 'latest'])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated code must fail!')
+
+  })
+
+
 })
 
