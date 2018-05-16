@@ -40,8 +40,8 @@ export default class EthHandler {
 
     // handle special jspn-rpc
     if (proof === 'proof' || proof === 'proofWithSignature') {
-      //      if (request.method === 'eth_getBlockByNumber' || request.method === 'eth_getBlockByHash')
-      //        return this.handleBlock(request)
+      if (request.method === 'eth_getBlockByNumber' || request.method === 'eth_getBlockByHash')
+        return this.handleBlock(request)
       if (request.method === 'eth_getTransactionByHash')
         return this.handeGetTransaction(request)
       if (request.method === 'eth_call' && this.config.client === 'parity_proofed')

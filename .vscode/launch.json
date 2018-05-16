@@ -16,7 +16,7 @@
         "999999",
         "--colors",
         "--grep",
-        "eth_blockNumber",
+        "eth_getBalance",
         "${workspaceFolder}/js/test/*/*.js"
       ],
       "outFiles": [

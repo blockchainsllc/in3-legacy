@@ -6,10 +6,23 @@ import { Signature } from '../types/config';
 import Block, { toHex, createTx, BlockData } from './block'
 
 export interface Proof {
-  type: 'transactionProof' | 'blockProof',
+  type: 'transactionProof' | 'blockProof' | 'accountProof',
   block?: string,
   merkelProof?: string[],
   transactions?: any[]
+  account?: {
+    accountProof: string[]
+    address: string,
+    balance: string
+    codeHash: string
+    nonce: string
+    storageHash: string
+    storageProof: {
+      key: string
+      proof: string
+      value: string
+    }[]
+  },
   txIndex?,
   signatures: Signature[]
 }
@@ -122,12 +135,11 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
 
 /** verifies a TransactionProof */
 export async function verifyBlockProof(blockData: BlockData, proof: Proof, expectedSigners: string[]) {
-
   if (!blockData) throw new Error('No Blockdata!')
 
   // decode the blockheader
   const block = new Block(proof.block || blockData)
-  if (proof.transactions) block.transactions = proof.transactions
+  if (proof.transactions) block.transactions = proof.transactions.map(createTx)
   if (!blockData.hash) blockData.hash = toHex(block.hash(), 32)
 
   // verify the blockhash and the signatures
@@ -144,6 +156,56 @@ export async function verifyBlockProof(blockData: BlockData, proof: Proof, expec
     if (thash !== block.transactionsTrie.toString('hex'))
       throw new Error('The Transaction of do not hash to the given transactionHash!')
   }
+}
+
+
+
+/** verifies a TransactionProof */
+export async function verifyAccountProof(request: RPCRequest, value: string, proof: Proof, expectedSigners: string[]) {
+  if (!value) throw new Error('No Accountdata!')
+
+  // verify the result
+  if (request.params[0].toLowerCase() !== proof.account.address.toLowerCase()) throw new Error('The Account does not match the account in the proof')
+  switch (request.method) {
+    case 'eth_getBalance':
+      if (value !== proof.account.balance) throw new Error('The Balance does not match the one in the proof')
+      break
+    case 'eth_getStorageAt':
+      const entry = proof.account.storageProof.find(_ => _.key === request.params[1])
+      if (!entry) throw new Error('The proof for the storage value ' + request.params[1] + ' can not be found ')
+      if (entry.value !== value) throw new Error('The Value does not match the one in the proof')
+      break
+    case 'eth_getCode':
+      if (proof.account.codeHash !== '0x' + util.keccak(value).toString('hex')) throw new Error('The codehash in the proof does not match the code')
+      break
+    case 'eth_getTransactionCount':
+      if (proof.account.nonce !== value) throw new Error('The nonce in the proof does not match the returned')
+      break
+    default:
+      throw new Error('Unsupported Account-Proof for ' + request.method)
+  }
+
+  // verify the blockhash and the signatures
+  const block = new Block(proof.block)
+  verifyBlock(block, proof.signatures, expectedSigners, null)
+
+  // verify the proof
+  await new Promise((resolve, reject) => {
+    Trie.verifyProof(
+      block.stateRoot, // expected merkle root
+      util.keccak(proof.account.address), // path, which is the transsactionIndex
+      proof.account.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
+      (err, value) => { // callback
+        if (err) return reject(err)
+
+        const account = util.rlp.encode([proof.account.nonce, proof.account.balance, proof.account.storageHash, proof.account.codeHash].map(util.toBuffer))
+
+        if (value.toString('hex') === account.toString('hex'))
+          resolve(value)
+        else
+          reject(new Error('The Account could not be verified, since the merkel-proof resolved to a different hash'))
+      })
+  })
 
 
 }
@@ -159,6 +221,8 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
       return verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any).then(_ => true, _ => false)
     case 'blockProof':
       return verifyBlockProof(response.result as any, proof, request.in3 && request.in3.signatures).then(_ => true, _ => false)
+    case 'accountProof':
+      return verifyAccountProof(request, response.result as string, proof, request.in3 && request.in3.signatures).then(_ => true, _ => false)
     default:
       return false
   }
@@ -169,7 +233,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
 
 function promisify(self, fn, ...args: any[]): Promise<any> {
   return new Promise((resolve, reject) => {
-    promisify.apply(self, [...args, (res, err) => {
+    fn.apply(self, [...args, (res, err) => {
       if (err)
         reject(err)
       else
