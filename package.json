@@ -5,11 +5,29 @@
   "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc -p . && cp src/types/registry.json js/src/types/registry.json",
-    "test": "tsc -p . && mocha --timeout 5000 -R $(pwd)/js/test/utils/mochaReporter js/test/*/*.js",
+    "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/utils/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*/*.ts; cp -r coverage test/report/",
     "updateContract": "solc --optimize --combined-json abi,bin,bin-runtime,compact-format,hashes,interface,metadata contracts/*.sol > src/types/registry.json",
     "start": "node --inspect js/server/server",
     "updateTypes": "dtsgen src/types/config.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' > src/types/config.ts ",
     "parity": "docker run -p 8180:8180 -p 8545:8545 -p 8546:8546 slockit/parity-in3:latest --jsonrpc-apis all --logging=3 --jsonrpc-interface=all --ws-interface=all ---chain dev --gas-cap=8000000 --gasprice 0  --reseal-min-period 0   --gas-floor-target 8700000  --tracing on"
+  },
+  "nyc": {
+    "include": [
+      "src/**/*.ts",
+      "test/**/*.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
   },
   "repository": {
     "type": "git",
@@ -31,6 +49,9 @@
     "chai": "^4.1.2",
     "dtsgenerator": "^0.9.9",
     "mocha": "^5.1.1",
+    "nyc": "^11.8.0",
+    "source-map-support": "^0.5.6",
+    "ts-node": "^6.0.3",
     "typescript": "^2.7.2"
   },
   "dependencies": {

@@ -56,12 +56,14 @@ class TestReporter extends mocha.reporters.Spec {
       'index.html',
       'Test Result',
       '<h2>Test Results</h2>'
+      + '<div style="padding-bottom:10px"><a style="color:yellow" href="coverage/index.html">Code Coverage</a></div>'
       + '<table border=0 cellspacing=0 cellpadding=0>'
       + this.results.map(r =>
         '<tr><td colspan=2>' + r.title + '</td></tr>' + r.tests.map(t =>
           `<tr><td>&nbsp;&nbsp;- </td><td><a style='color:${t.status === 'pass' ? 'green' : (t.status === 'fail' ? 'red' : 'white')}' href="${t.details}">${t.title}</a></td><td style='text-align:end'>${t.time} ms</td><td>${t.error || ''}</td></tr>`
         ).join('')
       ).join('')
+      + '</table>'
     )
   }
 
