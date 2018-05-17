@@ -3,14 +3,14 @@ import { assert, expect, should } from 'chai'
 import 'mocha'
 import Client from '../../src/client/Client'
 import { TestTransport } from '../utils/transport'
-import { deployChainRegistry, registerServers } from '../../src/server/registry';
+import { deployChainRegistry, registerServers, deployContract } from '../../src/server/registry';
 import { getChainData } from '../../src/client/abi'
 import * as tx from '../../src/server/tx'
 import * as logger from '../utils/memoryLogger'
 import * as verify from '../../src/client/verify'
 import Block from '../../src/client/block'
 import { RPCResponse } from '../../src/types/config';
-import { BlockData } from '../../src/client/block';
+import { BlockData, toHex } from '../../src/client/block';
 import { getAddress } from '../../src/server/tx';
 
 // our test private key
@@ -454,6 +454,56 @@ describe('ETH Standard JSON-RPC', () => {
     assert.isTrue(failed, 'The manipulated code must fail!')
 
   })
+
+
+
+  it('eth_getStorageAt', async () => {
+    let test = new TestTransport(1) // create a network of 3 nodes
+    let client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create 2 accounts
+    const pk1 = await test.createAccount()
+
+
+    // check deployed code
+    const adr = await deployContract('TestContract', pk1)
+    await tx.callContract('http://localhost:8545', adr, 'increase()', [], {
+      confirm: true,
+      privateKey: pk1,
+      gas: 3000000,
+      value: 0
+    })
+
+
+    const b = await client.sendRPC('eth_getStorageAt', [adr, '0x00', 'latest'], null, { keepIn3: true })
+    const result = b.result as string
+    assert.exists(b.in3)
+    assert.exists(b.in3.proof)
+    const proof = b.in3.proof as any
+    assert.equal(proof.type, 'accountProof')
+    assert.exists(proof.block)
+    assert.exists(proof.account)
+    assert.equal(toHex(result), '0x01')
+
+
+    let failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getStorageAt' }, (req, re: RPCResponse) => {
+        // we change the returned balance
+        re.result = '0x09'
+        return re
+      })
+      await client.sendRPC('eth_getStorageAt', [adr, '0x00', 'latest'])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated nonce must fail!')
+
+
+  })
+
 
 
 })

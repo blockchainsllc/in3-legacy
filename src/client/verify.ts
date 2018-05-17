@@ -241,9 +241,9 @@ export async function verifyAccountProof(request: RPCRequest, value: string, pro
       if (value !== proof.account.balance) throw new Error('The Balance does not match the one in the proof')
       break
     case 'eth_getStorageAt':
-      const entry = proof.account.storageProof.find(_ => _.key === request.params[1])
+      const entry = proof.account.storageProof.find(_ => toHex(_.key) === toHex(request.params[1]))
       if (!entry) throw new Error('The proof for the storage value ' + request.params[1] + ' can not be found ')
-      if (entry.value !== value) throw new Error('The Value does not match the one in the proof')
+      if (toHex(entry.value) !== toHex(value)) throw new Error('The Value does not match the one in the proof')
       break
     case 'eth_getCode':
       if (proof.account.codeHash !== '0x' + util.keccak(value).toString('hex')) throw new Error('The codehash in the proof does not match the code')

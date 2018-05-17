@@ -16,7 +16,7 @@
         "999999",
         "--colors",
         "--grep",
-        "eth_getTransactionReceipt",
+        "eth_getStorageAt",
         "${workspaceFolder}/js/test/*/*.js"
       ],
       "outFiles": [

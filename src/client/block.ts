@@ -101,11 +101,15 @@ export function toHex(val: any, bytes?: number): string {
     hex = val.startsWith('0x') ? val.substr(2) : new BN(val).toString(16)
   else if (typeof val === 'number')
     hex = val.toString(16)
+  else if (BN.isBN(val))
+    hex = val.toString(16)
   else
     hex = ethUtil.bufferToHex(val).substr(2)
   if (bytes)
     hex = hex.padStart(bytes * 2, '0')
-  return '0x' + hex
+  if (hex.length % 2)
+    hex = '0' + hex
+  return '0x' + hex.toLowerCase()
 }
 
 

@@ -1,4 +1,4 @@
-import { simpleEncode, simpleDecode } from 'ethereumjs-abi'
+import { simpleEncode, simpleDecode, methodID } from 'ethereumjs-abi'
 import { toBuffer, toChecksumAddress, privateToAddress } from 'ethereumjs-util'
 import { toHex } from '../client/block'
 import { Transport, AxiosTransport } from '../types/transport';
@@ -33,7 +33,7 @@ export async function callContract(url: string, contract: string, signature: str
   if (!transport) transport = new AxiosTransport()
 
   if (txargs)
-    return sendTransaction(url, { ...txargs, to: contract, data: simpleEncode(signature, ...args) }, transport)
+    return sendTransaction(url, { ...txargs, to: contract, data: signature.indexOf('()') >= 0 ? '0x' + methodID(signature.substr(0, signature.length - 2), []).toString('hex') : simpleEncode(signature, ...args) }, transport)
 
   return simpleDecode(signature, toBuffer(await transport.handle(url, {
     jsonrpc: '2.0',

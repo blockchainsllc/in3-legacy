@@ -5,6 +5,15 @@ import { Transport } from '../types/transport';
 
 const bin = require('../types/registry.json')
 
+export function deployContract(name: string, pk: string, url = 'http://localhost:8545', transport?: Transport) {
+  return tx.deployContract(url, '0x' + bin.contracts[Object.keys(bin.contracts).find(_ => _.indexOf(name) >= 0)].bin, {
+    privateKey: pk,
+    gas: 3000000,
+    confirm: true
+  }, transport).then(_ => toChecksumAddress(_.contractAddress) as string)
+
+}
+
 export function deployChainRegistry(pk: string, url = 'http://localhost:8545', transport?: Transport) {
   return tx.deployContract(url, '0x' + bin.contracts['contracts/ChainRegistry.sol:ChainRegistry'].bin, {
     privateKey: pk,
