@@ -52,6 +52,7 @@ describe('ETH Standard JSON-RPC', () => {
   })
 
 
+
   it('eth_getTransactionByHash', async () => {
     const test = new TestTransport(3) // create a network of 3 nodes
     const client = await test.createClient({ proof: true, requestCount: 1 })
@@ -106,6 +107,65 @@ describe('ETH Standard JSON-RPC', () => {
     }
     assert.isTrue(failed, 'The manipulated transaction must fail!')
   })
+
+
+  it('eth_getTransactionReceipt', async () => {
+    const test = new TestTransport(3) // create a network of 3 nodes
+    const client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create 2 accounts
+    const pk1 = await test.createAccount('0x01')
+    const pk2 = await test.createAccount('0x02')
+
+    // send 1000 wei from a to b
+    const receipt = await tx.sendTransaction(test.url, {
+      privateKey: pk1,
+      gas: 22000,
+      to: tx.getAddress(pk2),
+      data: '',
+      value: 1000,
+      confirm: true
+    })
+
+    const res = await client.sendRPC('eth_getTransactionReceipt', [receipt.transactionHash], null, { keepIn3: true })
+    const result = res.result as any
+    assert.exists(res.in3)
+    assert.exists(res.in3.proof)
+    const proof = res.in3.proof as any
+    assert.equal(proof.type, 'receiptProof')
+    assert.exists(proof.block)
+
+
+    const b = await client.sendRPC('eth_getBlockByNumber', [result.blockNumber, true], null, { keepIn3: true })
+    logger.info('found Block:', b.result)
+    const block = new Block(b.result)
+
+    assert.equal('0x' + block.hash().toString('hex').toLowerCase(), (res.result as any).blockHash, 'the hash of the blockheader in the proof must be the same as the blockHash in the Transactiondata')
+
+    // check blocknumber
+    assert.equal(parseInt('0x' + block.number.toString('hex')), parseInt(result.blockNumber), 'we must use the same blocknumber as in the transactiondata')
+
+    logger.info('result', res)
+
+
+    let failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getTransactionReceipt' }, (req, re: RPCResponse) => {
+        // we change a property
+        (re.result as any).cumulativeGasUsed += '00'
+        return re
+      })
+      await client.sendRPC('eth_getTransactionReceipt', [receipt.transactionHash])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated transaction must fail!')
+  })
+
+
+
 
   it('eth_getBlockByNumber', async () => {
     const test = new TestTransport(1) // create a network of 3 nodes

@@ -100,8 +100,9 @@ export async function createTransactionProof(block: BlockData, txHash: string, s
 /** creates the merkle-proof for a transation */
 export async function createTransactionReceiptProof(block: BlockData, receipts: any[], txHash: string, signatures: Signature[]): Promise<Proof> {
   // we always need the txIndex, since this is used as path inside the merkle-tree
-  const txIndex = block.transactions.findIndex(_ => _.hash === txHash)
-  if (txIndex < 0) throw new Error('tx not found')
+  const txIndex = block.transactions.indexOf(txHash)
+  if (txIndex < 0)
+    throw new Error('tx not found')
 
   // create trie
   const trie = new Trie()

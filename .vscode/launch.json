@@ -16,7 +16,7 @@
         "999999",
         "--colors",
         "--grep",
-        "eth_getTransactionByHash",
+        "eth_getTransactionReceipt",
         "${workspaceFolder}/js/test/*/*.js"
       ],
       "outFiles": [
