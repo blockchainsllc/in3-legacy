@@ -17,7 +17,7 @@ export async function handle(request: RPCRequest[]): Promise<RPCResponse[]> {
         id: r.id,
         result: result as any,
         jsonrpc: r.jsonrpc,
-        in3
+        in3: { ...in3, proof: result.proof }
       }) as RPCResponse)
 
     return Promise.all([

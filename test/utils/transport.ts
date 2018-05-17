@@ -99,7 +99,11 @@ export class TestTransport implements Transport {
         result: this.nodeList.nodes,
         jsonrpc: r.jsonrpc,
         in3: {
-          lastNodeList: this.nodeList.lastBlockNumber
+          lastNodeList: this.nodeList.lastBlockNumber,
+          proof: {
+            type: 'nodeListProof'
+
+          }
         }
       } as RPCResponse
     else

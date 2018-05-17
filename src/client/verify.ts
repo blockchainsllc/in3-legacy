@@ -7,7 +7,7 @@ import Block, { toHex, createTx, BlockData } from './block'
 import { toBuffer } from './block';
 
 export interface Proof {
-  type: 'transactionProof' | 'blockProof' | 'accountProof',
+  type: 'transactionProof' | 'blockProof' | 'accountProof' | 'nodeListProof',
   block?: string,
   merkelProof?: string[],
   transactions?: any[]
@@ -223,6 +223,10 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
   }
   try {
     switch (proof.type) {
+      case 'nodeListProof':
+        // TODO implement proof for nodelist
+        //        await verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
+        break
       case 'transactionProof':
         await verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
         break

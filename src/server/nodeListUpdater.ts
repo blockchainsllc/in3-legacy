@@ -12,7 +12,9 @@ export async function checkNodeList(handler: RPCHandler, nodeList: NodeList) {
 export async function getNodeListProof(handler: RPCHandler, nodeList: NodeList) {
   await checkNodeList(handler, nodeList)
   nodeList.nodes = await updateNodeList(handler)
-  return nodeList
+  return {
+    type: 'nodeListProof'
+  }
 }
 
 

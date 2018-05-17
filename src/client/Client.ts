@@ -300,9 +300,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     })
 
     // send the request to the server with a timeout
-    const res = await transport.handle(node.url, request, conf.timeout)
-    // always transform the results to a array of results
-    const responses = (Array.isArray(res) ? res : [res]) as RPCResponse[]
+    const responses = await transport.handle(node.url, request, conf.timeout).then(_ => Array.isArray(_) ? _ : [_])
 
     // update stats
     stats.responseCount = (stats.responseCount || 0) + 1
@@ -316,7 +314,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     await Promise.all(responses.map((response, i) => verifyProof(
       request[i],
       response,
-      true,//!request[i].in3 || (request[i].in3.verification || 'never') === 'never',
+      !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
       true)))
 
     return responses

@@ -30,25 +30,16 @@
     "@types/winston": "^2.3.8",
     "chai": "^4.1.2",
     "dtsgenerator": "^0.9.9",
-    "ethereumjs-util": "^5.2.0",
     "mocha": "^5.1.1",
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "ajv": "^6.2.1",
     "axios": "^0.18.0",
-    "chalk": "^2.3.2",
-    "ethereum-common": "^0.2.1",
     "ethereumjs-abi": "^0.6.5",
-    "ethereumjs-block": "^1.7.1",
-    "ethereumjs-devp2p": "^2.5.0",
     "ethereumjs-tx": "^1.3.4",
     "koa": "^2.5.0",
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.4.0",
-    "merkle-patricia-tree": "^2.3.1",
-    "rlp": "^2.0.0",
-    "safe-buffer": "^5.1.1",
-    "winston": "^2.4.1"
+    "merkle-patricia-tree": "^2.3.1"
   }
 }

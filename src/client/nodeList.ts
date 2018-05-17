@@ -4,6 +4,7 @@ export default class NodeList {
 
   lastBlockNumber: number
   nodes: IN3NodeConfig[]
+  proof: any
 
   update(nodes: IN3NodeConfig[], lastBlock: number) {
     this.nodes = nodes
