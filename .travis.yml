@@ -9,7 +9,7 @@ node_js:
 
 before_install:
   - docker pull slockit/parity-in3:latest
-  - docker run -dti --network="host" -p 8180:8180 -p 8545:8545 -p 30303:30303 -p 8546:8546 slockit/parity-in3:latest --chain dev
+  - docker run -dti --network="host" -p 8180:8180 -p 8545:8545 -p 8546:8546 slockit/parity-in3:latest --jsonrpc-apis all --logging=3 --jsonrpc-interface=all --ws-interface=all ---chain dev --gas-cap=8000000 --gasprice 0  --reseal-min-period 0   --gas-floor-target 8700000  --tracing on
   - while ! echo exit | nc localhost 8546; do sleep 1; done
   
 install:
