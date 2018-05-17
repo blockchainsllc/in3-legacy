@@ -110,11 +110,11 @@ export async function sendTransaction(url: string, txargs: {
     params: [toHex(tx.serialize())]
   }).then((_: RPCResponse) => _.error ? Promise.reject(new Error('Error sending the tx ' + JSON.stringify(txargs) + ':' + JSON.stringify(_.error))) as any : _.result + '')
 
-  return txargs.confirm ? waitForReceipt(url, txHash, 100, txargs.gas, transport) : txHash
+  return txargs.confirm ? waitForReceipt(url, txHash, 4, txargs.gas, transport) : txHash
 }
 
 
-export async function waitForReceipt(url: string, txHash: string, timeout = 100, sentGas = 0, transport?: Transport) {
+export async function waitForReceipt(url: string, txHash: string, timeout = 4, sentGas = 0, transport?: Transport) {
   if (!transport) transport = new AxiosTransport()
 
   let steps = 200
