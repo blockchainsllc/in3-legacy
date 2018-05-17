@@ -71,7 +71,8 @@ export default class EthHandler {
 
   async collectSignatures(addresses: string[], blockNumber: number, hash?: string): Promise<Signature[]> {
     if (!addresses || addresses.length === 0)
-      return this.handleSign({ params: [blockNumber, hash] } as any).then(_ => [_.result] as Signature[]).catch(_ => [])
+      return []
+    //      return this.handleSign({ params: [blockNumber, hash] } as any).then(_ => [_.result] as Signature[]).catch(_ => [])
     const nodes = await this.getNodeList(false)
     return Promise.all(addresses.map(address => {
       const config = nodes.getAddress(address)
@@ -105,7 +106,7 @@ export default class EthHandler {
   async  handleSign(request: RPCRequest): Promise<RPCResponse> {
     const [blockNumber, blockResult] = await this.getAllFromServer([
       { method: 'eth_blockNumber', params: [] },
-      { method: 'eth_getBlockByNumber', params: [parseInt(request.params[0]), false] },
+      { method: 'eth_getBlockByNumber', params: [request.params[0], false] },
     ])
     if (blockNumber.error || !blockNumber.result) throw new Error('no current blocknumber detectable ' + blockNumber.error)
     if (blockResult.error || !blockResult.result) throw new Error('requested block could not be found ' + blockResult.error)

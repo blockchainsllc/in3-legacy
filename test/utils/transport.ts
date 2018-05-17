@@ -126,6 +126,7 @@ export class TestTransport implements Transport {
   async createClient(conf?: Partial<IN3Config>): Promise<Client> {
     const client = new Client({
       chainId: '0x01',
+      timeout: 9999999,
       servers: {
         '0x01': {
           contract: 'dummy',

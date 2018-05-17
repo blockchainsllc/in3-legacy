@@ -4,14 +4,14 @@ import { toBuffer, toChecksumAddress } from 'ethereumjs-util'
 import { toHex } from './block'
 
 
+
 export async function callContract(client: Client, contract: string, chainId: string, signature: string, args: any[]) {
-  return simpleDecode(signature, toBuffer(await client.call({
-    method: 'eth_call', params: [{
-      to: contract,
-      data: '0x' + simpleEncode(signature, ...args).toString('hex')
-    },
-      'latest']
-  } as any, { chainId })))
+  return simpleDecode(signature, await client.sendRPC('eth_call', [{
+    to: contract,
+    data: '0x' + simpleEncode(signature, ...args).toString('hex')
+  },
+    'latest'], chainId)
+    .then(_ => _.error ? Promise.reject(new Error('Error handling call to ' + contract + ' :' + JSON.stringify(_.error))) as any : toBuffer(_.result + '')))
 }
 
 export async function getChainData(client: Client, chainId: string) {

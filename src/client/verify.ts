@@ -215,18 +215,31 @@ export async function verifyAccountProof(request: RPCRequest, value: string, pro
 
 
 /** general verification-function which handles it according to its given type. */
-export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true): Promise<boolean> {
+export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true): Promise<boolean> {
   const proof = response && response.in3 && response.in3.proof as any as Proof
-  if (!proof) return allowWithoutProof
-  switch (proof.type) {
-    case 'transactionProof':
-      return verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any).then(_ => true, _ => false)
-    case 'blockProof':
-      return verifyBlockProof(response.result as any, proof, request.in3 && request.in3.signatures).then(_ => true, _ => false)
-    case 'accountProof':
-      return verifyAccountProof(request, response.result as string, proof, request.in3 && request.in3.signatures).then(_ => true, _ => false)
-    default:
-      return false
+  if (!proof) {
+    if (throwException && !allowWithoutProof) throw new Error('the response does not contain any proof!')
+    return allowWithoutProof
+  }
+  try {
+    switch (proof.type) {
+      case 'transactionProof':
+        await verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
+        break
+      case 'blockProof':
+        await verifyBlockProof(response.result as any, proof, request.in3 && request.in3.signatures)
+        break
+      case 'accountProof':
+        await verifyAccountProof(request, response.result as string, proof, request.in3 && request.in3.signatures)
+        break
+      default:
+        throw new Error('Unsupported proof-type : ' + proof.type)
+    }
+    return true
+  }
+  catch (ex) {
+    if (throwException) throw ex
+    return false
   }
 }
 
