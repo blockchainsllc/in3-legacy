@@ -114,7 +114,7 @@ export function toBuffer(val, len = -1) {
   if (typeof val == 'string')
     val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toBuffer()
   if (typeof val == 'number')
-    val = Buffer.from(val.toString(16), 'hex')
+    val = Buffer.from(fixLength(val.toString(16)), 'hex')
 
   if (len == 0 && val.toString('hex') === '00')
     return Buffer.allocUnsafe(0)
@@ -151,3 +151,26 @@ export function createTx(transaction) {
   return tx
 }
 
+const fixLength = (hex: string) => hex.length % 2 ? '0' + hex : hex
+
+export function serializeReceipt(txReceipt: any) {
+
+  return rlp.encode([
+    toBuffer(txReceipt.status || txReceipt.root),
+    toBuffer(txReceipt.cumulativeGasUsed),
+    toBuffer(txReceipt.logsBloom),
+    txReceipt.logs.map(l => [l.address, l.topics.map(toBuffer), l.data].map(toBuffer))]
+  )
+  /*
+
+
+  var gas = toBuffer(txReceipt.cumulativeGasUsed)
+  var bloom = toBuffer(txReceipt.logsBloom)
+  var logs = txReceipt.logs.map(l => [l.address, l.topics.map(toBuffer), l.data].map(toBuffer))
+
+  if (txReceipt.status !== undefined && txReceipt.status != null)
+    return rlp.encode([toBuffer(txReceipt.status), gas, bloom, logs])
+  else
+    return rlp.encode([toBuffer(txReceipt.root), gas, bloom, logs])
+    */
+}

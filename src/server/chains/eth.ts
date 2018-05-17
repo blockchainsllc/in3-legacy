@@ -44,6 +44,8 @@ export default class EthHandler {
         return this.handleBlock(request)
       if (request.method === 'eth_getTransactionByHash')
         return this.handeGetTransaction(request)
+      if (request.method === 'eth_getTransactionReceipt')
+        return this.handeGetTransactionReceipt(request)
       if (request.method === 'eth_call' && this.config.client === 'parity_proofed')
         return this.handleCall(request)
       if (request.method === 'eth_getCode' || request.method === 'eth_getBalance' || request.method === 'eth_getTransactionCount' || request.method === 'eth_getStorageAt')
@@ -165,6 +167,35 @@ export default class EthHandler {
           proof: await verify.createTransactionProof(block, request.params[0] as string,
             await this.collectSignatures(request.in3.signatures, tx.blockNumber, block.hash)) as any
         }
+    }
+    return response
+  }
+
+
+  async  handeGetTransactionReceipt(request: RPCRequest): Promise<RPCResponse> {
+    // ask the server for the tx
+    const response = await this.getFromServer(request)
+    const tx = response && response.result as any
+    // if we have a blocknumber, it is mined and we can provide a proof over the blockhash
+    if (tx && tx.blockNumber) {
+      // get the block including all transactions from the server
+      const block = await this.getFromServer({ method: 'eth_getBlockByNumber', params: [toHex(tx.blockNumber), false] }).then(_ => _ && _.result as any)
+      if (block) {
+
+        const [signatures, receipts] = await Promise.all([
+          this.collectSignatures(request.in3.signatures, tx.blockNumber, block.hash),
+          this.getAllFromServer(block.transactions.map(_ => ({ method: 'eth_getTransactionReceipt', params: [_] }))).then(a => a.map(_ => _.result as any))
+        ])
+
+        // create the proof
+        response.in3 = {
+          proof: await verify.createTransactionReceiptProof(
+            block,
+            receipts,
+            request.params[0] as string,
+            signatures) as any
+        }
+      }
     }
     return response
   }

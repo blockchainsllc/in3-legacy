@@ -3,11 +3,11 @@ import * as Transaction from 'ethereumjs-tx'
 import * as Trie from 'merkle-patricia-tree'
 import { RPCRequest, RPCResponse } from '../types/config';
 import { Signature } from '../types/config';
-import Block, { toHex, createTx, BlockData } from './block'
-import { toBuffer } from './block';
+import Block, { toHex, createTx, BlockData, serializeReceipt } from './block'
+import { StringifyOptions } from 'querystring';
 
 export interface Proof {
-  type: 'transactionProof' | 'blockProof' | 'accountProof' | 'nodeListProof',
+  type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'nodeListProof',
   block?: string,
   merkelProof?: string[],
   transactions?: any[]
@@ -97,6 +97,42 @@ export async function createTransactionProof(block: BlockData, txHash: string, s
     }))
 }
 
+/** creates the merkle-proof for a transation */
+export async function createTransactionReceiptProof(block: BlockData, receipts: any[], txHash: string, signatures: Signature[]): Promise<Proof> {
+  // we always need the txIndex, since this is used as path inside the merkle-tree
+  const txIndex = block.transactions.findIndex(_ => _.hash === txHash)
+  if (txIndex < 0) throw new Error('tx not found')
+
+  // create trie
+  const trie = new Trie()
+  // fill in all transactions
+  await Promise.all(receipts.map(tx => new Promise((resolve, reject) =>
+    trie.put(
+      util.rlp.encode(parseInt(tx.transactionIndex)), // path as txIndex
+      serializeReceipt(tx),  // raw transactions
+      error => error ? reject(error) : resolve(true)
+    )
+  )))
+
+  // check roothash
+  if (block.receiptsRoot !== '0x' + trie.root.toString('hex'))
+    throw new Error('The receiptHash is wrong! : ' + block.receiptsRoot + '!==0x' + trie.root.toString('hex'))
+
+  // create prove
+  return new Promise<Proof>((resolve, reject) =>
+    Trie.prove(trie, util.rlp.encode(txIndex), (err, prove) => {
+      if (err) return reject(err)
+      resolve({
+        type: 'receiptProof',
+        block: blockToHex(block),
+        merkelProof: prove.map(_ => _.toString('hex')),
+        txIndex, signatures
+      })
+    }))
+}
+
+
+
 /** verifies a TransactionProof */
 export async function verifyTransactionProof(txHash: string, proof: Proof, expectedSigners: string[], txData: any) {
 
@@ -123,6 +159,38 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
         // the value holds the Buffer of the transaction to proof
         // we can now simply hash this and compare it to the given txHas
         if (txHash === '0x' + util.sha3(value).toString('hex'))
+          resolve(value)
+        else
+          reject(new Error('The TransactionHash could not be verified, since the merkel-proof resolved to a different hash'))
+      })
+  })
+
+
+}
+
+
+/** verifies a TransactionProof */
+export async function verifyTransactionReceiptProof(txHash: string, proof: Proof, expectedSigners: string[], receipt: any) {
+
+  if (!receipt) throw new Error('No TransactionData!')
+
+  // decode the blockheader
+  const block = blockFromHex(proof.block)
+
+  // verify the blockhash and the signatures
+  verifyBlock(block, proof.signatures, expectedSigners, receipt.blockHash)
+
+  // since the blockhash is verified, we have the correct transaction root
+  return new Promise((resolve, reject) => {
+    Trie.verifyProof(
+      block.receiptTrie, // expected merkle root
+      util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
+      proof.merkelProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
+      (err, value) => { // callback
+        if (err) return reject(err)
+        // the value holds the Buffer of the transaction to proof
+        // we can now simply hash this and compare it to the given txHas
+        if (value.toString('hex') === serializeReceipt(receipt).toString('hex'))
           resolve(value)
         else
           reject(new Error('The TransactionHash could not be verified, since the merkel-proof resolved to a different hash'))
@@ -229,6 +297,9 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
         break
       case 'transactionProof':
         await verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
+        break
+      case 'receiptProof':
+        await verifyTransactionReceiptProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
         break
       case 'blockProof':
         await verifyBlockProof(response.result as any, proof, request.in3 && request.in3.signatures)
