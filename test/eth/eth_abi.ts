@@ -501,7 +501,120 @@ describe('ETH Standard JSON-RPC', () => {
     }
     assert.isTrue(failed, 'The manipulated nonce must fail!')
 
+    test = new TestTransport(1) // create a network of 3 nodes
+    client = await test.createClient({ proof: true, requestCount: 1 })
 
+    failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getStorageAt' }, (req, re: RPCResponse) => {
+        // we change the returned balance
+        re.result = '0x09';
+        (re.in3.proof as any).account.storageProof[0].value = re.result
+        return re
+      })
+      await client.sendRPC('eth_getStorageAt', [adr, '0x00', 'latest'])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated nonce must fail!')
+
+
+  })
+  // eth_getBlockTransactionCountByNumber
+
+  it('eth_getBlockTransactionCountByNumber', async () => {
+    const test = new TestTransport(1) // create a network of 3 nodes
+    const client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create 2 accounts
+    const pk1 = await test.createAccount('0x01')
+
+    // send 1000 wei from a to b
+    const receipt = await tx.sendTransaction(test.url, {
+      privateKey: pk1,
+      gas: 22000,
+      to: pk1.substr(0, 42), // any address, we just need a simple transaction in the last block
+      data: '',
+      value: 1000,
+      confirm: true
+    })
+
+    // get the last Block
+    const b1 = await client.sendRPC('eth_getBlockTransactionCountByNumber', ['latest'], null, { keepIn3: true })
+
+    const result1 = b1.result as any as BlockData
+    assert.exists(b1.in3)
+    assert.exists(b1.in3.proof)
+    const proof1 = b1.in3.proof as any
+    assert.equal(proof1.type, 'blockProof')
+    assert.exists(proof1.block) // no block needed
+    assert.exists(proof1.transactions) // transactions are needed to calc the transactionRoot
+    assert.equal(b1.result, '0x1')
+
+    let failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getBlockTransactionCountByNumber' }, (req, re: RPCResponse) => {
+        // we change a property
+        re.result = '0x04'
+        return re
+      })
+      await client.sendRPC('eth_getBlockTransactionCountByNumber', ['latest'])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated block must fail!')
+  })
+
+
+  it('eth_getBlockTransactionCountByHash', async () => {
+    const test = new TestTransport(1) // create a network of 3 nodes
+    const client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create 2 accounts
+    const pk1 = await test.createAccount('0x01')
+
+    // send 1000 wei from a to b
+    const receipt = await tx.sendTransaction(test.url, {
+      privateKey: pk1,
+      gas: 22000,
+      to: pk1.substr(0, 42), // any address, we just need a simple transaction in the last block
+      data: '',
+      value: 1000,
+      confirm: true
+    })
+
+    const hash = await client.sendRPC('eth_getBlockByNumber', ['latest'], null, { keepIn3: true }).then(_ => (_.result as any).hash)
+
+    // get the last Block
+    const b1 = await client.sendRPC('eth_getBlockTransactionCountByHash', [hash], null, { keepIn3: true })
+
+    const result1 = b1.result as any as BlockData
+    assert.exists(b1.in3)
+    assert.exists(b1.in3.proof)
+    const proof1 = b1.in3.proof as any
+    assert.equal(proof1.type, 'blockProof')
+    assert.exists(proof1.block) // no block needed
+    assert.exists(proof1.transactions) // transactions are needed to calc the transactionRoot
+    assert.equal(b1.result, '0x1')
+
+    let failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getBlockTransactionCountByHash' }, (req, re: RPCResponse) => {
+        // we change a property
+        re.result = '0x04'
+        return re
+      })
+      await client.sendRPC('eth_getBlockTransactionCountByHash', [hash])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated block must fail!')
   })
 
 

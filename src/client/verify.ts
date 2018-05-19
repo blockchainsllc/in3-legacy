@@ -3,8 +3,9 @@ import * as Transaction from 'ethereumjs-tx'
 import * as Trie from 'merkle-patricia-tree'
 import { RPCRequest, RPCResponse } from '../types/config';
 import { Signature } from '../types/config';
-import Block, { toHex, createTx, BlockData, serializeReceipt } from './block'
+import Block, { toHex, createTx, BlockData, serializeReceipt, toBuffer } from './block'
 import { StringifyOptions } from 'querystring';
+import * as request from 'request';
 
 export interface Proof {
   type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'nodeListProof',
@@ -20,7 +21,7 @@ export interface Proof {
     storageHash: string
     storageProof: {
       key: string
-      proof: string
+      proof: string[]
       value: string
     }[]
   },
@@ -204,16 +205,22 @@ export async function verifyTransactionReceiptProof(txHash: string, proof: Proof
 
 
 /** verifies a TransactionProof */
-export async function verifyBlockProof(blockData: BlockData, proof: Proof, expectedSigners: string[]) {
-  if (!blockData) throw new Error('No Blockdata!')
-
+export async function verifyBlockProof(request: RPCRequest, data: any, proof: Proof, expectedSigners: string[]) {
   // decode the blockheader
-  const block = new Block(proof.block || blockData)
+  const block = new Block(proof.block || data)
   if (proof.transactions) block.transactions = proof.transactions.map(createTx)
-  if (!blockData.hash) blockData.hash = toHex(block.hash(), 32)
+
+  let requiredHash = null
+
+  if (request.method.endsWith('ByHash'))
+    requiredHash = request.params[0]
+  else if (parseInt(request.params[0]) && parseInt(request.params[0]) !== parseInt('0x' + block.number.toString('hex')))
+    throw new Error('The Block does not contain the required blocknumber')
+  if (!requiredHash && request.method.indexOf('Count') < 0 && data)
+    requiredHash = toHex(data.hash)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, blockData.hash)
+  verifyBlock(block, proof.signatures, expectedSigners, requiredHash)
 
   // verify the transactions
   if (block.transactions) {
@@ -226,6 +233,9 @@ export async function verifyBlockProof(blockData: BlockData, proof: Proof, expec
     if (thash !== block.transactionsTrie.toString('hex'))
       throw new Error('The Transaction of do not hash to the given transactionHash!')
   }
+
+  if (request.method.indexOf('Count') > 0 && toHex(block.transactions.length) != toHex(data))
+    throw new Error('The number of transaction does not match')
 }
 
 
@@ -257,27 +267,47 @@ export async function verifyAccountProof(request: RPCRequest, value: string, pro
 
   // verify the blockhash and the signatures
   const block = new Block(proof.block)
+  // TODO if we expect a specific block in the request, we should also check if the block is the one requested
   verifyBlock(block, proof.signatures, expectedSigners, null)
 
-  // verify the proof
-  await new Promise((resolve, reject) => {
-    Trie.verifyProof(
-      block.stateRoot, // expected merkle root
-      util.keccak(proof.account.address), // path, which is the transsactionIndex
-      proof.account.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
-      (err, value) => { // callback
-        if (err) return reject(err)
+  await Promise.all([
+    // verify the account
+    new Promise((resolve, reject) => {
+      Trie.verifyProof(
+        block.stateRoot, // expected merkle root
+        util.keccak(proof.account.address), // path, which is the transsactionIndex
+        proof.account.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
+        (err, value) => { // callback
+          if (err) return reject(err)
 
-        const account = util.rlp.encode([proof.account.nonce, proof.account.balance, proof.account.storageHash, proof.account.codeHash].map(toVariableBuffer))
+          // encode the account
+          const account = util.rlp.encode([proof.account.nonce, proof.account.balance, proof.account.storageHash, proof.account.codeHash].map(toVariableBuffer))
 
-        if (value.toString('hex') === account.toString('hex'))
-          resolve(value)
-        else
-          reject(new Error('The Account could not be verified, since the merkel-proof resolved to a different hash'))
+          if (value.toString('hex') === account.toString('hex'))
+            resolve(value)
+          else
+            reject(new Error('The Account could not be verified, since the merkel-proof resolved to a different hash'))
 
-      })
-  })
+        })
+    }),
 
+    // and all storage proofs
+    ...proof.account.storageProof.map(s =>
+      new Promise((resolve, reject) =>
+        Trie.verifyProof(
+          toBuffer(proof.account.storageHash),   // the storageRoot of the account
+          util.keccak(toHex(s.key, 32)),  // the path, which is the hash of the key
+          s.proof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
+          (err, value) => { // callback
+            if (err) return reject(err)
+            if ('0x' + value.toString('hex') === toHex(s.value))
+              resolve(value)
+            else
+              reject(new Error('The storage value for ' + s.key + ' could not be verified, since the merkel-proof resolved to a different hash'))
+
+          })
+      ))
+  ])
 
 }
 
@@ -303,7 +333,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
         await verifyTransactionReceiptProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
         break
       case 'blockProof':
-        await verifyBlockProof(response.result as any, proof, request.in3 && request.in3.signatures)
+        await verifyBlockProof(request, response.result as any, proof, request.in3 && request.in3.signatures)
         break
       case 'accountProof':
         await verifyAccountProof(request, response.result as string, proof, request.in3 && request.in3.signatures)

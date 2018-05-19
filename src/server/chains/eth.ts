@@ -40,7 +40,7 @@ export default class EthHandler {
 
     // handle special jspn-rpc
     if (proof === 'proof' || proof === 'proofWithSignature') {
-      if (request.method === 'eth_getBlockByNumber' || request.method === 'eth_getBlockByHash')
+      if (request.method === 'eth_getBlockByNumber' || request.method === 'eth_getBlockByHash' || request.method === 'eth_getBlockTransactionCountByHash' || request.method === 'eth_getBlockTransactionCountByNumber')
         return this.handleBlock(request)
       if (request.method === 'eth_getTransactionByHash')
         return this.handeGetTransaction(request)
@@ -127,7 +127,10 @@ export default class EthHandler {
 
   async  handleBlock(request: RPCRequest): Promise<RPCResponse> {
     // ask the server for the block
-    const response = await this.getFromServer({ ...request, params: [request.params[0], true] })
+    const response = await this.getFromServer(
+      request.method.indexOf('Count') > 0
+        ? { method: 'eth_getBlockBy' + request.method.substr(30), params: [request.params[0], true] }
+        : { ...request, params: [request.params[0], true] })
 
     const blockData = response && response.result as any as BlockData
 
@@ -147,6 +150,11 @@ export default class EthHandler {
         // since we fetched the block with all transactions, but the request said, we only want hashes, we put the full ransactions in the proof and only the hashes in the result.
         (response.in3.proof as any).transactions = transactions
         blockData.transactions = transactions.map(_ => _.hash)
+
+        if (request.method.indexOf('Count') > 0) {
+          (response.in3.proof as any).block = verify.blockToHex(blockData)
+          response.result = '0x' + blockData.transactions.length.toString(16)
+        }
       }
     }
 
