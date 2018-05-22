@@ -31,16 +31,17 @@ export async function callContract(url: string, contract: string, signature: str
   confirm?: boolean
 }, transport?: Transport) {
   if (!transport) transport = new AxiosTransport()
+  const data = signature.indexOf('()') >= 0 ? '0x' + methodID(signature.substr(0, signature.length - 2), []).toString('hex') : simpleEncode(signature, ...args)
 
   if (txargs)
-    return sendTransaction(url, { ...txargs, to: contract, data: signature.indexOf('()') >= 0 ? '0x' + methodID(signature.substr(0, signature.length - 2), []).toString('hex') : simpleEncode(signature, ...args) }, transport)
+    return sendTransaction(url, { ...txargs, to: contract, data }, transport)
 
   return simpleDecode(signature, toBuffer(await transport.handle(url, {
     jsonrpc: '2.0',
     id: idCount++,
     method: 'eth_call', params: [{
       to: contract,
-      data: simpleEncode(signature, ...args)
+      data
     },
       'latest']
   }).then((_: RPCResponse) => _.result + '')))

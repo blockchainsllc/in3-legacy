@@ -3,30 +3,35 @@ import * as Transaction from 'ethereumjs-tx'
 import * as Trie from 'merkle-patricia-tree'
 import { RPCRequest, RPCResponse } from '../types/config';
 import { Signature } from '../types/config';
-import Block, { toHex, createTx, BlockData, serializeReceipt, toBuffer } from './block'
+import Block, { toHex, createTx, BlockData, serializeReceipt, serializeAccount, toBuffer, promisify } from './block'
 import { StringifyOptions } from 'querystring';
-import * as request from 'request';
+import * as request from 'request'
+import { executeCall } from './call'
 
 export interface Proof {
-  type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'nodeListProof',
+  type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'nodeListProof' | 'callProof',
   block?: string,
   merkelProof?: string[],
   transactions?: any[]
-  account?: {
-    accountProof: string[]
-    address: string,
-    balance: string
-    codeHash: string
-    nonce: string
-    storageHash: string
-    storageProof: {
-      key: string
-      proof: string[]
-      value: string
-    }[]
-  },
+  account?: AccountProof,
+  accounts?: { [adr: string]: AccountProof },
   txIndex?,
   signatures: Signature[]
+}
+
+export interface AccountProof {
+  accountProof: string[]
+  address: string,
+  balance: string
+  codeHash: string
+  code?: string
+  nonce: string
+  storageHash: string
+  storageProof: {
+    key: string
+    proof: string[]
+    value: string
+  }[]
 }
 
 
@@ -146,11 +151,12 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
   // verify the blockhash and the signatures
   verifyBlock(block, proof.signatures, expectedSigners, txData.blockHash)
 
+  // TODO the from-address is not directly part of the hash, so manipulating this property would not be detected! 
+  // we would have to take the from-address from the signature
   const txHashofData = '0x' + createTx(txData).hash().toString('hex')
   if (txHashofData !== txHash)
     throw new Error('The transactiondata were manipulated')
 
-  // since the blockhash is verified, we have the correct transaction root
   return new Promise((resolve, reject) => {
     Trie.verifyProof(
       block.transactionsTrie, // expected merkle root
@@ -270,18 +276,58 @@ export async function verifyAccountProof(request: RPCRequest, value: string, pro
   // TODO if we expect a specific block in the request, we should also check if the block is the one requested
   verifyBlock(block, proof.signatures, expectedSigners, null)
 
-  await Promise.all([
+  // verify the merkle tree of the account proof
+  await verifyAccount(proof.account, block)
+}
+
+
+/** verifies a TransactionProof */
+export async function verifyCallProof(request: RPCRequest, value: string, proof: Proof, expectedSigners: string[]) {
+
+  // verify the blockhash and the signatures
+  const block = new Block(proof.block)
+  // TODO if we expect a specific block in the request, we should also check if the block is the one requested
+  verifyBlock(block, proof.signatures, expectedSigners, null)
+
+  if (!proof.accounts) throw new Error('No Accounts to verify')
+
+  // verify all accounts
+  await Promise.all(Object.keys(proof.accounts).map(adr => verifyAccount(proof.accounts[adr], block)))
+
+  const result = await executeCall(request.params[0], proof.accounts)
+
+  if (result !== value)
+    throw new Error('The result does not match the execution !')
+
+}
+
+
+
+
+
+
+
+
+
+
+function verifyAccount(accountProof: AccountProof, block: Block) {
+
+  // if we received the code, make sure the codeHash is correct!
+  if (accountProof.code && util.keccak(accountProof.code).toString('hex') !== accountProof.codeHash.substr(2))
+    throw new Error('The code does not math the correct codehash! ')
+
+  return Promise.all([
     // verify the account
     new Promise((resolve, reject) => {
       Trie.verifyProof(
         block.stateRoot, // expected merkle root
-        util.keccak(proof.account.address), // path, which is the transsactionIndex
-        proof.account.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
+        util.keccak(accountProof.address), // path, which is the transsactionIndex
+        accountProof.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
         (err, value) => { // callback
           if (err) return reject(err)
 
           // encode the account
-          const account = util.rlp.encode([proof.account.nonce, proof.account.balance, proof.account.storageHash, proof.account.codeHash].map(toVariableBuffer))
+          const account = serializeAccount(accountProof.nonce, accountProof.balance, accountProof.storageHash, accountProof.codeHash)
 
           if (value.toString('hex') === account.toString('hex'))
             resolve(value)
@@ -292,10 +338,10 @@ export async function verifyAccountProof(request: RPCRequest, value: string, pro
     }),
 
     // and all storage proofs
-    ...proof.account.storageProof.map(s =>
+    ...accountProof.storageProof.map(s =>
       new Promise((resolve, reject) =>
         Trie.verifyProof(
-          toBuffer(proof.account.storageHash),   // the storageRoot of the account
+          toBuffer(accountProof.storageHash),   // the storageRoot of the account
           util.keccak(toHex(s.key, 32)),  // the path, which is the hash of the key
           s.proof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
           (err, value) => { // callback
@@ -308,10 +354,7 @@ export async function verifyAccountProof(request: RPCRequest, value: string, pro
           })
       ))
   ])
-
 }
-
-
 
 /** general verification-function which handles it according to its given type. */
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true): Promise<boolean> {
@@ -338,6 +381,9 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
       case 'accountProof':
         await verifyAccountProof(request, response.result as string, proof, request.in3 && request.in3.signatures)
         break
+      case 'callProof':
+        await verifyCallProof(request, response.result as string, proof, request.in3 && request.in3.signatures)
+        break
       default:
         throw new Error('Unsupported proof-type : ' + proof.type)
     }
@@ -352,21 +398,6 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
 
 
 
-function promisify(self, fn, ...args: any[]): Promise<any> {
-  return new Promise((resolve, reject) => {
-    fn.apply(self, [...args, (res, err) => {
-      if (err)
-        reject(err)
-      else
-        resolve(res)
-    }])
-  })
+// converts a string into a Buffer, but treating 0x00 as empty Buffer
+const toVariableBuffer = (val: string) => (val == '0x' || val === '0x0' || val === '0x00') ? Buffer.alloc(0) : util.toBuffer(val) as Buffer
 
-
-}
-
-function toVariableBuffer(val: string) {
-  if (val == '0x' || val === '0x0' || val === '0x00')
-    return Buffer.alloc(0)
-  return util.toBuffer(val)
-}

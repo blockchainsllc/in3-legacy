@@ -133,8 +133,8 @@ export function toBuffer(val, len = -1) {
 export function createTx(transaction) {
   const txParams = {
     ...transaction,
-    nonce: toHex(transaction.nonce),
-    gasPrice: toHex(transaction.gasPrice),
+    nonce: toHex(transaction.nonce) || '0x00',
+    gasPrice: toHex(transaction.gasPrice) || '0x00',
     value: toHex(transaction.value || 0),
     gasLimit: toHex(transaction.gasLimit === undefined ? transaction.gas : transaction.gasLimit),
     data: toHex(transaction.gasLimit === undefined ? transaction.input : transaction.data),
@@ -146,16 +146,21 @@ export function createTx(transaction) {
   const tx = new Transaction(txParams)
   tx._from = fromAddress
   tx.getSenderAddress = function () { return fromAddress }
-  if (txParams.hash !== '0x' + ethUtil.sha3(tx.serialize()).toString('hex')) {
+  if (txParams.hash && txParams.hash !== '0x' + ethUtil.sha3(tx.serialize()).toString('hex')) {
     throw new Error('wrong txhash! : ' + (txParams.hash + '!== 0x' + ethUtil.sha3(tx.serialize()).toString('hex')) + '  full tx=' + tx.serialize().toString('hex'))
   }
   // override hash
   const txHash = ethUtil.toBuffer(txParams.hash)
-  tx.hash = function () { return txHash }
+  if (txParams.hash)
+    tx.hash = function () { return txHash }
   return tx
 }
 
-const fixLength = (hex: string) => hex.length % 2 ? '0' + hex : hex
+export function serializeAccount(nonce: string, balance: string, storageHash: string, codeHash: string): Buffer {
+  // encode the account
+  return ethUtil.rlp.encode([nonce || '0x00', balance || '0x00', storageHash || '0x' + ethUtil.KECCAK256_RLP_S, codeHash || '0x' + ethUtil.KECCAK256_NULL_S].map(toVariableBuffer))
+
+}
 
 export function serializeReceipt(txReceipt: any) {
 
@@ -177,4 +182,19 @@ export function serializeReceipt(txReceipt: any) {
   else
     return rlp.encode([toBuffer(txReceipt.root), gas, bloom, logs])
     */
+}
+
+// converts a string into a Buffer, but treating 0x00 as empty Buffer
+const fixLength = (hex: string) => hex.length % 2 ? '0' + hex : hex
+const toVariableBuffer = (val: string) => (val == '0x' || val === '0x0' || val === '0x00') ? Buffer.alloc(0) : ethUtil.toBuffer(val) as Buffer
+
+export function promisify(self, fn, ...args: any[]): Promise<any> {
+  return new Promise((resolve, reject) => {
+    fn.apply(self, [...args, (err, res) => {
+      if (err)
+        reject(err)
+      else
+        resolve(res)
+    }])
+  })
 }

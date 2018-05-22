@@ -14,6 +14,9 @@ import { toHex, BlockData } from '../../client/block';
 const NOT_SUPPORTED = {
   eth_sign: 'a in3-node can not sign Messages, because the no unlocked key is allowed!',
   eth_sendTransaction: 'a in3-node can not sign Transactions, because the no unlocked key is allowed!',
+  eth_submitWork: 'Incubed cannot be used for mining since there is no coinbase',
+  eth_submitHashrate: 'Incubed cannot be used for mining since there is no coinbase',
+
 }
 
 /**
@@ -46,7 +49,7 @@ export default class EthHandler {
         return this.handeGetTransaction(request)
       if (request.method === 'eth_getTransactionReceipt')
         return this.handeGetTransactionReceipt(request)
-      if (request.method === 'eth_call' && this.config.client === 'parity_proofed')
+      if (request.method === 'eth_call' /*&& this.config.client === 'parity_proofed'*/)
         return this.handleCall(request)
       if (request.method === 'eth_getCode' || request.method === 'eth_getBalance' || request.method === 'eth_getTransactionCount' || request.method === 'eth_getStorageAt')
         return this.handleAccount(request)
@@ -211,7 +214,7 @@ export default class EthHandler {
 
 
   async  handleCall(request: RPCRequest): Promise<RPCResponse> {
-    console.log('handle call', this.config)
+    //    console.log('handle call', this.config)
     // read the response,blockheader and trace from server
     const [response, blockResponse, trace] = await this.getAllFromServer([
       request,
@@ -241,7 +244,7 @@ export default class EthHandler {
       const accounts = accountProofs
         .filter(a => (a.result as any).codeHash !== '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470')
       const codes = await this.getAllFromServer(accounts.map(a => ({ method: 'eth_getCode', params: [toHex((a.result as any).address, 20), request.params[1] || 'latest'] })))
-      accounts.forEach((r, i) => (accounts[i].result as any).code = codes[i])
+      accounts.forEach((r, i) => (accounts[i].result as any).code = codes[i].result)
     }
 
     // bundle the answer

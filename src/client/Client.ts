@@ -122,6 +122,17 @@ export default class Client {
     return this.send({ jsonrpc: '2.0', method, params, id: idCount++ }, null, { chainId: chain || this.defConfig.chainId, ...config }) as Promise<RPCResponse>
   }
 
+  /**
+   * sends a simply RPC-Request
+   * @param method the method
+   * @param params the params
+   * @param chain a optional chainId (default: chainId from config)
+   * @param config optional config-params overridnig the client config
+   */
+  public async call(method: string, params: any, chain = '0x01', config?: Partial<IN3Config>) {
+    return this.sendRPC(method, params, chain, config).then(_ => _.error ? Promise.reject(_.error) : _.result as any)
+  }
+
 
 
   /**
@@ -241,19 +252,22 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   // do we have responses with proofes?
   const verifiedResponse = responses.find(_ => _.in3 && !!_.in3.proof)
 
+  // TODO, what if we get different verified responses (like somebody signed a different blockhash)
   // if we have different result and none if them has a proof, we may want to ask the authorities
   if (Object.keys(groups).length > 1 && !verifiedResponse) {
-    // there are more then one answers!
+    // there are more then one answer!
     // how are we going to handle the conflict?
     if (conf.servers[conf.chainId].nodeAuthorities && conf.servers[conf.chainId].nodeAuthorities.length) {
+      // if we have authroities set, we will choose from them
       const aconf = { ...conf, nodeList: conf.servers[conf.chainId].nodeAuthorities.map(a => conf.servers[conf.chainId].nodeList.find(_ => _.address === a)).filter(_ => _) }
       const anodes = getNodes(aconf, 1, transport)
-      if (anodes.length) {
+      if (anodes.length)
         // we simply ask the authrority node
-        const res = await handleRequest([request], anodes[0], aconf, transport)
-        return res[0]
-      }
+        return await handleRequest([request], anodes[0], aconf, transport).then(_ => _[0])
     }
+
+    // hmmm. what else can we do now?
+    // TODO maybe we can support a simple consenus and go with the majority.
     throw new Error('The nodes responded with ' + Object.keys(groups).length + ' different answers and there is no authroityNode to resolve the conflict! ')
   }
 
@@ -292,6 +306,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         if (conf.signatureCount)
           // if signatures are requested, we choose some random nodes and create a list of their addresses
           in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => _.address)
+
+        // ask the server to include the code
+        if (conf.includeCode)
+          in3.includeCode = true
       }
 
       // only if there is something to set, we will add the in3-key and merge it
@@ -314,6 +332,8 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     await Promise.all(responses.map((response, i) => verifyProof(
       request[i],
       response,
+      // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
+      // maybe we can still deliver a proof, but without data
       !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
       true)))
 

@@ -1,3 +1,4 @@
+import { error } from '../../../test/utils/memoryLogger';
 const codes = {
   '00': 'STOP 0 0 Halts execution',
   '01': 'ADD 2 1 Addition operation',
@@ -156,6 +157,7 @@ export function analyse(trace, storageAccount: string, result?: any): {
     const c = codes[code.substr(s.pc * 2, 2)]
     if (!c) throw new Error('ERROR Could not find ' + code.substr(s.pc * 2, 2))
     let [op, sdel, sadd, desc] = c.split(' ')
+    //    console.error('trace step ' + op + ' pc:' + s.pc + ' stack :' + JSON.stringify(stack))
 
     if (s.sub) {
       let ac = storageAccount

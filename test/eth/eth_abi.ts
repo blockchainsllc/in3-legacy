@@ -522,7 +522,7 @@ describe('ETH Standard JSON-RPC', () => {
 
 
   })
-  // eth_getBlockTransactionCountByNumber
+
 
   it('eth_getBlockTransactionCountByNumber', async () => {
     const test = new TestTransport(1) // create a network of 3 nodes
@@ -617,6 +617,86 @@ describe('ETH Standard JSON-RPC', () => {
     assert.isTrue(failed, 'The manipulated block must fail!')
   })
 
+
+
+
+
+
+
+  it('eth_call', async () => {
+    let test = new TestTransport(1) // create a network of 3 nodes
+    let client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create 2 accounts
+    const pk1 = await test.createAccount()
+
+
+    // check deployed code
+    const adr = await deployContract('TestContract', pk1)
+
+    // increase the count 
+    await tx.callContract('http://localhost:8545', adr, 'increase()', [], {
+      confirm: true,
+      privateKey: pk1,
+      gas: 3000000,
+      value: 0
+    })
+
+
+    const txArgs = {
+      from: getAddress(pk1),
+      to: adr,
+      data: '0x61bc221a'
+    }
+
+    const b = await client.sendRPC('eth_call', [txArgs], null, { keepIn3: true, includeCode: true })
+
+    const result = b.result as string
+    assert.exists(b.in3)
+    assert.exists(b.in3.proof)
+    const proof = b.in3.proof as any
+    assert.equal(proof.type, 'callProof')
+    assert.exists(proof.block)
+    assert.exists(proof.accounts)
+    assert.equal(toHex(result), '0x0000000000000000000000000000000000000000000000000000000000000001')
+
+
+    let failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_call' }, (req, re: RPCResponse) => {
+        // we change the returned balance
+        re.result = '0x09'
+        return re
+      })
+      await client.sendRPC('eth_call', [txArgs])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated nonce must fail!')
+
+    test = new TestTransport(1) // create a network of 3 nodes
+    client = await test.createClient({ proof: true, requestCount: 1 })
+
+    failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getStorageAt' }, (req, re: RPCResponse) => {
+        // we change the returned balance
+        re.result = '0x09';
+        (re.in3.proof as any).account.storageProof[0].value = re.result
+        return re
+      })
+      await client.sendRPC('eth_getStorageAt', [adr, '0x00', 'latest'])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated nonce must fail!')
+
+
+  })
 
 
 })
