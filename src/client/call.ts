@@ -19,11 +19,11 @@ export async function executeCall(args: {
 }, accounts: { [adr: string]: AccountProof }) {
 
   // create new state for a vm
-  const stateTrie = new Trie()
-  const vm = new VM({ state: stateTrie })
+  const state = new Trie()
+  const vm = new VM({ state })
 
   // set all storage values from the proof in the state
-  await prepareVM(stateTrie, accounts)
+  await prepareVM(state, accounts)
 
   // create a transaction-object
   const tx = b.createTx({ gas: '0x5b8d80', gasLimit: '0x5b8d80', from: '0x0000000000000000000000000000000000000000', ...args })
@@ -31,6 +31,22 @@ export async function executeCall(args: {
   // keep track of each opcode in order to make sure, all storage-values are provided!
   let missingDataError: Error = null
   vm.on('step', ev => {
+    // TODO als check the following opcodes:
+    // - BALANCE
+    // - EXTCODESIZE
+    // - EXTCODECOPY
+    // - BLOCKHASH
+    // - COINBASE ( since we are currently not using a real block!)
+    // - TIMESTAMP
+    // - NUMBER
+    // - DIFFICULTY
+    // - GASLIMIT
+    // and we need to check if the target contract exists (even though it would most likely fail if not)
+    // - CALL
+    // - CALLCODE
+    // - DELEGATECALL
+    // - STATIONCALL
+
     if (ev.opcode.name === 'SLOAD') {
       const contract = utils.toChecksumAddress(ev.address.toString('hex'))
       const key = '0x' + ev.stack[ev.stack.length - 1].toString(16)
@@ -56,15 +72,21 @@ export async function executeCall(args: {
 async function prepareVM(trie, accounts: { [adr: string]: AccountProof }) {
   for (const adr of Object.keys(accounts)) {
     const ac = accounts[adr]
+
+    // create an account-object
     const account = new Account()
     if (ac.balance) account.balance = ac.balance
     if (ac.nonce) account.nonce = ac.nonce
     if (ac.codeHash) account.codeHash = ac.codeHash
+
+    // if we have a code, we will set the code
     if (ac.code) await promisify(account, account.setCode, trie, b.toBuffer(ac.code))
 
+    // set all storage-values
     for (const s of ac.storageProof)
       await promisify(account, account.setStorage, trie, b.toBuffer(s.key, 32), rlp.encode(b.toBuffer(s.value, 32)))
 
+    // set the account data
     await promisify(trie, trie.put, b.toBuffer(adr, 20), account.serialize())
   }
 }
