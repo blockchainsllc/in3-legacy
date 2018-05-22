@@ -294,6 +294,7 @@ export async function verifyCallProof(request: RPCRequest, value: string, proof:
   // verify all accounts
   await Promise.all(Object.keys(proof.accounts).map(adr => verifyAccount(proof.accounts[adr], block)))
 
+  // now create a vm and run the transaction
   const result = await executeCall(request.params[0], proof.accounts)
 
   if (result !== value)
