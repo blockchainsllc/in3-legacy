@@ -9,7 +9,7 @@ import { RPCHandler } from '../rpc';
 import NodeList from '../../client/nodeList'
 import { checkNodeList, getNodeListProof } from '../nodeListUpdater'
 import { Transport, AxiosTransport } from '../../types/transport'
-import { toHex, BlockData } from '../../client/block';
+import { toHex, BlockData, LogData } from '../../client/block';
 
 const NOT_SUPPORTED = {
   eth_sign: 'a in3-node can not sign Messages, because the no unlocked key is allowed!',
@@ -47,6 +47,8 @@ export default class EthHandler {
         return this.handleBlock(request)
       if (request.method === 'eth_getTransactionByHash')
         return this.handeGetTransaction(request)
+      if (request.method === 'eth_getLogs')
+        return this.handleLogs(request)
       if (request.method === 'eth_getTransactionReceipt')
         return this.handeGetTransactionReceipt(request)
       if (request.method === 'eth_call' /*&& this.config.client === 'parity_proofed'*/)
@@ -74,7 +76,7 @@ export default class EthHandler {
       : Promise.resolve([])
   }
 
-  async collectSignatures(addresses: string[], blockNumber: number, hash?: string): Promise<Signature[]> {
+  async collectSignatures(addresses: string[], blocks: { blockNumber: number, hash?: string }[]): Promise<Signature[]> {
     if (!addresses || addresses.length === 0)
       return []
     //      return this.handleSign({ params: [blockNumber, hash] } as any).then(_ => [_.result] as Signature[]).catch(_ => [])
@@ -82,22 +84,25 @@ export default class EthHandler {
     return Promise.all(addresses.map(address => {
       const config = nodes.getAddress(address)
       if (config)
-        return this.transport.handle(config.url, { id: this.counter++, jsonrpc: '2.0', method: 'in3_sign', params: [blockNumber] })
-          .then((_: RPCResponse) => _.error ? Promise.reject(_.error) as any : _.result as Signature).catch(_ => '')
-    })).then(a => a.filter(_ => _))
+        return this.transport.handle(config.url, { id: this.counter++, jsonrpc: '2.0', method: 'in3_sign', params: [...blocks] })
+          .then((_: RPCResponse) => _.error ? Promise.reject(_.error) as any : _.result as Signature[]).catch(_ => '')
+
+    })).then(a => a.filter(_ => _).reduce((p, c) => [...p, ...c], []))
   }
 
-  sign(blockHash: string, blockNumber: number): Signature {
-    const msgHash = util.sha3('0x' + toHex(blockHash).substr(2).padStart(64, '0') + toHex(blockNumber).substr(2).padStart(64, '0'))
-    const sig = util.ecsign(msgHash, util.toBuffer(this.config.privateKey))
-    return {
-      blockHash,
-      block: blockNumber,
-      r: '0x' + sig.r.toString('hex'),
-      s: '0x' + sig.s.toString('hex'),
-      v: sig.v,
-      msgHash: '0x' + msgHash.toString('hex')
-    }
+  sign(blocks: { blockNumber: number, hash: string }[]): Signature[] {
+    return blocks.map(b => {
+      const msgHash = util.sha3('0x' + toHex(b.hash).substr(2).padStart(64, '0') + toHex(b.blockNumber).substr(2).padStart(64, '0'))
+      const sig = util.ecsign(msgHash, util.toBuffer(this.config.privateKey))
+      return {
+        blockHash: b.hash,
+        block: b.blockNumber,
+        r: '0x' + sig.r.toString('hex'),
+        s: '0x' + sig.s.toString('hex'),
+        v: sig.v,
+        msgHash: '0x' + msgHash.toString('hex')
+      }
+    })
   }
 
   getNodeList(includeProof: boolean): Promise<NodeList> {
@@ -109,22 +114,25 @@ export default class EthHandler {
 
 
   async  handleSign(request: RPCRequest): Promise<RPCResponse> {
-    const [blockNumber, blockResult] = await this.getAllFromServer([
+    const blocks = request.params as { blockNumber: number, hash: string }[]
+    const blockData = await this.getAllFromServer([
+      ...blocks.map(b => ({ method: 'eth_getBlockByNumber', params: [toHex(b.blockNumber), false] })),
       { method: 'eth_blockNumber', params: [] },
-      { method: 'eth_getBlockByNumber', params: [request.params[0], false] },
-    ])
-    if (blockNumber.error || !blockNumber.result) throw new Error('no current blocknumber detectable ' + blockNumber.error)
-    if (blockResult.error || !blockResult.result) throw new Error('requested block could not be found ' + blockResult.error)
-    const block = blockResult.result as any
-    const age = parseInt(blockNumber.result as any) - parseInt(block.number)
-    if (age <= (this.config.minBlockHeight || 6))
-      return {
-        id: request.id,
-        jsonrpc: request.jsonrpc,
-        result: this.sign(block.hash, parseInt(block.number)) as any
-      }
-    else
-      throw new Error(' cannot sign for block ' + block.number + ', because the blockHeight is only ' + age + ' but must be at least ' + (this.config.minBlockHeight || 6))
+    ]).then(a => a.map(_ => _.result as any as BlockData))
+    const blockNumber = blockData.pop() as any as string
+
+    if (!blockNumber) throw new Error('no current blocknumber detectable ')
+    if (blockData.find(_ => !_)) throw new Error('requested block could not be found ')
+
+    const tooYoungBlock = blockData.find(block => parseInt(blockNumber) - parseInt(block.number as string) <= (this.config.minBlockHeight || 6))
+    if (tooYoungBlock)
+      throw new Error(' cannot sign for block ' + tooYoungBlock.number + ', because the blockHeight must be at least ' + (this.config.minBlockHeight || 6))
+
+    return {
+      id: request.id,
+      jsonrpc: request.jsonrpc,
+      result: this.sign(blockData.map(b => ({ blockNumber: parseInt(b.number as string), hash: b.hash })))
+    }
   }
 
 
@@ -144,7 +152,7 @@ export default class EthHandler {
       response.in3 = {
         proof: {
           type: 'blockProof',
-          signatures: await this.collectSignatures(request.in3.signatures, parseInt(blockData.number as any, 10), blockData.hash) as any
+          signatures: await this.collectSignatures(request.in3.signatures, [{ blockNumber: parseInt(blockData.number as any, 10), hash: blockData.hash }]) as any
         }
       }
 
@@ -176,7 +184,7 @@ export default class EthHandler {
         // create the proof
         response.in3 = {
           proof: await verify.createTransactionProof(block, request.params[0] as string,
-            await this.collectSignatures(request.in3.signatures, tx.blockNumber, block.hash)) as any
+            await this.collectSignatures(request.in3.signatures, [{ blockNumber: tx.blockNumber, hash: block.hash }])) as any
         }
     }
     return response
@@ -194,7 +202,7 @@ export default class EthHandler {
       if (block) {
 
         const [signatures, receipts] = await Promise.all([
-          this.collectSignatures(request.in3.signatures, tx.blockNumber, block.hash),
+          this.collectSignatures(request.in3.signatures, [{ blockNumber: tx.blockNumber, hash: block.hash }]),
           this.getAllFromServer(block.transactions.map(_ => ({ method: 'eth_getTransactionReceipt', params: [_] }))).then(a => a.map(_ => _.result as any))
         ])
 
@@ -205,6 +213,69 @@ export default class EthHandler {
             receipts,
             request.params[0] as string,
             signatures) as any
+        }
+      }
+    }
+    return response
+  }
+
+  async  handleLogs(request: RPCRequest): Promise<RPCResponse> {
+    // ask the server for the tx
+    const response = await this.getFromServer(request)
+    const logs = response && response.result as any as LogData[]
+    // if we have a blocknumber, it is mined and we can provide a proof over the blockhash
+    if (logs && logs.length) {
+
+      // find all needed blocks
+      const proof: verify.LogProof = {}
+      logs.forEach(l => {
+        const b = proof[toHex(l.blockNumber)] || (proof[toHex(l.blockNumber)] = { receipts: {}, allReceipts: [] } as any)
+      })
+
+      // get the blocks from the server
+      const blocks = await this.getAllFromServer(Object.keys(proof).map(bn => ({ method: 'eth_getBlockByNumber', params: [bn, false] }))).then(all => all.map(_ => _.result as any as BlockData))
+
+      // fetch in parallel
+      const [signatures, receipts] = await Promise.all([
+        // collect signatures for all the blocks
+        this.collectSignatures(request.in3.signatures, blocks.map(b => ({ blockNumber: parseInt(b.number as string), hash: b.hash }))),
+        // and get all receipts in all blocks and afterwards reasign them to their block
+        this.getAllFromServer(
+          blocks.map(_ => _.transactions).reduce((p, c) => [...p, ...c], []).map(t => ({ method: 'eth_getTransactionReceipt', params: [t] }))
+        ).then(a => a.forEach(r => proof[toHex((r.result as any).blockNumber)].allReceipts.push(r.result)))
+      ])
+
+      // create the proof per block
+      await Promise.all(blocks.map(b => {
+        const blockProof = proof[toHex(b.number)]
+
+        // add the blockheader
+        blockProof.block = verify.blockToHex(b)
+
+        // we only need all receipts in order to create the full merkletree, but we do not return them all.
+        const allReceipts = blockProof.allReceipts
+        delete blockProof.allReceipts
+
+        // find all the involved transactionshashes, we need to proof
+        const toProof = logs.filter(_ => toHex(_.blockNumber) === toHex(b.number))
+          .map(_ => _.transactionHash) // we only need the transaction hash
+          .filter((th, i, a) => a.indexOf(th) === i) // there could be more than one event in one transaction, so make it unique
+
+        // create receipt-proofs for all these transactions
+        return Promise.all(toProof.map(th =>
+          verify.createTransactionReceiptProof(b, allReceipts, th, [])
+            .then(p => blockProof.receipts[th] = {
+              txIndex: parseInt(allReceipts.find(_ => _.transactionHash).transactionIndex),
+              proof: p.merkelProof
+            })
+        ))
+      }))
+
+      // attach prood to answer
+      response.in3 = {
+        proof: {
+          type: 'logProof',
+          logProof: proof
         }
       }
     }
@@ -236,7 +307,7 @@ export default class EthHandler {
       this.getAllFromServer(Object.keys(neededProof.accounts).map(adr => (
         { method: 'eth_getProof', params: [toHex(adr, 20), Object.keys(neededProof.accounts[adr].storage).map(_ => toHex(_, 32)), block.number] }
       ))),
-      this.collectSignatures(request.in3.signatures, block.number, block.hash)
+      this.collectSignatures(request.in3.signatures, [{ blockNumber: block.number, hash: block.hash }])
     ])
 
     // add the codes to the accounts
@@ -304,7 +375,7 @@ export default class EthHandler {
         proof: {
           type: 'accountProof',
           block: verify.blockToHex(block),
-          signatures: await this.collectSignatures(request.in3.signatures, block.number, block.hash),
+          signatures: await this.collectSignatures(request.in3.signatures, [{ blockNumber: block.number, hash: block.hash }]),
           account: proof.result
         }
       }

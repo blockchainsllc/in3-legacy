@@ -3,16 +3,30 @@ import * as Transaction from 'ethereumjs-tx'
 import * as Trie from 'merkle-patricia-tree'
 import { RPCRequest, RPCResponse } from '../types/config';
 import { Signature } from '../types/config';
-import Block, { toHex, createTx, BlockData, serializeReceipt, serializeAccount, toBuffer, promisify } from './block'
+import Block, { toHex, createTx, BlockData, serializeReceipt, serializeAccount, toBuffer, promisify, LogData } from './block'
 import { StringifyOptions } from 'querystring';
 import * as request from 'request'
 import { executeCall } from './call'
 
+
+export interface LogProof {
+  [blockNumber: string]: {
+    block: string
+    allReceipts?: any[]
+    receipts: {
+      [txHash: string]: {
+        txIndex: number
+        proof: string[]
+      }
+    }
+  }
+}
 export interface Proof {
-  type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'nodeListProof' | 'callProof',
+  type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'nodeListProof' | 'callProof' | 'logProof'
   block?: string,
   merkelProof?: string[],
   transactions?: any[]
+  logProof?: LogProof
   account?: AccountProof,
   accounts?: { [adr: string]: AccountProof },
   txIndex?,
@@ -56,7 +70,7 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
   if (!signatures) return
 
   const messageHash = util.sha3(blockHash + b.number.toString('hex').padStart(64, '0')).toString('hex')
-  if (!signatures.reduce((p, signature, i) => {
+  if (!signatures.filter(_ => _.block.toString(16) === b.number.toString('hex')).reduce((p, signature, i) => {
     if (messageHash !== signature.msgHash)
       throw new Error('The signature signed the wrong message!')
     const signer = '0x' + util.pubToAddress(util.erecover(messageHash, signature.v, util.toBuffer(signature.r), util.toBuffer(signature.s))).toString('hex')
@@ -206,6 +220,80 @@ export async function verifyTransactionReceiptProof(txHash: string, proof: Proof
   })
 
 
+}
+
+
+
+/** verifies a TransactionProof */
+export async function verifyLogProof(proof: Proof, expectedSigners: string[], logs: LogData[]) {
+
+  if (!logs) throw new Error('No Logs!')
+  if (!logs.length) return
+
+  if (!proof.logProof) throw new Error('Missing LogProof')
+
+  const receiptData: { [txHash: string]: Buffer[] } = {}
+  const blockHashes: { [blockNumber: string]: string } = {}
+
+  await Promise.all(Object.keys(proof.logProof).map(async bn => {
+
+    const blockProof = proof.logProof[bn]
+
+    // decode the blockheader
+    const block = blockFromHex(blockProof.block)
+    blockHashes[bn] = '0x' + block.hash().toString('hex')
+
+    // verify the blockhash and the signatures
+    verifyBlock(block, proof.signatures, expectedSigners, null)
+
+    // verifiy all merkle-Trees of the receipts
+    await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
+      new Promise((resolve, reject) => {
+        Trie.verifyProof(
+          block.receiptTrie, // expected merkle root
+          util.rlp.encode(toBuffer(blockProof.receipts[txHash].txIndex)), // path, which is the transsactionIndex
+          blockProof.receipts[txHash].proof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
+          (err, value) => { // callback
+            if (err) return reject(err)
+            resolve(receiptData[txHash] = value)
+          })
+      })
+    ))
+
+  }))
+
+
+  // now verify the logdata
+  logs.forEach(l => {
+    const receipt = receiptData[l.transactionHash]
+    if (!receipt) throw new Error('The receipt ' + l.transactionHash + 'is missing in the proof')
+
+    const logData = (receipt[3] as any)[parseInt(l.logIndex)] as Buffer[]
+    if (!logData) throw new Error('Log not found in Transaction')
+
+    /// txReceipt.logs.map(l => [l.address, l.topics.map(toBuffer), l.data].map(toBuffer))]
+    if (logData[0].toString('hex') !== l.address.toLowerCase().substr(2))
+      throw new Error('Wrong address in log ')
+
+    if ((logData[1] as any as Buffer[]).map(toHex).join() !== l.topics.join())
+      throw new Error('Wrong Topics in log ')
+
+    if (util.rlp.encode(logData[2]).toString('hex') !== l.data.substr(2))
+      throw new Error('Wrong data in log ')
+
+    const bp = proof.logProof[toHex(l.blockNumber)]
+    if (bp)
+      throw new Error('wrong blockNumber')
+
+    if (blockHashes[toHex(l.blockNumber)] !== l.blockHash)
+      throw new Error('wrong blockhash')
+
+    if (!bp.receipts[l.transactionHash])
+      throw new Error('wrong transactionHash')
+
+    if (bp.receipts[l.transactionHash].txIndex !== parseInt(l.transactionIndex as string))
+      throw new Error('wrong transactionIndex')
+  })
 }
 
 
@@ -372,6 +460,9 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
         break
       case 'transactionProof':
         await verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
+        break
+      case 'logProof':
+        await verifyLogProof(proof, request.in3 && request.in3.signatures, response.result && response.result as LogData[])
         break
       case 'receiptProof':
         await verifyTransactionReceiptProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)

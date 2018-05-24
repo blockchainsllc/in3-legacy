@@ -28,6 +28,18 @@ export interface BlockData {
 
 }
 
+export interface LogData {
+  removed: boolean // true when the log was removed, due to a chain reorganization. false if its a valid log.
+  logIndex: string //  integer of the log index position in the block. null when its pending log.
+  transactionIndex: string // of the transactions index position log was created from. null when its pending log.
+  transactionHash: string // 32 Bytes - hash of the transactions this log was created from. null when its pending log.
+  blockHash: string // 32 Bytes - hash of the block where this log was in. null when its pending. null when its pending log.
+  blockNumber: string // - the block number where this log was in. null when its pending. null when its pending log.
+  address: string //, 20 Bytes - address from which this log originated.
+  data: string // contains one or more 32 Bytes non-indexed arguments of the log.
+  topics: string[] //Array of DATA - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.)
+}
+
 /**
  * encodes and decodes the blockheader
  */

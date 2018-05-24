@@ -32,7 +32,7 @@ export async function handle(request: RPCRequest[]): Promise<RPCResponse[]> {
 export interface RPCHandler {
 
   handle(request: RPCRequest): Promise<RPCResponse>
-  sign(blockHash: string, blockNumber: number): Signature
+  sign(blocks: { blockNumber: number, hash: string }[]): Signature[]
   getFromServer(request: Partial<RPCRequest>): Promise<RPCResponse>
   getAllFromServer(request: Partial<RPCRequest>[]): Promise<RPCResponse[]>
   getNodeList(includeProof: boolean): Promise<NodeList>
