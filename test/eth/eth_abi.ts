@@ -12,6 +12,8 @@ import Block from '../../src/client/block'
 import { RPCResponse } from '../../src/types/config';
 import { BlockData, toHex } from '../../src/client/block';
 import { getAddress } from '../../src/server/tx';
+import { Proof } from '../../src/client/verify';
+import { LogData } from '../../src/client/block';
 
 // our test private key
 const pk = '0xb903239f8543d04b5dc1ba6579132b143087c68db1b2168786408fcbce568238'
@@ -117,15 +119,17 @@ describe('ETH Standard JSON-RPC', () => {
     const pk1 = await test.createAccount('0x01')
     const pk2 = await test.createAccount('0x02')
 
-    // send 1000 wei from a to b
-    const receipt = await tx.sendTransaction(test.url, {
+    // check deployed code
+    const adr = await deployContract('TestContract', pk1)
+    const receipt = await tx.callContract('http://localhost:8545', adr, 'increase()', [], {
+      confirm: true,
       privateKey: pk1,
-      gas: 22000,
-      to: tx.getAddress(pk2),
-      data: '',
-      value: 1000,
-      confirm: true
+      gas: 3000000,
+      value: 0
     })
+
+    assert.equal(receipt.logs.length, 1)
+
 
     const res = await client.sendRPC('eth_getTransactionReceipt', [receipt.transactionHash], null, { keepIn3: true })
     const result = res.result as any
@@ -698,6 +702,52 @@ describe('ETH Standard JSON-RPC', () => {
 
   })
 
+
+
+
+  it('eth_getLogs', async () => {
+    const test = new TestTransport(3) // create a network of 3 nodes
+    const client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create 2 accounts
+    const pk1 = await test.createAccount('0x01')
+
+    // check deployed code
+    const adr = await deployContract('TestContract', pk1)
+    const receipt = await tx.callContract('http://localhost:8545', adr, 'increase()', [], {
+      confirm: true,
+      privateKey: pk1,
+      gas: 3000000,
+      value: 0
+    })
+
+    assert.equal(receipt.logs.length, 1)
+
+    const res = await client.sendRPC('eth_getLogs', [{ fromBlock: toHex(receipt.blockNumber) }], null, { keepIn3: true })
+    const result = res.result as any
+    assert.exists(res.in3)
+    assert.exists(res.in3.proof)
+    const proof = res.in3.proof as any as Proof
+    assert.equal(proof.type, 'logProof')
+    assert.exists(proof.logProof)
+
+    logger.info('result', res)
+
+    let failed = false
+    try {
+      // now manipulate the result
+      test.injectResponse({ method: 'eth_getLogs' }, (req, re: RPCResponse) => {
+        // we change a property
+        ((re.result as any)[0] as LogData).address = getAddress(pk1)
+        return re
+      })
+      await client.sendRPC('eth_getLogs', [{ fromBlock: toHex(receipt.blockNumber) }])
+    }
+    catch {
+      failed = true
+    }
+    assert.isTrue(failed, 'The manipulated transaction must fail!')
+  })
 
 })
 

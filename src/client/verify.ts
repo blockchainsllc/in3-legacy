@@ -251,11 +251,11 @@ export async function verifyLogProof(proof: Proof, expectedSigners: string[], lo
       new Promise((resolve, reject) => {
         Trie.verifyProof(
           block.receiptTrie, // expected merkle root
-          util.rlp.encode(toBuffer(blockProof.receipts[txHash].txIndex)), // path, which is the transsactionIndex
+          util.rlp.encode(blockProof.receipts[txHash].txIndex), // path, which is the transsactionIndex
           blockProof.receipts[txHash].proof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
           (err, value) => { // callback
             if (err) return reject(err)
-            resolve(receiptData[txHash] = value)
+            resolve(receiptData[txHash] = util.rlp.decode(value))
           })
       })
     ))
@@ -278,11 +278,11 @@ export async function verifyLogProof(proof: Proof, expectedSigners: string[], lo
     if ((logData[1] as any as Buffer[]).map(toHex).join() !== l.topics.join())
       throw new Error('Wrong Topics in log ')
 
-    if (util.rlp.encode(logData[2]).toString('hex') !== l.data.substr(2))
+    if (logData[2].toString('hex') !== l.data.substr(2))
       throw new Error('Wrong data in log ')
 
     const bp = proof.logProof[toHex(l.blockNumber)]
-    if (bp)
+    if (!bp)
       throw new Error('wrong blockNumber')
 
     if (blockHashes[toHex(l.blockNumber)] !== l.blockHash)
