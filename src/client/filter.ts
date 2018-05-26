@@ -18,11 +18,57 @@ export default class Filters {
 
   filters: { [id: string]: Filter }
 
+  constructor() {
+    this.filters = {}
+  }
+
   async addFilter(client: Client, type: 'event' | 'block' | 'pending', options: FilterOptions) {
     if (type === 'pending') throw new Error('Pending Transactions are not supported')
     const id = '0x' + (Object.keys(this.filters).reduce((a, b) => Math.max(a, parseInt(b)), 0) + 1).toString(16)
     this.filters[id] = { type, options, lastBlock: parseInt(await client.call('eth_blockNumber', [])) }
     return id
+  }
+
+  handleFilter(request: RPCRequest, client: Client): Promise<RPCResponse> {
+    switch (request.method) {
+      case 'eth_newFilter':
+        return this.addFilter(client, 'event', request.params[0] as any)
+          .then(result => ({
+            id: request.id,
+            jsonrpc: request.jsonrpc,
+            result
+          }))
+      case 'eth_newBlockFilter':
+        return this.addFilter(client, 'block', {})
+          .then(result => ({
+            id: request.id,
+            jsonrpc: request.jsonrpc,
+            result
+          }))
+      case 'eth_newPendingTransactionFilter':
+        return this.addFilter(client, 'pending', {})
+          .then(result => ({
+            id: request.id,
+            jsonrpc: request.jsonrpc,
+            result
+          }))
+      case 'eth_uninstallFilter':
+        return Promise.resolve({
+          id: request.id,
+          jsonrpc: request.jsonrpc,
+          result: !!this.removeFilter(request.params[0])
+        } as any)
+      case 'eth_getFilterChanges':
+        return this.getFilterChanges(client, request.params[0])
+          .then(result => ({
+            id: request.id,
+            jsonrpc: request.jsonrpc,
+            result
+          }))
+
+      default:
+        return null
+    }
   }
 
   async getFilterChanges(client: Client, id: string) {
@@ -65,8 +111,9 @@ export default class Filters {
   }
 
   removeFilter(id: string) {
+    const res = !!this.filters[id]
     delete this.filters[id]
-    return id
+    return res
   }
 
 

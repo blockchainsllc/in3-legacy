@@ -749,5 +749,119 @@ describe('ETH Standard JSON-RPC', () => {
     assert.isTrue(failed, 'The manipulated transaction must fail!')
   })
 
+
+  it('eth_newBlockFilter', async () => {
+    const test = new TestTransport(3) // create a network of 3 nodes
+    const client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // current blockNumber
+    const blockNumber = await client.sendRPC('eth_blockNumber', []).then(_ => parseInt(_.result as any))
+
+    // create filter
+    const filterId = await client.sendRPC('eth_newBlockFilter', []).then(_ => _.result as string)
+
+    // first call should return an empty array
+    let changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 0)
+
+    // create an accounts, which creates an block, so the filter should give us now 1 block.
+    const pk1 = await test.createAccount('0x01')
+
+    // now we should receive a new BlockHash
+    changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 1)
+
+    // but the second call should not return anything since no new blocks were produced
+    changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 0)
+
+  })
+
+  it('eth_getFilterChanges', async () => {
+    const test = new TestTransport(3) // create a network of 3 nodes
+    const client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // current blockNumber
+    const blockNumber = await client.sendRPC('eth_blockNumber', []).then(_ => parseInt(_.result as any))
+
+    // create filter
+    const filterId = await client.sendRPC('eth_newBlockFilter', []).then(_ => _.result as string)
+
+    // first call should return an empty array
+    let changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 0)
+
+    // create an accounts, which creates an block, so the filter should give us now 1 block.
+    const pk1 = await test.createAccount('0x01')
+
+    // now we should receive a new BlockHash
+    changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 1)
+
+    // current blockNumber
+    const block = await client.sendRPC('eth_getBlockByNumber', ['latest']).then(_ => _.result as any as BlockData)
+    assert.equal(changes[0], block.hash)
+
+    // but the second call should not return anything since no new blocks were produced
+    changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 0)
+
+  })
+
+
+  it('eth_newFilter', async () => {
+    const test = new TestTransport(3) // create a network of 3 nodes
+    const client = await test.createClient({ proof: true, requestCount: 1 })
+    // create 2 accounts
+    const pk1 = await test.createAccount('0x01')
+
+    // check deployed code
+    const address = await deployContract('TestContract', pk1)
+
+    // current blockNumber
+    const blockNumber = await client.sendRPC('eth_blockNumber', []).then(_ => parseInt(_.result as any))
+
+    // create filter for all events from the deployed contracts
+    const filterId = await client.sendRPC('eth_newFilter', [{ address }]).then(_ => _.result as string)
+
+    // first call should return an empty array
+    let changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 0)
+
+    // now run a transaction and trigger an event
+    const receipt = await tx.callContract('http://localhost:8545', address, 'increase()', [], {
+      confirm: true,
+      privateKey: pk1,
+      gas: 3000000,
+      value: 0
+    })
+
+    // this filter should now return the event
+    changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 1)
+
+    // this filter should now an empty []
+    changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 0)
+
+  })
+
+
+  it('eth_uninstallFilter', async () => {
+    const test = new TestTransport(3) // create a network of 3 nodes
+    const client = await test.createClient({ proof: true, requestCount: 1 })
+
+    // create filter
+    const filterId = await client.sendRPC('eth_newBlockFilter', []).then(_ => _.result as string)
+
+    let changes = await client.sendRPC('eth_getFilterChanges', [filterId]).then(_ => _.result as string[])
+    assert.equal(changes.length, 0)
+
+    assert.equal(await client.sendRPC('eth_uninstallFilter', [filterId]).then(_ => _.result as any as boolean), true)
+    assert.equal(await client.sendRPC('eth_uninstallFilter', [filterId]).then(_ => _.result as any as boolean), false)
+
+  })
+
+
 })
 

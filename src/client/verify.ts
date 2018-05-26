@@ -9,6 +9,7 @@ import * as request from 'request'
 import { executeCall } from './call'
 
 
+
 export interface LogProof {
   [blockNumber: string]: {
     block: string
@@ -48,6 +49,7 @@ export interface AccountProof {
   }[]
 }
 
+const alloedWithoutProof = ['eth_blockNumber']
 
 /** converts blockdata to a hexstring*/
 export function blockToHex(block) {
@@ -449,6 +451,10 @@ function verifyAccount(accountProof: AccountProof, block: Block) {
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true): Promise<boolean> {
   const proof = response && response.in3 && response.in3.proof as any as Proof
   if (!proof) {
+    if (alloedWithoutProof.indexOf(request.method) >= 0) return true
+    // exceptions
+    if (request.method === 'eth_getLogs' && response.result && (response.result as any).length === 0) return true
+    if (request.method.startsWith('eth_getTransaction') && !response.result) return true
     if (throwException && !allowWithoutProof) throw new Error('the response does not contain any proof!')
     return allowWithoutProof
   }

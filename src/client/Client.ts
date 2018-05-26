@@ -4,6 +4,7 @@ import NodeList, { canMultiChain, canProof } from './nodeList'
 import { Transport, AxiosTransport } from '../types/transport'
 import { getChainData } from './abi'
 import { toChecksumAddress } from 'ethereumjs-util'
+import Filters from './filter'
 
 
 
@@ -16,6 +17,7 @@ export default class Client {
 
   public defConfig: IN3Config
   private transport: Transport
+  private filters: Filters
 
   /**
    * creates a new Client.
@@ -23,6 +25,7 @@ export default class Client {
    * @param transport a optional transport-object. default: AxiosTransport
    */
   public constructor(config?: Partial<IN3Config>, transport?: Transport) {
+    this.filters = new Filters()
     this.transport = transport || new AxiosTransport()
     this.defConfig = {
       proof: false,
@@ -179,6 +182,19 @@ export default class Client {
    */
   private async sendIntern(requests: RPCRequest[], conf: IN3Config, prevExcludes?: string[]): Promise<RPCResponse[]> {
 
+    // filter requests are handled internally and externally
+    const internResponses: Promise<RPCResponse>[] = []
+    const externRequests: RPCRequest[] = []
+    requests.forEach(r => {
+      const res = this.filters.handleFilter(r, this)
+      if (res) internResponses.push(res)
+      else externRequests.push(r)
+    })
+
+    // only intern Requests
+    if (externRequests.length === 0)
+      return Promise.all(internResponses)
+
     // check nodeList and update if needed
     await this.getNodeList(conf)
 
@@ -189,18 +205,29 @@ export default class Client {
     const excludes = [...(prevExcludes || []), ...nodes.map(_ => _.address)].filter((e, i, a) => a.indexOf(e) === i)
 
     // get the verified responses from the nodes
-    const responses = await Promise.all(nodes.map(_ => handleRequest(requests, _, conf, this.transport, excludes)))
+    const responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, excludes)))
 
     // merge the result 
-    return await Promise.all(
-      requests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))
+    const result: RPCResponse[] = await Promise.all(
+      externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))
     )
       // clean it, so we don't give the in3Node to the client
       .then(_ => conf.keepIn3 ? _ : _.map(cleanResult))
+
+    // merge the intern and extern results
+    if (internResponses.length) {
+      const result2 = await Promise.all(internResponses)
+      return requests.map(r => result.find(_ => _.id === r.id) || result2.find(_ => _.id === r.id))
+    }
+    else
+      return result
   }
 
 
+
 }
+
+
 
 
 let idCount = 1
