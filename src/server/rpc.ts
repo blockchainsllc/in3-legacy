@@ -9,7 +9,7 @@ const handlers: { [chain: string]: RPCHandler } = {}
 
 export async function handle(request: RPCRequest[]): Promise<RPCResponse[]> {
   return Promise.all(request.map(r => {
-    const in3Request = r.in3 || {}
+    const in3Request = r.in3 || { chainId: toHex((config.chainIds && config.chainIds[0]) || '0x2a', 32) }
     const handler = handlers[in3Request.chainId] || handlers['']
     const in3: IN3ResponseConfig = {}
 

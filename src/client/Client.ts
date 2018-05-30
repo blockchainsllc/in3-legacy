@@ -5,6 +5,7 @@ import { Transport, AxiosTransport } from '../types/transport'
 import { getChainData } from './abi'
 import { toChecksumAddress } from 'ethereumjs-util'
 import Filters from './filter'
+import { toHex } from './block';
 
 
 
@@ -59,7 +60,7 @@ export default class Client {
    * @param chainId if given, the list for the given chainId will be updated otherwise the chainId is taken from the config
    */
   public async updateNodeList(chainId?: string) {
-    const chain = chainId || this.defConfig.chainId || '0x01'
+    const chain = toHex(chainId || this.defConfig.chainId || '0x01', 32)
     if (!chain) throw new Error('No ChainId found to update')
 
     const servers = this.defConfig.servers[chain] || (this.defConfig.servers[chain] = {})
