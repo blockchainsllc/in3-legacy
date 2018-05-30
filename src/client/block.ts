@@ -77,8 +77,12 @@ export default class Block {
       ['parentHash:32', 'sha3Uncles', 'miner,coinbase:20', 'stateRoot:32', 'transactionsRoot:32', 'receiptsRoot,receiptRoot', 'logsBloom', 'difficulty', 'number', 'gasLimit', 'gasUsed', 'timestamp', 'extraData:-1'].forEach(field => {
         this.raw.push(toBuffer(field.split(':')[0].split(',').map(_ => data[_]).find(_ => _) || ethUtil.SHA3_NULL, parseInt(field.split(':')[1] || '0')))
       })
-      if (data.sealFields)
-        data.sealFields.forEach(_ => this.raw.push(toBuffer(_)))
+      if (data.sealFields && data.sealFields.length)
+        data.sealFields.forEach(s => this.raw.push(rlp.decode(toBuffer(s))))
+
+
+      //        this.raw.push(ethUtil.rlp.encode(data.sealFields.map(toBuffer)))
+      //        data.sealFields.forEach(_ => this.raw.push(toBuffer(_)))
       else {
         if (data.mixHash !== undefined)
           this.raw.push(toBuffer(data.mixHash))

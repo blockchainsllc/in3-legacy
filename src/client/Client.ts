@@ -104,7 +104,7 @@ export default class Client {
    * @param chain a optional chainId (default: chainId from config)
    * @param config optional config-params overridnig the client config
    */
-  public async sendRPC(method: string, params: any, chain?: string, config?: Partial<IN3Config>) {
+  public async sendRPC(method: string, params: any[] = [], chain?: string, config?: Partial<IN3Config>) {
     return this.send({ jsonrpc: '2.0', method, params, id: idCount++ }, null, { chainId: chain || this.defConfig.chainId, ...config }) as Promise<RPCResponse>
   }
 
