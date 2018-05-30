@@ -68,14 +68,19 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
   if (expectedBlockHash && blockHash !== expectedBlockHash.toLowerCase())
     throw new Error('The BlockHash is not the expected one!')
 
+
   // TODO in the future we are not allowing block verification without signature
   if (!signatures) return
 
-  const messageHash = util.sha3(blockHash + b.number.toString('hex').padStart(64, '0')).toString('hex')
+  const messageHash = '0x' + util.sha3(blockHash + b.number.toString('hex').padStart(64, '0')).toString('hex')
   if (!signatures.filter(_ => _.block.toString(16) === b.number.toString('hex')).reduce((p, signature, i) => {
+
     if (messageHash !== signature.msgHash)
       throw new Error('The signature signed the wrong message!')
-    const signer = '0x' + util.pubToAddress(util.erecover(messageHash, signature.v, util.toBuffer(signature.r), util.toBuffer(signature.s))).toString('hex')
+
+    // recover the signer from the signature
+    const signer = '0x' + util.pubToAddress(util.ecrecover(util.toBuffer(messageHash), parseInt(signature.v), util.toBuffer(signature.r), util.toBuffer(signature.s))).toString('hex')
+
     if (signer.toLowerCase() !== expectedSigners[i].toLowerCase())
       throw new Error('The signature was not signed by ' + expectedSigners[i])
     return true
