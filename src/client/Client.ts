@@ -32,44 +32,22 @@ export default class Client {
       signatureCount: 0,
       minDeposit: 0,
       requestCount: 3,
-      chainId: '0x2a',
-      mainChain: '0x2a',
+      chainId: '0x000000000000000000000000000000000000000000000000000000000000002a',
+      mainChain: '0x000000000000000000000000000000000000000000000000000000000000002a',
+      chainRegistry: '0x013b82355a066A31427df3140C5326cdE9c64e3A',
       ...config,
       servers: {
-        '0x2a': {
-          contract: '0xF88e75205BcD029C897700E8ad03050C78611A37',
+        '0x000000000000000000000000000000000000000000000000000000000000002a': {
+          contractChain: '0x000000000000000000000000000000000000000000000000000000000000002a',
+          contract: '0xb9a2bB17675206F3233bF426eB4b64900F63cd28',
           nodeList: [
             {
-              address: '0x01',
-              chainIds: ['0x2a'],
-              url: 'https://rpc-kovan.slock.it',
-              deposit: 0
-
-            },
-            {
-              address: '0x02',
-              chainIds: ['0x2a'],
-              url: 'https://kovan.infura.io/HVtVmCIHVgqHGUgihfhX',
-              deposit: 0
-            },
-            {
-              address: '0x03',
-              chainIds: ['0x2a'],
-              url: 'https://kovan.infura.io/HVtVmCIHVsqHGUgihfhX',
-              deposit: 0
-            },
-            {
-              address: '0x04',
-              chainIds: ['0x2a'],
-              url: 'https://kovan.infura.io/HVtVmCIHVaqHGUgihfhX',
-              deposit: 0
-            },
-            {
-              address: '0x05',
-              chainIds: ['0x2a'],
-              url: 'https://koasdfjojoi.com',
-              deposit: 0
-            }],
+              deposit: 0,
+              chainIds: ['0x000000000000000000000000000000000000000000000000000000000000002a'],
+              address: '0xa1bB1860c4aBF6F050F36cf672679d940c916a18',
+              url: 'https://in3-kovan1.slock.it'
+            }
+          ]
         },
         ...((config && config.servers) || {})
       }
@@ -121,7 +99,7 @@ export default class Client {
    * @param chain a optional chainId (default: chainId from config)
    * @param config optional config-params overridnig the client config
    */
-  public async sendRPC(method: string, params: any, chain = '0x01', config?: Partial<IN3Config>) {
+  public async sendRPC(method: string, params: any, chain?: string, config?: Partial<IN3Config>) {
     return this.send({ jsonrpc: '2.0', method, params, id: idCount++ }, null, { chainId: chain || this.defConfig.chainId, ...config }) as Promise<RPCResponse>
   }
 

@@ -31,6 +31,7 @@ export default class EthHandler {
   constructor(config: any, transport?: Transport) {
     this.config = config
     this.transport = transport || new AxiosTransport()
+    this.nodeList = new NodeList()
   }
 
   async handle(request: RPCRequest): Promise<RPCResponse> {

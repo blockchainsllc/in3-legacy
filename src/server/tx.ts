@@ -104,6 +104,7 @@ export async function sendTransaction(url: string, txargs: {
   })
   tx.sign(key)
 
+
   const txHash = await transport.handle(url, {
     jsonrpc: '2.0',
     id: idCount++,
