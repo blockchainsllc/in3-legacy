@@ -42,14 +42,14 @@ export class TestTransport implements Transport {
       nodes.push({
         address: toChecksumAddress('0x' + privateToAddress(toBuffer(privateKey)).toString('hex')),
         url: url,
-        chainIds: ['0x01'],
+        chainIds: ['0x0000000000000000000000000000000000000000000000000000000000000001'],
         deposit: i,
         props: 255
-      })
-      this.handlers['#' + (i + 1)] = new EthHandler({
+      });
+      (this.handlers['#' + (i + 1)] = new EthHandler({
         rpcUrl: 'http://localhost:8545',
-        privateKey
-      }, this)
+        privateKey,
+      }, this)).chainId = '0x0000000000000000000000000000000000000000000000000000000000000001'
     }
     this.url = 'http://localhost:8545'
 
@@ -96,7 +96,7 @@ export class TestTransport implements Transport {
     if (r.method === 'in3_nodeList')
       res = {
         id: r.id,
-        result: this.nodeList.nodes,
+        result: this.nodeList as any,
         jsonrpc: r.jsonrpc,
         in3: {
           lastNodeList: this.nodeList.lastBlockNumber,
@@ -129,10 +129,10 @@ export class TestTransport implements Transport {
 
   async createClient(conf?: Partial<IN3Config>): Promise<Client> {
     const client = new Client({
-      chainId: '0x01',
+      chainId: '0x0000000000000000000000000000000000000000000000000000000000000001',
       timeout: 9999999,
       servers: {
-        '0x01': {
+        '0x0000000000000000000000000000000000000000000000000000000000000001': {
           contract: 'dummy',
           nodeList: this.nodeList.nodes
         }

@@ -90,7 +90,11 @@ export default class Client {
 
     // TODO maybe may should support a upper limit of nodes and the choose randomly
     // now we can ask the current nodes for a new list.
-    servers.nodeList = await this.sendRPC('in3_nodeList', [], chain).then(_ => _.result as any as IN3NodeConfig[])
+    //const res = await this.sendRPC('in3_nodeList', [], chain).then(_ => (_.result as any) as IN3NodeConfig[])
+
+    servers.nodeList = await this.sendRPC('in3_nodeList', [], chain).then(_ => (_.result as any).nodes as IN3NodeConfig[])
+    //servers.nodeList = res
+    //console.log('r:', res)
   }
 
   /**
@@ -111,7 +115,7 @@ export default class Client {
    * @param chain a optional chainId (default: chainId from config)
    * @param config optional config-params overridnig the client config
    */
-  public async call(method: string, params: any, chain = '0x01', config?: Partial<IN3Config>) {
+  public async call(method: string, params: any, chain?: string, config?: Partial<IN3Config>) {
     return this.sendRPC(method, params, chain, config).then(_ => _.error ? Promise.reject(_.error) : _.result as any)
   }
 
