@@ -2,12 +2,14 @@ import * as fs from 'fs'
 
 const config = {
   //  rpcUrl: 'https://mainnet.infura.io/HVtVmCIHVgqHGUgihfhX',
-  rpcUrl: 'http://localhost:8545',
+  rpcUrl: 'https://kovan.infura.io/HVtVmCIHVgqHGUgihfhX', //'http://localhost:8545',
   privateKey: '',
   port: 8500,
   minBlockHeight: 6,
-  registry: '', // registry-contract
-  client: 'parity' // parity_proofed
+  registry: '0x013b82355a066A31427df3140C5326cdE9c64e3A', // registry-contract
+  registryRPC: 'https://kovan.infura.io/HVtVmCIHVgqHGUgihfhX',
+  client: 'parity', // parity_proofed,
+  chainIds: ['0x2a']
 }
 
 try {

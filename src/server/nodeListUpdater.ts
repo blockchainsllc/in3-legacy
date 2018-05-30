@@ -1,6 +1,11 @@
-import { RPCHandler } from './rpc';
+import { RPCHandler } from './rpc'
+import config from './config'
+import * as tx from './tx'
+import * as abi from 'ethereumjs-abi'
 import NodeList from '../client/nodeList'
-import { RPCRequest, IN3Config, RPCResponse } from '../types/config';
+import { RPCRequest, IN3Config, RPCResponse, IN3NodeConfig } from '../types/config'
+import { toBuffer, toHex } from '../client/block';
+import { toChecksumAddress } from 'ethereumjs-util'
 
 export async function checkNodeList(handler: RPCHandler, nodeList: NodeList) {
   // TODO check blocknumber of last event.
@@ -10,7 +15,6 @@ export async function checkNodeList(handler: RPCHandler, nodeList: NodeList) {
 }
 
 export async function getNodeListProof(handler: RPCHandler, nodeList: NodeList) {
-  await checkNodeList(handler, nodeList)
   nodeList.nodes = await updateNodeList(handler)
   return {
     type: 'nodeListProof'
@@ -29,27 +33,41 @@ function prepareCall(contract: string, methodHash: string, params?: string): RPC
 }
 
 async function updateNodeList(handler: RPCHandler) {
-  const contract = handler.config.registry
-  const count = await call(handler, prepareCall(contract, '0x15625c5e')).then(parseInt)
 
-  const req: RPCRequest[] = []
-  for (let i = 0; i < count; i++)
-    req.push(prepareCall(contract, '0x5cf0f357', (i).toString(16).padStart(64, '0')))
+  // first get the registry
+  const [owner, bootNodes, meta, registryContract, contractChain] = await tx.callContract(config.registryRPC || config.rpcUrl, config.registry, 'chains(bytes32):(address,string,string,address,bytes32)', [handler.chainId])
 
-  const nodes = await handler.getAllFromServer(req)
-  console.log('nodes:', nodes.map(_ => _.result.toString().substr(2)))
-  return nodes.map(_ => _.result.toString().substr(2)).map(data => ({
-    address: '0x' + data.substr(24, 40),
-    owner: '0x' + data.substr(64 + 24, 40),
-    deposit: parseInt('0x' + data.substr(64 * 2, 64)),
-    unregisterRequestTime: parseInt('0x' + data.substr(64 * 3, 64)),
-    chainIds: [('0x' + data.substr(64 * 4, 64)).replace(/0x0+/, '0x')],
-    url: decodeURIComponent(data.substr(64 * 7, 2 * parseInt('0x' + data.substr(64 * 6, 64))).replace(/[0-9a-f]{2}/g, '%$&'))
-  })
-  )
-}
+  // number of registered servers
+  const [serverCount] = await tx.callContract(config.rpcUrl, '0x' + registryContract, 'totalServers():(uint)', [])
 
-function call(handler: RPCHandler, request: RPCRequest): Promise<string> {
-  return handler.getFromServer(request).then(_ => _.error ? Promise.reject(_.error) as any : _.result + '')
+  // build the requests per server-entry
+  const nodeRequests: RPCRequest[] = []
+  for (let i = 0; i < serverCount.toNumber(); i++)
+    nodeRequests.push({
+      jsonrpc: '2.0',
+      id: i + 1,
+      method: 'eth_call', params: [{
+        to: '0x' + registryContract,
+        data: '0x' + abi.simpleEncode('servers(uint)', toHex(i, 32)).toString('hex')
+      },
+        'latest']
+    })
+
+  return await handler.getAllFromServer(nodeRequests).then(all => all.map(n => {
+    // invalid requests must be filtered out
+    if (n.error) return null
+    const [url, owner, deposit, props, unregisterRequestTime] = abi.simpleDecode('servers(uint):(string,address,uint,uint,uint)', toBuffer(n.result))
+
+    return {
+      address: toChecksumAddress(owner),
+      url,
+      deposit: deposit.toNumber(),
+      props: props.toNumber(),
+      chainIds: [handler.chainId],
+      unregisterRequestTime: unregisterRequestTime.toNumber()
+    } as IN3NodeConfig
+
+  })).then(_ => _)
+
 }
 

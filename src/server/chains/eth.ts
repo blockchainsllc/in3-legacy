@@ -27,9 +27,11 @@ export default class EthHandler {
   config: any
   nodeList: NodeList
   transport: Transport
+  chainId: string
 
   constructor(config: any, transport?: Transport) {
-    this.config = config
+    this.config = config || {}
+    this.chainId = (this.config.chainIds && this.config.chainIds[0]) || toHex('0x2a', 32)
     this.transport = transport || new AxiosTransport()
     this.nodeList = new NodeList()
   }

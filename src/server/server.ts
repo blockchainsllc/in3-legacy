@@ -28,3 +28,6 @@ app
   .use(router.routes())
   .use(router.allowedMethods())
   .listen(config.port || 8500, () => logger.info(`http server listening on ${config.port || 8500}`))
+
+
+setTimeout(() => rpc.updateNodelists().catch(logger.error))

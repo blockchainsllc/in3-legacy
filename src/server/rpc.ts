@@ -2,6 +2,7 @@ import { RPCRequest, RPCResponse, Signature, IN3ResponseConfig } from '../types/
 import config from './config'
 import EthHandler from './chains/eth'
 import NodeList from '../client/nodeList';
+import { toHex } from '../client/block';
 
 
 const handlers: { [chain: string]: RPCHandler } = {}
@@ -30,7 +31,7 @@ export async function handle(request: RPCRequest[]): Promise<RPCResponse[]> {
 
 
 export interface RPCHandler {
-
+  chainId: string
   handle(request: RPCRequest): Promise<RPCResponse>
   sign(blocks: { blockNumber: number, hash: string }[]): Signature[]
   getFromServer(request: Partial<RPCRequest>): Promise<RPCResponse>
@@ -41,3 +42,16 @@ export interface RPCHandler {
 
 // register Handlers 
 handlers[''] = handlers['0x00'] = new EthHandler({ ...config })
+
+
+config.chainIds.forEach(id => {
+  const chain = toHex(id, 32)
+  handlers[chain] = new EthHandler({ ...config })
+  handlers[chain].chainId = chain
+
+})
+
+
+export function updateNodelists() {
+  return Promise.all(config.chainIds.map(id => handlers[toHex(id, 32)].getNodeList(false)))
+}
