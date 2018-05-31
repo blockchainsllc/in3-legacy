@@ -19,7 +19,10 @@ export class AxiosTransport implements Transport {
   }
 
   async handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]> {
+    // convertto array
     const requests = Array.isArray(data) ? data : [data]
+
+    // add cbor-config
     const conf = {}
     if (this.format === 'cbor')
       Object.assign(conf, {
@@ -29,9 +32,13 @@ export class AxiosTransport implements Transport {
         responseType: 'arraybuffer'
       })
 
+    // execute request
     const res = await axios.post(url, requests, { ...conf, timeout: timeout || 5000 })
+
+    // throw if the status is an error
     if (res.status > 200) throw new Error('Invalid response ' + url + ' : ' + res.statusText)
 
+    // if this was not given as array, we need to convert it back to a single object
     return Array.isArray(data) ? res.data : res.data[0]
   }
 
