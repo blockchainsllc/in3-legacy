@@ -53,12 +53,8 @@ app
   .use(router.allowedMethods())
   .listen(config.port || 8500, () => logger.info(`http server listening on ${config.port || 8500}`))
 
-
-setTimeout(() => rpc.updateNodelists()
-  .then(nl => console.log('NodeList:' + JSON.stringify(nl, null, 2)))
-  .then(_ => rpc.handle([{ method: 'in3_nodeList', params: [], id: 1, jsonrpc: '2.0' }]))
-  .then(nl => console.log('Request-Result:' + JSON.stringify(nl, null, 2)))
-  .catch(logger.error)
+// after starting the server, we should make sure our nodelist is up-to-date.
+setTimeout(() => rpc.updateNodelists().catch(logger.error)
 
 
 )
