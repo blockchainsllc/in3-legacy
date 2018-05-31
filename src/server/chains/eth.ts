@@ -354,7 +354,7 @@ export default class EthHandler {
 
     // error checking
     if (blockResponse.error) throw new Error('Could not get the block for ' + request.params[1] + ':' + blockResponse.error)
-    if (proof.error) throw new Error('Could not get the proof :' + proof.error)
+    if (proof.error) throw new Error('Could not get the proof :' + JSON.stringify(proof.error, null, 2) + ' for request ' + JSON.stringify({ method: 'eth_getProof', params: [toHex(address, 20), storage.map(_ => toHex(_, 32)), blockNr] }, null, 2))
 
     // anaylse the transaction in order to find all needed storage
     const block = blockResponse.result as any
