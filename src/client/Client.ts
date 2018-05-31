@@ -27,7 +27,7 @@ export default class Client {
    */
   public constructor(config?: Partial<IN3Config>, transport?: Transport) {
     this.filters = new Filters()
-    this.transport = transport || new AxiosTransport()
+    this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
       proof: false,
       signatureCount: 0,

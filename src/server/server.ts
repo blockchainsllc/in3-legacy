@@ -7,10 +7,34 @@ import * as logger from 'winston'
 import * as rpc from './rpc'
 import { RPCRequest } from '../types/config'
 import config from './config'
+import * as cbor from '../types/cbor'
 
 export const app = new Koa()
 const router = new Router()
+app.use(async (ctx, next) => {
+  const format = ctx.headers['content-type']
+  if (format && format === 'application/cbor') {
+    const body = await new Promise((res, rej) => {
+      const bufs = []
+      ctx.req.on('data', d => bufs.push(d))
+      ctx.req.on('end', () => {
+        res(ctx.request.body = cbor.decodeRequests(Buffer.concat(bufs)))
+      })
+
+    })
+    await next()
+    if ((ctx.status || 200) === 200) {
+      ctx.set('content-type', 'application/cbor')
+      ctx.body = cbor.encodeResponses(ctx.body)
+    }
+    return
+  }
+  await next()
+
+
+})
 app.use(bodyParser())
+
 router.post('/', async ctx => {
   try {
     const res = await rpc.handle(Array.isArray(ctx.request.body) ? ctx.request.body : [ctx.request.body])

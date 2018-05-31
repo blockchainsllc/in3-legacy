@@ -7,6 +7,10 @@
          */
         keepIn3?: boolean;
         /**
+         * the format for sending the data to the client
+         */
+        format?: "json" | "cbor";
+        /**
          * if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
          */
         includeCode?: boolean;

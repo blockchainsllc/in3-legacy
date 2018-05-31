@@ -124,6 +124,10 @@ definitions:
             keepIn3:
                 description: if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data.
                 type: boolean
+            format:
+                 description: the format for sending the data to the client
+                 type: string
+                 enum: ["json","cbor"]
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean
