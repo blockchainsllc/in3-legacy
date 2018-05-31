@@ -53,7 +53,7 @@ const alloedWithoutProof = ['eth_blockNumber']
 
 /** converts blockdata to a hexstring*/
 export function blockToHex(block) {
-  return new Block(block).serializeHeader().toString('hex')
+  return '0x'+new Block(block).serializeHeader().toString('hex')
 }
 
 /** converts a hexstring to a block-object */
