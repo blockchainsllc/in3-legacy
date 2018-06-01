@@ -7,7 +7,7 @@ import * as evm from './evm'
 import * as request from 'request';
 import { RPCHandler } from '../rpc';
 import NodeList from '../../client/nodeList'
-import { checkNodeList, getNodeListProof } from '../nodeListUpdater'
+import { checkNodeList } from '../nodeListUpdater'
 import { Transport, AxiosTransport } from '../../types/transport'
 import { toHex, BlockData, LogData } from '../../client/block';
 
@@ -108,11 +108,12 @@ export default class EthHandler {
     })
   }
 
-  getNodeList(includeProof: boolean): Promise<NodeList> {
-    if (includeProof)
-      return getNodeListProof(this, this.nodeList).then(_ => ({ ...this.nodeList, proof: _ }) as any)
-    else
-      return checkNodeList(this, this.nodeList).then(_ => this.nodeList)
+  async getNodeList(includeProof: boolean, limit = 0, seed?: string, addresses: string[] = [], signers?: string[]): Promise<NodeList> {
+    const nl = await checkNodeList(this, this.nodeList, includeProof, limit, seed, addresses)
+    if (nl.proof && signers && signers.length)
+      nl.proof.signatures = await this.collectSignatures(signers, [{ blockNumber: nl.lastBlockNumber }])
+    return nl
+
   }
 
 
@@ -384,6 +385,13 @@ export default class EthHandler {
       }
     }
   }
+
+
+
+
+
+
+
 }
 
 

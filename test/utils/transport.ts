@@ -96,15 +96,13 @@ export class TestTransport implements Transport {
     if (r.method === 'in3_nodeList')
       res = {
         id: r.id,
-        result: this.nodeList as any,
-        jsonrpc: r.jsonrpc,
-        in3: {
-          lastNodeList: this.nodeList.lastBlockNumber,
-          proof: {
-            type: 'nodeListProof'
-
-          }
-        }
+        result: {
+          lastBlockNumber: 0,
+          nodes: this.nodeList.nodes,
+          contract: '0x00000000',
+          totalServers: this.nodeList.nodes.length
+        } as any,
+        jsonrpc: r.jsonrpc
       } as RPCResponse
     else
       res = await handler.handle(r)
@@ -139,7 +137,7 @@ export class TestTransport implements Transport {
       },
       ...(conf || {})
     }, this)
-    await client.updateNodeList()
+    await client.updateNodeList(client.defConfig.chainId, { proof: false })
     return client
   }
 

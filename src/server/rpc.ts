@@ -14,12 +14,34 @@ export async function handle(request: RPCRequest[]): Promise<RPCResponse[]> {
     const in3: IN3ResponseConfig = {}
 
     if (r.method === 'in3_nodeList')
-      return handler.getNodeList(true).then(result => ({
-        id: r.id,
-        result: result as any,
-        jsonrpc: r.jsonrpc,
-        in3: { ...in3, proof: result.proof }
-      }) as RPCResponse)
+      return handler.getNodeList(
+        in3Request.verification.startsWith('proof'),
+        r.params[0] || 0,
+        r.params[1],
+        r.params[2] || [],
+        in3Request.signatures
+      ).then(async result => {
+        const res = {
+          id: r.id,
+          result: result as any,
+          jsonrpc: r.jsonrpc,
+          in3: { ...in3 }
+        }
+        const proof = res.result.proof
+        if (proof) {
+          delete res.result.proof
+          res.in3.proof = proof
+        }
+
+
+        return ({
+          id: r.id,
+          result: result as any,
+          jsonrpc: r.jsonrpc,
+          in3: { ...in3, proof: result.proof }
+        }) as RPCResponse
+
+      })
 
     return Promise.all([
       handler.getNodeList(false).then(_ => in3.lastNodeList = _.lastBlockNumber),
@@ -36,7 +58,7 @@ export interface RPCHandler {
   sign(blocks: { blockNumber: number, hash: string }[]): Signature[]
   getFromServer(request: Partial<RPCRequest>): Promise<RPCResponse>
   getAllFromServer(request: Partial<RPCRequest>[]): Promise<RPCResponse[]>
-  getNodeList(includeProof: boolean): Promise<NodeList>
+  getNodeList(includeProof: boolean, limit?: number, seed?: string, addresses?: string[], signers?: string[]): Promise<NodeList>
   config: any
 }
 

@@ -30,6 +30,9 @@ definitions:
         type: object
         required: [ address,url,deposit, chainIds]
         properties:
+            index :
+                description : the index within the contract
+                type: integer
             address:
                 description: the address of the node, which is the public address it iis signing with.
                 type: string
@@ -121,6 +124,9 @@ definitions:
         type: object
         required: [ minDeposit, requestCount, chainId]
         properties:
+            nodeLimit:
+                description: the limit of nodes to store in the client
+                type: number
             keepIn3:
                 description: if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data.
                 type: boolean
@@ -168,6 +174,11 @@ definitions:
                 additionalProperties:
                     type: object
                     properties:
+                        initAddresses:
+                            description: a list of addresses which should always be part of the nodelist when getting an update
+                            type: array
+                            items:
+                                type: string 
                         contract:
                             type: string
                             description: the address of the registry contract

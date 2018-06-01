@@ -11,6 +11,8 @@ import * as cbor from '../types/cbor'
 
 export const app = new Koa()
 const router = new Router()
+
+// handle cbor-encoding
 app.use(async (ctx, next) => {
   const format = ctx.headers['content-type']
   if (format && format === 'application/cbor') {
@@ -30,9 +32,9 @@ app.use(async (ctx, next) => {
     return
   }
   await next()
-
-
 })
+
+// handle json
 app.use(bodyParser())
 
 router.post('/', async ctx => {

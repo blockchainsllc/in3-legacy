@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-
+// defaults for the config
 const config = {
   //  rpcUrl: 'https://mainnet.infura.io/HVtVmCIHVgqHGUgihfhX',
   rpcUrl: 'https://kovan.infura.io/HVtVmCIHVgqHGUgihfhX', //'http://localhost:8545',
@@ -12,6 +12,7 @@ const config = {
   chainIds: ['0x2a']
 }
 
+// take the config from config.json and overwrite it
 try {
   Object.assign(config, JSON.parse(fs.readFileSync('config.json', 'utf-8')))
 }

@@ -3,7 +3,7 @@ import { verifyProof } from './verify'
 import NodeList, { canMultiChain, canProof } from './nodeList'
 import { Transport, AxiosTransport } from '../types/transport'
 import { getChainData } from './abi'
-import { toChecksumAddress } from 'ethereumjs-util'
+import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
 import Filters from './filter'
 import { toHex } from './block';
 
@@ -59,7 +59,8 @@ export default class Client {
    * fetches the nodeList from the servers.
    * @param chainId if given, the list for the given chainId will be updated otherwise the chainId is taken from the config
    */
-  public async updateNodeList(chainId?: string) {
+  public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>) {
+    const config = { ...this.defConfig, ...conf }
     const chain = toHex(chainId || this.defConfig.chainId || '0x01', 32)
     if (!chain) throw new Error('No ChainId found to update')
 
@@ -73,7 +74,7 @@ export default class Client {
         throw new Error('There are no bootnodes configured for chain ' + this.defConfig.mainChain)
 
       // fetch the chain-definition
-      const chainData = await getChainData(this, chain)
+      const chainData = await getChainData(this, chain, config)
 
       // fill the data 
       servers.contract = chainData.registryContract
@@ -92,9 +93,15 @@ export default class Client {
     // now we can ask the current nodes for a new list.
     //const res = await this.sendRPC('in3_nodeList', [], chain).then(_ => (_.result as any) as IN3NodeConfig[])
 
-    servers.nodeList = await this.sendRPC('in3_nodeList', [], chain).then(_ => (_.result as any).nodes as IN3NodeConfig[])
-    //servers.nodeList = res
-    //console.log('r:', res)
+
+    // create a random seed which ensures the deterministic nature of even a partly list.
+    const seed = '0x' + keccak256('0x' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)).toString('hex')
+
+    servers.nodeList = await this.sendRPC(
+      'in3_nodeList',
+      [this.defConfig.nodeLimit, seed, servers.initAddresses || []],
+      chain, conf)
+      .then(_ => (_.result as any).nodes as IN3NodeConfig[])
   }
 
   /**

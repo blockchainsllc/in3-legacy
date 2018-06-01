@@ -2,20 +2,21 @@ import Client from './Client'
 import { simpleEncode, simpleDecode } from 'ethereumjs-abi'
 import { toBuffer, toChecksumAddress } from 'ethereumjs-util'
 import { toHex } from './block'
+import { IN3Config } from '../types/config';
 
 
 
-export async function callContract(client: Client, contract: string, chainId: string, signature: string, args: any[]) {
+export async function callContract(client: Client, contract: string, chainId: string, signature: string, args: any[], config?: IN3Config) {
   return simpleDecode(signature, await client.sendRPC('eth_call', [{
     to: contract,
     data: '0x' + simpleEncode(signature, ...args).toString('hex')
   },
-    'latest'], chainId)
+    'latest'], chainId, config)
     .then(_ => _.error ? Promise.reject(new Error('Error handling call to ' + contract + ' :' + JSON.stringify(_.error))) as any : toBuffer(_.result + '')))
 }
 
-export async function getChainData(client: Client, chainId: string) {
-  return callContract(client, client.defConfig.chainRegistry, client.defConfig.mainChain, 'chains(bytes32):(address,string,string,address,bytes32)', [toHex(chainId, 32)]).then(_ => ({
+export async function getChainData(client: Client, chainId: string, config?: IN3Config) {
+  return callContract(client, client.defConfig.chainRegistry, client.defConfig.mainChain, 'chains(bytes32):(address,string,string,address,bytes32)', [toHex(chainId, 32)], config).then(_ => ({
     owner: toChecksumAddress(_[0]) as string,
     bootNodes: _[1].split(',') as string[],
     meta: _[2] as string,

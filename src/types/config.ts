@@ -3,6 +3,10 @@
      */
     export interface IN3Config {
         /**
+         * the limit of nodes to store in the client
+         */
+        nodeLimit?: number;
+        /**
          * if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data.
          */
         keepIn3?: boolean;
@@ -52,6 +56,10 @@
         servers?: {
             [name: string]: {
                 /**
+                 * a list of addresses which should always be part of the nodelist when getting an update
+                 */
+                initAddresses?: string[];
+                /**
                  * the address of the registry contract
                  */
                 contract?: string;
@@ -80,6 +88,10 @@
      * a config of a n3-node.
      */
     export interface IN3NodeConfig {
+        /**
+         * the index within the contract
+         */
+        index?: number;
         /**
          * the address of the node, which is the public address it iis signing with.
          */
