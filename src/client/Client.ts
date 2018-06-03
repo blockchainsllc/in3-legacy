@@ -59,7 +59,7 @@ export default class Client {
    * fetches the nodeList from the servers.
    * @param chainId if given, the list for the given chainId will be updated otherwise the chainId is taken from the config
    */
-  public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>) {
+  public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>, retryCount = 5) {
     const config = { ...this.defConfig, ...conf }
     const chain = toHex(chainId || this.defConfig.chainId || '0x01', 32)
     if (!chain) throw new Error('No ChainId found to update')
@@ -97,11 +97,21 @@ export default class Client {
     // create a random seed which ensures the deterministic nature of even a partly list.
     const seed = '0x' + keccak256('0x' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)).toString('hex')
 
-    servers.nodeList = await this.sendRPC(
+    const nl = await this.sendRPC(
       'in3_nodeList',
       [this.defConfig.nodeLimit, seed, servers.initAddresses || []],
       chain, conf)
-      .then(_ => (_.result as any).nodes as IN3NodeConfig[])
+      .then(_ => _.result as any as NodeList)
+
+    if (config.proof && nl.contract.toLowerCase() !== servers.contract.toLowerCase()) {
+      // the server gave us the wrong contract!
+      // should we retry?
+      if (retryCount)
+        return this.updateNodeList(chain, conf, retryCount - 1)
+      throw new Error('The server responded with the wrong contract-address : ' + nl.contract)
+
+    }
+    servers.nodeList = nl.nodes
   }
 
   /**

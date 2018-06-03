@@ -7,7 +7,9 @@ import Block, { toHex, createTx, BlockData, serializeReceipt, serializeAccount, 
 import { StringifyOptions } from 'querystring';
 import * as request from 'request'
 import { executeCall } from './call'
-
+import NodeList from './nodeList';
+import * as tx from '../server/tx'
+import { getStorageKeys, createRandomIndexes } from '../server/nodeListUpdater'
 
 
 export interface LogProof {
@@ -53,7 +55,7 @@ const alloedWithoutProof = ['eth_blockNumber']
 
 /** converts blockdata to a hexstring*/
 export function blockToHex(block) {
-  return '0x'+new Block(block).serializeHeader().toString('hex')
+  return '0x' + new Block(block).serializeHeader().toString('hex')
 }
 
 /** converts a hexstring to a block-object */
@@ -64,14 +66,15 @@ export function blockFromHex(hex) {
 /** verify the signatures of a blockhash */
 export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: string[], expectedBlockHash: string) {
 
+  // calculate the blockHash
   const blockHash = '0x' + b.hash().toString('hex').toLowerCase()
   if (expectedBlockHash && blockHash !== expectedBlockHash.toLowerCase())
     throw new Error('The BlockHash is not the expected one!')
 
-
   // TODO in the future we are not allowing block verification without signature
   if (!signatures) return
 
+  // verify the signatures for only the blocks matching the given
   const messageHash = '0x' + util.sha3(blockHash + b.number.toString('hex').padStart(64, '0')).toString('hex')
   if (!signatures.filter(_ => _.block.toString(16) === b.number.toString('hex')).reduce((p, signature, i) => {
 
@@ -81,8 +84,11 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
     // recover the signer from the signature
     const signer = '0x' + util.pubToAddress(util.ecrecover(util.toBuffer(messageHash), parseInt(signature.v), util.toBuffer(signature.r), util.toBuffer(signature.s))).toString('hex')
 
+    // make sure the signer is the expected one
     if (signer.toLowerCase() !== expectedSigners[i].toLowerCase())
       throw new Error('The signature was not signed by ' + expectedSigners[i])
+
+    // looks good ;-)
     return true
   }, true))
     throw new Error('No valid signature')
@@ -193,8 +199,6 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
           reject(new Error('The TransactionHash could not be verified, since the merkel-proof resolved to a different hash'))
       })
   })
-
-
 }
 
 
@@ -342,11 +346,19 @@ export async function verifyBlockProof(request: RPCRequest, data: any, proof: Pr
 
 
 /** verifies a TransactionProof */
-export async function verifyAccountProof(request: RPCRequest, value: string, proof: Proof, expectedSigners: string[]) {
+export async function verifyAccountProof(request: RPCRequest, value: any, proof: Proof, expectedSigners: string[]) {
   if (!value) throw new Error('No Accountdata!')
 
+  // get the account this proof is based on
+  const account = request.method === 'in3_nodeList' ? value.contract : request.params[0]
+
+  // verify the blockhash and the signatures
+  const block = new Block(proof.block)
+  // TODO if we expect a specific block in the request, we should also check if the block is the one requested
+  verifyBlock(block, proof.signatures, expectedSigners, null)
+
   // verify the result
-  if (request.params[0].toLowerCase() !== proof.account.address.toLowerCase()) throw new Error('The Account does not match the account in the proof')
+  if (account.toLowerCase() !== proof.account.address.toLowerCase()) throw new Error('The Account does not match the account in the proof')
   switch (request.method) {
     case 'eth_getBalance':
       if (value !== proof.account.balance) throw new Error('The Balance does not match the one in the proof')
@@ -362,19 +374,108 @@ export async function verifyAccountProof(request: RPCRequest, value: string, pro
     case 'eth_getTransactionCount':
       if (proof.account.nonce !== value) throw new Error('The nonce in the proof does not match the returned')
       break
+    case 'in3_nodeList':
+      verifyNodeListData(value, proof, block, request)
+      // the contract must be checked later in the updateList -function
+      break
     default:
       throw new Error('Unsupported Account-Proof for ' + request.method)
   }
-
-  // verify the blockhash and the signatures
-  const block = new Block(proof.block)
-  // TODO if we expect a specific block in the request, we should also check if the block is the one requested
-  verifyBlock(block, proof.signatures, expectedSigners, null)
 
   // verify the merkle tree of the account proof
   await verifyAccount(proof.account, block)
 }
 
+function verifyNodeListData(nl: NodeList, proof: Proof, block: Block, request: RPCRequest) {
+  // make it a real NodeList
+  (nl as any).__proto__ = NodeList.prototype
+
+  // check the total servercount
+  checkStorage(proof.account, toHex(tx.getStorageArrayKey(0), 32), toHex(nl.totalServers, 32), 'wrong number of servers ')
+
+  // check blocknumber
+  if (parseInt('0x' + block.number.toString('hex')) !== nl.lastBlockNumber)
+    throw new Error('The signature is based on a different blockhash!')
+
+  // if we requested a limit, we need to find out if the correct nodes where send.
+  const limit = request.params[0] as number
+  if (limit && limit < nl.totalServers) {
+    if (limit !== nl.nodes.length)
+      throw new Error('The number of returned nodes must be ' + limit + ', since this was required and there are ' + nl.totalServers + ' servers')
+
+    // try to find the addresses in the node list
+    const idxs: number[] = (request.params[2] || []).map(adr => {
+      const a = nl.nodes.find(_ => _.address === adr)
+      if (!a)
+        throw new Error('The required address ' + adr + ' is not part of the list!')
+      return a.index
+    });
+
+    // create the index the same way the server should
+    createRandomIndexes(nl.totalServers, limit, request.params[1] as string, idxs)
+
+    // veryfy the index is in the same order 
+    if (idxs.length !== limit)
+      throw new Error('wrong number of index')
+    idxs.forEach((index, i) => {
+      if (nl.nodes[i].index !== index)
+        throw new Error('the index of node nr. ' + (i + 1) + ' needs to be ' + index)
+    });
+  }
+
+  // we got the complete list in the correct order
+  else {
+
+    // check server count
+    if (nl.nodes.length !== nl.totalServers)
+      throw new Error('Wrong number of nodes!');
+
+    // check the index of the result
+    const failedNode = nl.nodes.find((n, i) => n.index !== i);
+    if (failedNode)
+      throw new Error('The node ' + failedNode.url + ' has the wrong index!');
+  }
+
+  // verify the values of the proof
+  for (const n of nl.nodes) {
+    checkStorage(proof.account, tx.getStorageArrayKey(0, n.index, 5, 1), toHex(n.address.toLowerCase(), 32), 'wrong owner ');
+    checkStorage(proof.account, tx.getStorageArrayKey(0, n.index, 5, 2), toHex(n.deposit, 32), 'wrong deposit ');
+    checkStorage(proof.account, tx.getStorageArrayKey(0, n.index, 5, 3), toHex(n.props, 32), 'wrong props ');
+    const urlKey = tx.getStorageArrayKey(0, n.index, 5, 0);
+    const urlVal = tx.getStringValue(getStorageValue(proof.account, urlKey), urlKey);
+    if (typeof urlVal === 'string') {
+      if (urlVal !== n.url)
+        throw new Error('Wrong url in proof ' + n.url);
+    }
+    else {
+      const url = Buffer.concat(urlVal.storageKeys.map(_ => toBuffer(getStorageValue(proof.account, _)))).slice(0, urlVal.len).toString('utf8');
+      if (url !== n.url)
+        throw new Error('Wrong url in proof ' + n.url);
+    }
+  }
+}
+
+function checkStorage(ap: AccountProof, key: string, value: string, msg?: string) {
+  if (getStorageValue(ap, key) !== toMinHex(value))
+    throw new Error(msg || ('The key has the wrong value (expected: ' + value + ' proven:' + getStorageValue(ap, key)))
+}
+
+function toMinHex(key: string) {
+  if (key === '0x0000000000000000000000000000000000000000000000000000000000000000') return '0x0'
+  for (let i = 2; i < key.length; i++) {
+    if (key[i] !== '0')
+      return '0x' + key.substr(i)
+  }
+  return key
+}
+
+function getStorageValue(ap: AccountProof, key: string) {
+
+  key = toMinHex(key)
+  const entry = ap.storageProof.find(_ => _.key === key)
+  if (!entry) throw new Error(' There is no storrage key ' + key + ' in the storage proof!')
+  return entry.value
+}
 
 /** verifies a TransactionProof */
 export async function verifyCallProof(request: RPCRequest, value: string, proof: Proof, expectedSigners: string[]) {
@@ -406,12 +507,13 @@ export async function verifyCallProof(request: RPCRequest, value: string, proof:
 
 
 
-function verifyAccount(accountProof: AccountProof, block: Block) {
+async function verifyAccount(accountProof: AccountProof, block: Block) {
 
   // if we received the code, make sure the codeHash is correct!
   if (accountProof.code && util.keccak(accountProof.code).toString('hex') !== accountProof.codeHash.substr(2))
     throw new Error('The code does not math the correct codehash! ')
 
+  //  return Promise.all([
   return Promise.all([
     // verify the account
     new Promise((resolve, reject) => {
@@ -435,19 +537,24 @@ function verifyAccount(accountProof: AccountProof, block: Block) {
 
     // and all storage proofs
     ...accountProof.storageProof.map(s =>
-      new Promise((resolve, reject) =>
+      new Promise((resolve, reject) => {
         Trie.verifyProof(
           toBuffer(accountProof.storageHash),   // the storageRoot of the account
           util.keccak(toHex(s.key, 32)),  // the path, which is the hash of the key
           s.proof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
           (err, value) => { // callback
-            if (err) return reject(err)
-            if ('0x' + value.toString('hex') === toHex(s.value))
+            // if the storagevalue is 0 the merkleProof may not contain the leaf
+            if (err && err.message === 'Unexpected end of proof' && parseInt(s.value) === 0)
+              return resolve(value)
+            if (err)
+              return reject(err)
+            if ('0x' + util.rlp.decode(value).toString('hex') === toHex(s.value))
               resolve(value)
             else
               reject(new Error('The storage value for ' + s.key + ' could not be verified, since the merkel-proof resolved to a different hash'))
 
           })
+      }
       ))
   ])
 }

@@ -32,15 +32,7 @@ export async function handle(request: RPCRequest[]): Promise<RPCResponse[]> {
           delete res.result.proof
           res.in3.proof = proof
         }
-
-
-        return ({
-          id: r.id,
-          result: result as any,
-          jsonrpc: r.jsonrpc,
-          in3: { ...in3, proof: result.proof }
-        }) as RPCResponse
-
+        return res as RPCResponse
       })
 
     return Promise.all([
@@ -75,5 +67,5 @@ config.chainIds.forEach(id => {
 
 
 export function updateNodelists() {
-  return Promise.all(config.chainIds.map(id => handlers[toHex(id, 32)].getNodeList(false)))
+  return Promise.all(config.chainIds.map(id => handlers[toHex(id, 32)].getNodeList(true)))
 }

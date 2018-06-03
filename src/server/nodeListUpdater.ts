@@ -40,25 +40,27 @@ export async function checkNodeList(handler: RPCHandler, nodeList: NodeList, inc
     }
 
 
+
     return nl
   }
 
   // clone result
-  const list = { ...nodeList, proof: { ...nodeList.proof } }
+  const list = new NodeList()
+  Object.assign(list, nodeList, { proof: { ...nodeList.proof } })
   if (!includeProof) delete list.proof
   return list as any
 
 }
 
-function getStorageKeys(list: IN3NodeConfig[]) {
+export function getStorageKeys(list: IN3NodeConfig[]) {
   // create the keys with the serverCount
   const keys: string[] = [tx.getStorageArrayKey(0)]
 
   for (const n of list) {
     for (let i = 0; i < 5; i++)
-      tx.getStorageArrayKey(0, n.index, 5, i)
+      keys.push(tx.getStorageArrayKey(0, n.index, 5, i))
     const urlKey = tx.toBN(keccak256(keys[keys.length - 5]))
-    for (let i = 0; i < n.url.length / 32; i++)
+    for (let i = 0; i < Math.floor(n.url.length / 32); i++)
       keys.push(tx.leftPad('0x' + urlKey.add(tx.toBN(i)).toString(16), 64))
   }
 
@@ -75,7 +77,7 @@ export async function createNodeListProof(handler: RPCHandler, nodeList: NodeLis
   const blockNr = '0x' + nodeList.lastBlockNumber.toString(16)
 
   // read the response,blockheader and trace from server
-  const [blockResponse, proof, code] = await this.getAllFromServer([
+  const [blockResponse, proof] = await handler.getAllFromServer([
     { method: 'eth_getBlockByNumber', params: [blockNr, false] },
     { method: 'eth_getProof', params: [toHex(address, 20), keys, blockNr] }
   ])
@@ -119,7 +121,7 @@ async function updateNodeList(handler: RPCHandler, list: NodeList) {
 
   // number of registered servers
   const [serverCount] = await tx.callContract(config.rpcUrl, '0x' + registryContract, 'totalServers():(uint)', [])
-
+  list.lastBlockNumber = parseInt(await handler.getFromServer({ method: 'eth_blockNumber', params: [] }).then(_ => _.result as string))
   list.contract = toChecksumAddress('0x' + registryContract)
   list.totalServers = serverCount.toNumber()
 
