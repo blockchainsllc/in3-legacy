@@ -9,7 +9,8 @@
     "updateContract": "solc --optimize --combined-json abi,bin,bin-runtime,compact-format,hashes,interface,metadata contracts/*.sol > src/types/registry.json",
     "start": "node --inspect js/server/server",
     "updateTypes": "dtsgen src/types/config.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' > src/types/config.ts ",
-    "parity": "docker run -p 8180:8180 -p 8545:8545 -p 8546:8546 slockit/parity-in3:latest --jsonrpc-apis all --logging=3 --jsonrpc-interface=all --ws-interface=all ---chain dev --gas-cap=8000000 --gasprice 0  --reseal-min-period 0   --gas-floor-target 8700000"
+    "parity": "docker run -p 8180:8180 -p 8545:8545 -p 8546:8546 slockit/parity-in3:latest --jsonrpc-apis all --logging=3 --jsonrpc-interface=all --ws-interface=all ---chain dev --gas-cap=8000000 --gasprice 0  --reseal-min-period 0   --gas-floor-target 8700000",
+    "browserify": "cd js; browserify -r ./src/client/Client.js:in3 -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd .."
   },
   "nyc": {
     "include": [
@@ -47,13 +48,15 @@
     "@types/koa-router": "^7.0.27",
     "@types/mocha": "^5.2.0",
     "@types/winston": "^2.3.8",
+    "browserify": "^16.2.2",
     "chai": "^4.1.2",
     "dtsgenerator": "^0.9.9",
     "mocha": "^5.1.1",
     "nyc": "^11.8.0",
     "source-map-support": "^0.5.6",
     "ts-node": "^6.0.3",
-    "typescript": "^2.7.2"
+    "typescript": "^2.7.2",
+    "uglify-es": "^3.2.0"
   },
   "dependencies": {
     "axios": "^0.18.0",
