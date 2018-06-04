@@ -34,6 +34,7 @@ function convertToBuffer(val: any): any {
     case 'string':
       return val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : val
     case 'object':
+      if (val === null) return null
       return Array.isArray(val)
         ? val.map(convertToBuffer)
         : Object.keys(val).reduce((p, c) => { p[c] = convertToBuffer(val[c]); return p }, {})
@@ -47,6 +48,7 @@ function convertToHex(val: any): any {
 
   switch (typeof val) {
     case 'object':
+      if (val === null) return null
       return Array.isArray(val)
         ? val.map(convertToHex)
         : Object.keys(val).reduce((p, c) => { p[c] = convertToHex(val[c]); return p }, {})
@@ -71,6 +73,7 @@ export function createRefs<T>(val: T, cache: string[] = []): T {
       return val
 
     case 'object':
+      if (val === null) return null
       return (Array.isArray(val)
         ? val.map(_ => createRefs(_, cache))
         : Object.keys(val).reduce((p, c) => { p[c] = createRefs(val[c], cache); return p }, {})) as any as T
@@ -89,6 +92,7 @@ export function resolveRefs<T>(val: T, cache: string[] = []): T {
         return cache[parseInt(s.substr(1))] as any as T
       return val
     case 'object':
+      if (val === null) return null
       return (Array.isArray(val)
         ? val.map(_ => resolveRefs(_, cache))
         : Object.keys(val).reduce((p, c) => { p[c] = resolveRefs(val[c], cache); return p }, {})) as any as T

@@ -1,6 +1,7 @@
-import { AccountProof } from './verify'
+import { AccountProof, getStorageValue } from './verify'
 import * as VM from 'ethereumjs-vm'
 import * as Account from 'ethereumjs-account'
+import * as Block from 'ethereumjs-block'
 import * as Transaction from 'ethereumjs-tx'
 import * as Trie from 'merkle-patricia-tree'
 import * as rlp from 'rlp'
@@ -16,14 +17,14 @@ export async function executeCall(args: {
   data: string
   value?: string
   from?: string
-}, accounts: { [adr: string]: AccountProof }) {
+}, accounts: { [adr: string]: AccountProof }, block: Buffer) {
 
   // create new state for a vm
   const state = new Trie()
   const vm = new VM({ state })
 
   // set all storage values from the proof in the state
-  await prepareVM(state, accounts)
+  await setStorageFromProof(state, accounts)
 
   // create a transaction-object
   const tx = b.createTx({ gas: '0x5b8d80', gasLimit: '0x5b8d80', from: '0x0000000000000000000000000000000000000000', ...args })
@@ -32,44 +33,50 @@ export async function executeCall(args: {
   let missingDataError: Error = null
   vm.on('step', ev => {
     // TODO als check the following opcodes:
-    // - BALANCE
     // - EXTCODESIZE
     // - EXTCODECOPY
     // - BLOCKHASH
     // - COINBASE ( since we are currently not using a real block!)
-    // - TIMESTAMP
-    // - NUMBER
-    // - DIFFICULTY
-    // - GASLIMIT
     // and we need to check if the target contract exists (even though it would most likely fail if not)
     // - CALL
     // - CALLCODE
     // - DELEGATECALL
     // - STATIONCALL
+    switch (ev.opcode.name) {
+      case 'BALANCE':
+        const balanceContract = utils.toChecksumAddress('0x' + ev.stack[ev.stack.length - 1].toString(16))
+        if (!(accounts[balanceContract] || accounts[balanceContract.toLowerCase()]))
+          missingDataError = new Error('The contract ' + balanceContract + ' is used to get the balance but is missing in the proof!')
+        break
 
-    if (ev.opcode.name === 'SLOAD') {
-      const contract = utils.toChecksumAddress(ev.address.toString('hex'))
-      const key = '0x' + ev.stack[ev.stack.length - 1].toString(16)
-      const ac = accounts[contract] || accounts[contract.toLowerCase()]
+      case 'SLOAD':
+        const contract = utils.toChecksumAddress(ev.address.toString('hex'))
+        const key = '0x' + ev.stack[ev.stack.length - 1].toString(16)
+        const ac = accounts[contract] || accounts[contract.toLowerCase()]
 
-      // check if this key is part of the acountProof, if not the result can not be trusted
-      if (!ac)
-        missingDataError = new Error('The contract ' + contract + ' is used but is missing in the proof!')
-      else if (!ac.storageProof.find(_ => _.key === key))
-        missingDataError = new Error('The storage value ' + key + ' in ' + contract + ' is used but is missing in the proof!')
+        // check if this key is part of the acountProof, if not the result can not be trusted
+        if (!ac)
+          missingDataError = new Error('The contract ' + contract + ' is used but is missing in the proof!')
+        else if (!getStorageValue(ac, key))
+          missingDataError = new Error('The storage value ' + key + ' in ' + contract + ' is used but is missing in the proof!')
+        break
+
+      default:
+        return
     }
+
     //    console.log('step ' + counter + ' : ' + ev.opcode.name + ' pc:' + ev.pc + 'stack: ' + ev.stack.map(_ => _.toString(16)))
   })
 
   // run the tx
-  const result = await promisify(vm, vm.runTx, { tx })
+  const result = await promisify(vm, vm.runTx, { tx, block: new Block([block, [], []]) })
 
   // return the returnValue
   if (missingDataError) throw missingDataError
   return '0x' + result.vm.return.toString('hex')
 }
 
-async function prepareVM(trie, accounts: { [adr: string]: AccountProof }) {
+async function setStorageFromProof(trie, accounts: { [adr: string]: AccountProof }) {
   for (const adr of Object.keys(accounts)) {
     const ac = accounts[adr]
 

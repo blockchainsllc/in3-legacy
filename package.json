@@ -10,7 +10,8 @@
     "start": "node --inspect js/server/server",
     "updateTypes": "dtsgen src/types/config.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' > src/types/config.ts ",
     "parity": "docker run -p 8180:8180 -p 8545:8545 -p 8546:8546 slockit/parity-in3:latest --jsonrpc-apis all --logging=3 --jsonrpc-interface=all --ws-interface=all ---chain dev --gas-cap=8000000 --gasprice 0  --reseal-min-period 0   --gas-floor-target 8700000",
-    "browserify": "cd js; browserify -r ./src/client/Client.js:in3 -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd .."
+    "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
+    "disc": "cd js; discify in3.js > in3.html; cd .."
   },
   "nyc": {
     "include": [
@@ -41,6 +42,9 @@
   },
   "homepage": "https://github.com/slockit/n3-ts#readme",
   "devDependencies": {
+    "@babel/core": "^7.0.0-beta.49",
+    "@babel/preset-env": "^7.0.0-beta.49",
+    "@babel/preset-es2015": "^7.0.0-beta.49",
     "@types/cbor": "^2.0.0",
     "@types/chai": "^4.1.3",
     "@types/koa": "^2.0.44",
@@ -48,6 +52,7 @@
     "@types/koa-router": "^7.0.27",
     "@types/mocha": "^5.2.0",
     "@types/winston": "^2.3.8",
+    "babelify": "^9.0.0",
     "browserify": "^16.2.2",
     "chai": "^4.1.2",
     "dtsgenerator": "^0.9.9",
@@ -61,6 +66,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "cbor": "^4.0.0",
+    "disc": "^1.3.3",
     "ethereumjs-abi": "^0.6.5",
     "ethereumjs-account": "^2.0.5",
     "ethereumjs-tx": "^1.3.4",

@@ -468,7 +468,7 @@ function toMinHex(key: string) {
   return '0x0'
 }
 
-function getStorageValue(ap: AccountProof, key: string) {
+export function getStorageValue(ap: AccountProof, key: string) {
 
   key = toMinHex(key)
   let entry = ap.storageProof.find(_ => _.key === key)
@@ -495,7 +495,7 @@ export async function verifyCallProof(request: RPCRequest, value: string, proof:
   await Promise.all(Object.keys(proof.accounts).map(adr => verifyAccount(proof.accounts[adr], block)))
 
   // now create a vm and run the transaction
-  const result = await executeCall(request.params[0], proof.accounts)
+  const result = await executeCall(request.params[0], proof.accounts, block.serializeHeader())
 
   if (result !== value)
     throw new Error('The result does not match the execution !')

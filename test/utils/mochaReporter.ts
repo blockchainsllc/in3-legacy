@@ -16,7 +16,7 @@ function color(colorName, content) {
  * @class USNReporter
  */
 class TestReporter extends mocha.reporters.Spec {
-  private runner: mocha.IRunner
+  private run: mocha.IRunner
   private root = 'test/report/'
   private lastStart: number
   private results: {

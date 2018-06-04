@@ -79,10 +79,6 @@ export default class Block {
       })
       if (data.sealFields && data.sealFields.length)
         data.sealFields.forEach(s => this.raw.push(rlp.decode(toBuffer(s))))
-
-
-      //        this.raw.push(ethUtil.rlp.encode(data.sealFields.map(toBuffer)))
-      //        data.sealFields.forEach(_ => this.raw.push(toBuffer(_)))
       else {
         if (data.mixHash !== undefined)
           this.raw.push(toBuffer(data.mixHash))
@@ -162,9 +158,9 @@ export function createTx(transaction) {
   const tx = new Transaction(txParams)
   tx._from = fromAddress
   tx.getSenderAddress = function () { return fromAddress }
-  if (txParams.hash && txParams.hash !== '0x' + ethUtil.sha3(tx.serialize()).toString('hex')) {
+  if (txParams.hash && txParams.hash !== '0x' + ethUtil.sha3(tx.serialize()).toString('hex'))
     throw new Error('wrong txhash! : ' + (txParams.hash + '!== 0x' + ethUtil.sha3(tx.serialize()).toString('hex')) + '  full tx=' + tx.serialize().toString('hex'))
-  }
+
   // override hash
   const txHash = ethUtil.toBuffer(txParams.hash)
   if (txParams.hash)
@@ -172,32 +168,23 @@ export function createTx(transaction) {
   return tx
 }
 
+// encode the account
 export function serializeAccount(nonce: string, balance: string, storageHash: string, codeHash: string): Buffer {
-  // encode the account
-  return ethUtil.rlp.encode([nonce || '0x00', balance || '0x00', storageHash || '0x' + ethUtil.KECCAK256_RLP_S, codeHash || '0x' + ethUtil.KECCAK256_NULL_S].map(toVariableBuffer))
-
+  return rlp.encode([
+    nonce || '0x00',
+    balance || '0x00',
+    storageHash || '0x' + ethUtil.KECCAK256_RLP_S,
+    codeHash || '0x' + ethUtil.KECCAK256_NULL_S
+  ].map(toVariableBuffer))
 }
 
 export function serializeReceipt(txReceipt: any) {
-
   return rlp.encode([
     toBuffer(txReceipt.status || txReceipt.root),
     toBuffer(txReceipt.cumulativeGasUsed),
     toBuffer(txReceipt.logsBloom),
     txReceipt.logs.map(l => [l.address, l.topics.map(toBuffer), l.data].map(toBuffer))]
   )
-  /*
-
-
-  var gas = toBuffer(txReceipt.cumulativeGasUsed)
-  var bloom = toBuffer(txReceipt.logsBloom)
-  var logs = txReceipt.logs.map(l => [l.address, l.topics.map(toBuffer), l.data].map(toBuffer))
-
-  if (txReceipt.status !== undefined && txReceipt.status != null)
-    return rlp.encode([toBuffer(txReceipt.status), gas, bloom, logs])
-  else
-    return rlp.encode([toBuffer(txReceipt.root), gas, bloom, logs])
-    */
 }
 
 // converts a string into a Buffer, but treating 0x00 as empty Buffer
