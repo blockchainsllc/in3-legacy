@@ -80,9 +80,6 @@ export function createRefs<T>(val: T, cache: string[] = []): T {
 }
 
 export function resolveRefs<T>(val: T, cache: string[] = []): T {
-  if (typeof val === 'string' && val.startsWith('0x'))
-    cache.push(val)
-
   switch (typeof val) {
     case 'string':
       const s = val as any as string
