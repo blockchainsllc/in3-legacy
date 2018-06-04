@@ -39,7 +39,7 @@ app.use(bodyParser())
 
 router.post('/', async ctx => {
   try {
-    const res = await rpc.handle(Array.isArray(ctx.request.body) ? ctx.request.body : [ctx.request.body])
+    const res = cbor.createRefs(await rpc.handle(Array.isArray(ctx.request.body) ? ctx.request.body : [ctx.request.body]))
     ctx.body = Array.isArray(ctx.request.body) ? res : res[0]
   } catch (err) {
     ctx.status = err.status || 500

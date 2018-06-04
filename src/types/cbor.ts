@@ -54,3 +54,48 @@ function convertToHex(val: any): any {
       return val
   }
 }
+
+
+
+
+
+export function createRefs<T>(val: T, cache: string[] = []): T {
+  switch (typeof val) {
+    case 'string':
+      const s = val as any as string
+      if (s.startsWith('0x')) {
+        const i = cache.indexOf(s)
+        if (i >= 0) return (':' + i) as any as T
+        cache.push(s)
+      }
+      return val
+
+    case 'object':
+      return (Array.isArray(val)
+        ? val.map(_ => createRefs(_, cache))
+        : Object.keys(val).reduce((p, c) => { p[c] = createRefs(val[c], cache); return p }, {})) as any as T
+    default:
+      return val
+  }
+}
+
+export function resolveRefs<T>(val: T, cache: string[] = []): T {
+  if (typeof val === 'string' && val.startsWith('0x'))
+    cache.push(val)
+
+  switch (typeof val) {
+    case 'string':
+      const s = val as any as string
+      if (s.startsWith('0x'))
+        cache.push(s)
+      if (s.startsWith(':'))
+        return cache[parseInt(s.substr(1))] as any as T
+      return val
+    case 'object':
+      return (Array.isArray(val)
+        ? val.map(_ => resolveRefs(_, cache))
+        : Object.keys(val).reduce((p, c) => { p[c] = resolveRefs(val[c], cache); return p }, {})) as any as T
+    default:
+      return val
+  }
+}

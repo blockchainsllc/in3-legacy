@@ -6,6 +6,7 @@ import { getChainData } from './abi'
 import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
 import Filters from './filter'
 import { toHex } from './block';
+import { resolveRefs } from '../types/cbor';
 
 
 
@@ -345,7 +346,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     })
 
     // send the request to the server with a timeout
-    const responses = await transport.handle(node.url, request, conf.timeout).then(_ => Array.isArray(_) ? _ : [_])
+    const responses = resolveRefs(await transport.handle(node.url, request, conf.timeout).then(_ => Array.isArray(_) ? _ : [_]))
 
     // update stats
     stats.responseCount = (stats.responseCount || 0) + 1
