@@ -47,7 +47,8 @@ export default class Client {
               deposit: 0,
               chainIds: ['0x000000000000000000000000000000000000000000000000000000000000002a'],
               address: '0xa1bB1860c4aBF6F050F36cf672679d940c916a18',
-              url: 'https://in3-kovan1.slock.it'
+              url: 'https://in3-kovan1.slock.it',
+              props: 65535
             }
           ]
         },

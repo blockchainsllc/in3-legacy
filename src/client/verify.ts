@@ -456,23 +456,27 @@ function verifyNodeListData(nl: NodeList, proof: Proof, block: Block, request: R
 }
 
 function checkStorage(ap: AccountProof, key: string, value: string, msg?: string) {
-  if (getStorageValue(ap, key) !== toMinHex(value))
-    throw new Error(msg || ('The key has the wrong value (expected: ' + value + ' proven:' + getStorageValue(ap, key)))
+  if (toMinHex(getStorageValue(ap, key)) !== toMinHex(value))
+    throw new Error(msg + ('The key has the wrong value (expected: ' + toMinHex(value) + ' proven:' + toMinHex(getStorageValue(ap, key))))
 }
 
 function toMinHex(key: string) {
-  if (key === '0x0000000000000000000000000000000000000000000000000000000000000000') return '0x0'
   for (let i = 2; i < key.length; i++) {
     if (key[i] !== '0')
       return '0x' + key.substr(i)
   }
-  return key
+  return '0x0'
 }
 
 function getStorageValue(ap: AccountProof, key: string) {
 
   key = toMinHex(key)
-  const entry = ap.storageProof.find(_ => _.key === key)
+  let entry = ap.storageProof.find(_ => _.key === key)
+  if (!entry && key.length % 2) {
+    key = '0x0' + key.substr(2)
+    entry = ap.storageProof.find(_ => _.key === key)
+  }
+
   if (!entry) throw new Error(' There is no storrage key ' + key + ' in the storage proof!')
   return entry.value
 }

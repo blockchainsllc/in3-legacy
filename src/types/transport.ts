@@ -27,19 +27,30 @@ export class AxiosTransport implements Transport {
     if (this.format === 'cbor')
       Object.assign(conf, {
         transformRequest: cbor.encodeRequests,
-        transformResponse: cbor.decodeResponses,
+        transformResponse: cbor.decodeResponses /*{
+          console.log('received size:', r.length)
+          const decodec = cbor.decodeResponses(r)
+          console.log('decodec size:', JSON.stringify(decodec).length)
+          console.log('replaced refs size:', JSON.stringify(cbor.resolveRefs(decodec)).length)
+          return decodec
+
+        }*/,
         headers: { 'Content-Type': 'application/cbor' },
         responseType: 'arraybuffer'
       })
 
     // execute request
-    const res = await axios.post(url, requests, { ...conf, timeout: timeout || 5000 })
+    try {
+      const res = await axios.post(url, requests, { ...conf, timeout: timeout || 5000 })
 
-    // throw if the status is an error
-    if (res.status > 200) throw new Error('Invalid response ' + url + ' : ' + res.statusText)
+      // throw if the status is an error
+      if (res.status > 200) throw new Error('Invalid status')
 
-    // if this was not given as array, we need to convert it back to a single object
-    return Array.isArray(data) ? res.data : res.data[0]
+      // if this was not given as array, we need to convert it back to a single object
+      return Array.isArray(data) ? res.data : res.data[0]
+    } catch (err) {
+      throw new Error('Invalid response from ' + url + '(' + JSON.stringify(requests, null, 2) + ')' + ' : ' + err.message + (err.response ? err.response.statusText : ''))
+    }
   }
 
   random(count: number): number[] {

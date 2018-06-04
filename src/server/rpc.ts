@@ -15,7 +15,7 @@ export async function handle(request: RPCRequest[]): Promise<RPCResponse[]> {
 
     if (r.method === 'in3_nodeList')
       return handler.getNodeList(
-        in3Request.verification.startsWith('proof'),
+        in3Request.verification && in3Request.verification.startsWith('proof'),
         r.params[0] || 0,
         r.params[1],
         r.params[2] || [],
