@@ -14,6 +14,8 @@ import { BlockData, toHex } from '../../src/client/block';
 import { getAddress } from '../../src/server/tx';
 import { Proof } from '../../src/client/verify';
 import { LogData } from '../../src/client/block';
+import { simpleEncode } from 'ethereumjs-abi'
+
 
 // our test private key
 const pk = '0xb903239f8543d04b5dc1ba6579132b143087c68db1b2168786408fcbce568238'
@@ -638,6 +640,9 @@ describe('ETH Standard JSON-RPC', () => {
     // check deployed code
     const adr = await deployContract('TestContract', pk1)
 
+    // check deployed code
+    const adr2 = await deployContract('TestContract', pk1)
+
     // increase the count 
     await tx.callContract('http://localhost:8545', adr, 'increase()', [], {
       confirm: true,
@@ -646,12 +651,29 @@ describe('ETH Standard JSON-RPC', () => {
       value: 0
     })
 
+    // increase the count 
+    await tx.callContract('http://localhost:8545', adr2, 'increase()', [], {
+      confirm: true,
+      privateKey: pk1,
+      gas: 3000000,
+      value: 0
+    })
 
     const txArgs = {
       from: getAddress(pk1),
       to: adr,
       data: '0x61bc221a'
     }
+    const b1 = await client.sendRPC('eth_call', [{ from: txArgs.from, to: adr2, data: '0x' + simpleEncode('add(address)', adr).toString('hex') }, 'latest'], null, { keepIn3: true, includeCode: true })
+    const result1 = b1.result as string
+    assert.exists(b1.in3)
+    assert.exists(b1.in3.proof)
+    const proof1 = b1.in3.proof as any
+    assert.equal(proof1.type, 'callProof')
+    assert.exists(proof1.block)
+    assert.exists(proof1.accounts)
+    assert.equal(toHex(result1), '0x0000000000000000000000000000000000000000000000000000000000000002')
+
 
     const b = await client.sendRPC('eth_call', [txArgs], null, { keepIn3: true, includeCode: true })
 

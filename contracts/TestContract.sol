@@ -11,6 +11,14 @@ contract TestContract {
         LogInc(counter,msg.sender);
     }
 
+    function add(TestContract c) public view returns(uint) {
+        return c.counter() + counter;
+    }
+
+    function getBlockHash(uint number) public view returns (bytes32) {
+        return block.blockhash(number);
+    }
+
     
 
 }
