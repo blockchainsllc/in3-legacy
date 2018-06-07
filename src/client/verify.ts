@@ -10,6 +10,7 @@ import { executeCall } from './call'
 import NodeList from './nodeList';
 import * as tx from '../server/tx'
 import { getStorageKeys, createRandomIndexes } from '../server/nodeListUpdater'
+import verifyMerkleProof from './merkleProof'
 
 
 export interface LogProof {
@@ -180,27 +181,22 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
 
   // TODO the from-address is not directly part of the hash, so manipulating this property would not be detected! 
   // we would have to take the from-address from the signature
-  const txHashofData = '0x' + createTx(txData).hash().toString('hex')
+  const tx = createTx(txData)
+  const txHashofData = '0x' + tx.hash().toString('hex')
+  //  const txHashofData = '0x' + createTx(txData).hash().toString('hex')
   if (txHashofData !== txHash)
     throw new Error('The transactiondata were manipulated')
 
-  return new Promise((resolve, reject) => {
-    Trie.verifyProof(
-      block.transactionsTrie, // expected merkle root
-      util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
-      proof.merkelProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
-      (err, value) => { // callback
-        if (err) return reject(err)
-        // the value holds the Buffer of the transaction to proof
-        // we can now simply hash this and compare it to the given txHas
-        if (txHash === '0x' + util.sha3(value).toString('hex'))
-          resolve(value)
-        else
-          reject(new Error('The TransactionHash could not be verified, since the merkel-proof resolved to a different hash'))
-      })
-  })
-}
+  // verifiy the proof
+  await verifyMerkleProof(
+    block.transactionsTrie, // expected merkle root
+    util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
+    proof.merkelProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
+    tx.serialize(),
+    'The Transaction can not be verified'
+  )
 
+}
 
 /** verifies a TransactionProof */
 export async function verifyTransactionReceiptProof(txHash: string, proof: Proof, expectedSigners: string[], receipt: any) {
@@ -214,23 +210,14 @@ export async function verifyTransactionReceiptProof(txHash: string, proof: Proof
   verifyBlock(block, proof.signatures, expectedSigners, receipt.blockHash)
 
   // since the blockhash is verified, we have the correct transaction root
-  return new Promise((resolve, reject) => {
-    Trie.verifyProof(
-      block.receiptTrie, // expected merkle root
-      util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
-      proof.merkelProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
-      (err, value) => { // callback
-        if (err) return reject(err)
-        // the value holds the Buffer of the transaction to proof
-        // we can now simply hash this and compare it to the given txHas
-        if (value.toString('hex') === serializeReceipt(receipt).toString('hex'))
-          resolve(value)
-        else
-          reject(new Error('The TransactionHash could not be verified, since the merkel-proof resolved to a different hash'))
-      })
-  })
-
-
+  // verifiy the proof
+  await verifyMerkleProof(
+    block.receiptTrie, // expected merkle root
+    util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
+    proof.merkelProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
+    serializeReceipt(receipt),
+    'The TransactionReceipt can not be verified'
+  )
 }
 
 
@@ -259,16 +246,12 @@ export async function verifyLogProof(proof: Proof, expectedSigners: string[], lo
 
     // verifiy all merkle-Trees of the receipts
     await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
-      new Promise((resolve, reject) => {
-        Trie.verifyProof(
-          block.receiptTrie, // expected merkle root
-          util.rlp.encode(blockProof.receipts[txHash].txIndex), // path, which is the transsactionIndex
-          blockProof.receipts[txHash].proof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
-          (err, value) => { // callback
-            if (err) return reject(err)
-            resolve(receiptData[txHash] = util.rlp.decode(value))
-          })
-      })
+      verifyMerkleProof(
+        block.receiptTrie, // expected merkle root
+        util.rlp.encode(blockProof.receipts[txHash].txIndex), // path, which is the transsactionIndex
+        blockProof.receipts[txHash].proof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
+        undefined // we don't want to check, but use the found value in the next step
+      ).then(value => receiptData[txHash] = util.rlp.decode(value))
     ))
 
   }))
@@ -519,48 +502,31 @@ async function verifyAccount(accountProof: AccountProof, block: Block) {
 
   //  return Promise.all([
   return Promise.all([
-    // verify the account
-    new Promise((resolve, reject) => {
-      Trie.verifyProof(
-        block.stateRoot, // expected merkle root
-        util.keccak(accountProof.address), // path, which is the transsactionIndex
-        accountProof.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
-        (err, value) => { // callback
-          if (err) return reject(err)
 
-          // encode the account
-          const account = serializeAccount(accountProof.nonce, accountProof.balance, accountProof.storageHash, accountProof.codeHash)
 
-          if (value.toString('hex') === account.toString('hex'))
-            resolve(value)
-          else
-            reject(new Error('The Account could not be verified, since the merkel-proof resolved to a different hash'))
-
-        })
-    }),
+    verifyMerkleProof(
+      block.stateRoot, // expected merkle root
+      util.keccak(accountProof.address), // path, which is the transsactionIndex
+      accountProof.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
+      isNotExistend(accountProof) ? null : serializeAccount(accountProof.nonce, accountProof.balance, accountProof.storageHash, accountProof.codeHash),
+      'The Account could not be verified'
+    ),
 
     // and all storage proofs
     ...accountProof.storageProof.map(s =>
-      new Promise((resolve, reject) => {
-        Trie.verifyProof(
-          toBuffer(accountProof.storageHash),   // the storageRoot of the account
-          util.keccak(toHex(s.key, 32)),  // the path, which is the hash of the key
-          s.proof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
-          (err, value) => { // callback
-            // if the storagevalue is 0 the merkleProof may not contain the leaf
-            if (err && err.message === 'Unexpected end of proof' && parseInt(s.value) === 0)
-              return resolve(value)
-            if (err)
-              return reject(err)
-            if ('0x' + util.rlp.decode(value).toString('hex') === toHex(s.value))
-              resolve(value)
-            else
-              reject(new Error('The storage value for ' + s.key + ' could not be verified, since the merkel-proof resolved to a different hash'))
-
-          })
-      }
+      verifyMerkleProof(
+        toBuffer(accountProof.storageHash),   // the storageRoot of the account
+        util.keccak(toHex(s.key, 32)),  // the path, which is the hash of the key
+        s.proof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
+        parseInt(s.value) === 0 ? null : util.rlp.encode(s.value),
+        'The Srorage could not be verified'
       ))
   ])
+}
+
+function isNotExistend(account: AccountProof) {
+  // TODO how do I determine the default nonce? It is in the genesis-bock!
+  return parseInt(account.balance) === 0 && account.codeHash == '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' && parseInt(account.nonce) === 0
 }
 
 /** general verification-function which handles it according to its given type. */
