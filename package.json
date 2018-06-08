@@ -2,7 +2,7 @@
   "name": "in3",
   "version": "0.1.0",
   "description": "Typescript-version of the incubed client/server",
-  "main": "js/src/index.js",
+  "main": "js/index.js",
   "scripts": {
     "build": "tsc -p .",
     "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/utils/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*/*.ts; cp -r coverage test/report/",
