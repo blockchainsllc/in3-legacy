@@ -19,3 +19,8 @@ export const storage = _storage
 import * as _transport from './util/transport'
 export const transport = _transport
 
+
+import * as _nodeList from './client/nodeList'
+export const NodeList = _nodeList
+
+
