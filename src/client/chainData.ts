@@ -1,10 +1,8 @@
 import Client from './Client'
 import { simpleEncode, simpleDecode } from 'ethereumjs-abi'
 import { toBuffer, toChecksumAddress } from 'ethereumjs-util'
-import { toHex } from './block'
-import { IN3Config } from '../types/config';
-
-
+import { toHex, toSimpleHex } from '../util/util'
+import { IN3Config } from '../types/types';
 
 export async function callContract(client: Client, contract: string, chainId: string, signature: string, args: any[], config?: IN3Config) {
   return simpleDecode(signature, await client.sendRPC('eth_call', [{
@@ -26,10 +24,3 @@ export async function getChainData(client: Client, chainId: string, config?: IN3
 }
 
 
-function toSimpleHex(val: string) {
-  let hex = val.replace('0x', '')
-  while (hex.startsWith('00') && hex.length > 2)
-    hex = hex.substr(2)
-  return '0x' + hex
-
-}

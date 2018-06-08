@@ -1,15 +1,13 @@
-import { AccountProof, getStorageValue } from './verify'
+import { getStorageValue } from './verify'
 import * as VM from 'ethereumjs-vm'
 import * as Account from 'ethereumjs-account'
 import * as Block from 'ethereumjs-block'
-import * as Transaction from 'ethereumjs-tx'
 import * as Trie from 'merkle-patricia-tree'
 import * as rlp from 'rlp'
 import * as utils from 'ethereumjs-util'
-import * as b from './block'
-import { promisify, toBuffer } from './block';
-import { getAddress } from '../server/tx'
-import { toChecksumAddress } from 'ethereumjs-util';
+import { createTx } from '../util/serialize'
+import { promisify, toBuffer } from '../util/util'
+import { AccountProof } from '../types/types'
 
 /** executes a transaction-call to a smart contract */
 export async function executeCall(args: {
@@ -27,7 +25,7 @@ export async function executeCall(args: {
   await setStorageFromProof(state, accounts)
 
   // create a transaction-object
-  const tx = b.createTx({ gas: '0x5b8d80', gasLimit: '0x5b8d80', from: '0x0000000000000000000000000000000000000000', ...args })
+  const tx = createTx({ gas: '0x5b8d80', gasLimit: '0x5b8d80', from: '0x0000000000000000000000000000000000000000', ...args })
 
   // keep track of each opcode in order to make sure, all storage-values are provided!
   let missingDataError: Error = null
@@ -87,14 +85,14 @@ async function setStorageFromProof(trie, accounts: { [adr: string]: AccountProof
     if (ac.codeHash) account.codeHash = ac.codeHash
 
     // if we have a code, we will set the code
-    if (ac.code) await promisify(account, account.setCode, trie, b.toBuffer(ac.code))
+    if (ac.code) await promisify(account, account.setCode, trie, toBuffer(ac.code))
 
     // set all storage-values
     for (const s of ac.storageProof)
-      await promisify(account, account.setStorage, trie, b.toBuffer(s.key, 32), rlp.encode(b.toBuffer(s.value, 32)))
+      await promisify(account, account.setStorage, trie, toBuffer(s.key, 32), rlp.encode(toBuffer(s.value, 32)))
 
     // set the account data
-    await promisify(trie, trie.put, b.toBuffer(adr, 20), account.serialize())
+    await promisify(trie, trie.put, toBuffer(adr, 20), account.serialize())
   }
 }
 

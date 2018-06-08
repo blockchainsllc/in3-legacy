@@ -1,12 +1,12 @@
-import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig } from '../types/config'
+import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig } from '../types/types'
 import { verifyProof } from './verify'
 import NodeList, { canMultiChain, canProof } from './nodeList'
-import { Transport, AxiosTransport } from '../types/transport'
-import { getChainData } from './abi'
+import { Transport, AxiosTransport } from '../util/transport'
+import { getChainData } from './chainData'
 import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
 import Filters from './filter'
-import { toHex } from './block';
-import { resolveRefs } from '../types/cbor';
+import { toHex } from '../util/util'
+import { resolveRefs } from '../util/cbor'
 
 
 
@@ -91,11 +91,6 @@ export default class Client {
       }))
     }
 
-    // TODO maybe may should support a upper limit of nodes and the choose randomly
-    // now we can ask the current nodes for a new list.
-    //const res = await this.sendRPC('in3_nodeList', [], chain).then(_ => (_.result as any) as IN3NodeConfig[])
-
-
     // create a random seed which ensures the deterministic nature of even a partly list.
     const seed = '0x' + keccak256('0x' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)).toString('hex')
 
@@ -103,7 +98,7 @@ export default class Client {
       'in3_nodeList',
       [this.defConfig.nodeLimit, seed, servers.initAddresses || []],
       chain, conf)
-      .then(_ => _.result as any as NodeList)
+      .then(_ => _.result as NodeList)
 
     if (config.proof && nl.contract.toLowerCase() !== servers.contract.toLowerCase()) {
       // the server gave us the wrong contract!
@@ -135,7 +130,7 @@ export default class Client {
    * @param config optional config-params overridnig the client config
    */
   public async call(method: string, params: any, chain?: string, config?: Partial<IN3Config>) {
-    return this.sendRPC(method, params, chain, config).then(_ => _.error ? Promise.reject(_.error) : _.result as any)
+    return this.sendRPC(method, params, chain, config).then(_ => _.error ? Promise.reject(_.error) : _.result)
   }
 
 
@@ -234,16 +229,6 @@ export default class Client {
 
 let idCount = 1
 
-function prepareCall(contract: string, methodHash: string, params?: string): RPCRequest {
-  return {
-    method: 'eth_call',
-    params: [{
-      to: contract,
-      data: methodHash + (params || '')
-    }, 'latest']
-  } as any
-}
-
 /**
  * 
  * verifies all responses and removed the invalid ones.
@@ -267,7 +252,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   // for blocknumbers, we simply ake the highest! 
   // TODO check error and maybe even blocknumbers in the future
   if (request.method === 'eth_blockNumber')
-    return { ...responses[0], result: '0x' + Math.max(...responses.map(_ => parseInt(_.result as any))).toString(16) }
+    return { ...responses[0], result: '0x' + Math.max(...responses.map(_ => parseInt(_.result))).toString(16) }
 
 
   // how many different results do we have?

@@ -1,5 +1,5 @@
 import Client from './Client';
-import { RPCRequest, RPCResponse } from '../types/config'
+import { RPCRequest, RPCResponse } from '../types/types'
 
 export interface FilterOptions {
   fromBlock?: number | string

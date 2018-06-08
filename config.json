@@ -1,4 +1,4 @@
 {
-  "privateKey":"0x1234567890123456789012345678901234567890123456789012345678901234"
-
+  "privateKey": "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
+  "rpcUrl": "http://rpc-kovan.slock.it"
 }
