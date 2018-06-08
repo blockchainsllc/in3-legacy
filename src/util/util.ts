@@ -6,6 +6,8 @@ const BN = ethUtil.BN
 // converts a string into a Buffer, but treating 0x00 as empty Buffer
 export const fixLength = (hex: string) => hex.length % 2 ? '0' + hex : hex
 export const toVariableBuffer = (val: string) => (val == '0x' || val === '0x0' || val === '0x00') ? Buffer.alloc(0) : ethUtil.toBuffer(val) as Buffer
+export const leftPad = (val: any, len: number) => toHex(val, len / 2)
+export const toBN = val => new BN(toHex(val).substr(2), 16)
 
 export function promisify(self, fn, ...args: any[]): Promise<any> {
   return new Promise((resolve, reject) => {
