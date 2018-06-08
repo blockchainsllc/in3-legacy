@@ -1,7 +1,7 @@
 import { IN3NodeConfig } from '../types/types'
 import keccak256 from 'ethereumjs-util'
 
-export default class NodeList {
+export default class ServerList {
 
   lastBlockNumber: number
   nodes: IN3NodeConfig[]

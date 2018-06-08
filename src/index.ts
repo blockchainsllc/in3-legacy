@@ -17,8 +17,8 @@ export const storage = _storage
 import * as _transport from './util/transport'
 export const transport = _transport
 
-import _NodeList, * as _nodeList from './client/nodeList'
-export const NodeList = _NodeList
+import _ServerList, * as _nodeList from './client/serverList'
+export const ServerList = _ServerList
 export const createRandomIndexes = _nodeList.createRandomIndexes
 
 

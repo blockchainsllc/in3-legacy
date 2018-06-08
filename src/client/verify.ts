@@ -4,7 +4,7 @@ import { Signature } from '../types/types'
 import { Block, createTx, blockFromHex, serializeReceipt, serializeAccount, LogData } from '../util/serialize'
 import { toHex, toBuffer, promisify, toMinHex } from '../util/util'
 import { executeCall } from './call'
-import NodeList, { createRandomIndexes } from './nodeList'
+import ServerList, { createRandomIndexes } from './serverList'
 import verifyMerkleProof from '../util/merkleProof'
 import { getStorageArrayKey, getStringValue } from '../util/storage'
 import * as Trie from 'merkle-patricia-tree'
@@ -251,9 +251,9 @@ export async function verifyAccountProof(request: RPCRequest, value: any, proof:
   await verifyAccount(accountProof, block)
 }
 
-function verifyNodeListData(nl: NodeList, proof: Proof, block: Block, request: RPCRequest) {
+function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request: RPCRequest) {
   // make it a real NodeList
-  (nl as any).__proto__ = NodeList.prototype
+  (nl as any).__proto__ = ServerList.prototype
 
   // get the one account to check with
   const accountProof = proof.accounts[Object.keys(proof.accounts)[0]]

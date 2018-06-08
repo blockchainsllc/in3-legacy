@@ -1,6 +1,6 @@
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig } from '../types/types'
 import { verifyProof } from './verify'
-import NodeList, { canMultiChain, canProof } from './nodeList'
+import ServerList, { canMultiChain, canProof } from './serverList'
 import { Transport, AxiosTransport } from '../util/transport'
 import { getChainData } from './chainData'
 import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
@@ -96,7 +96,7 @@ export default class Client {
       'in3_nodeList',
       [this.defConfig.nodeLimit, seed, servers.initAddresses || []],
       chain, conf)
-      .then(_ => _.result as NodeList)
+      .then(_ => _.result as ServerList)
 
     if (config.proof && nl.contract.toLowerCase() !== servers.contract.toLowerCase()) {
       // the server gave us the wrong contract!
