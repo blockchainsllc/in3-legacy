@@ -9,8 +9,6 @@ import { toHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 
 
-
-
 /**
  * Client for N3.
  * 

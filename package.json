@@ -2,7 +2,7 @@
   "name": "n3-ts",
   "version": "1.0.0",
   "description": "Typescript-version of the incubed client/server",
-  "main": "dist/src/index.js",
+  "main": "js/src/index.js",
   "scripts": {
     "build": "tsc -p .",
     "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/utils/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*/*.ts; cp -r coverage test/report/",
@@ -11,7 +11,8 @@
     "updateTypes": "dtsgen src/types/types.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' | sed 's/;//g' > src/types/types.ts ",
     "parity": "docker run -p 8180:8180 -p 8545:8545 -p 8546:8546 slockit/parity-in3:latest --jsonrpc-apis all --logging=3 --jsonrpc-interface=all --ws-interface=all ---chain dev --gas-cap=8000000 --gasprice 0  --reseal-min-period 0   --gas-floor-target 8700000",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
-    "disc": "cd js; discify in3.js > in3.html; cd .."
+    "disc": "cd js; discify in3.js > in3.html; cd ..",
+    "postinstall": "tsc -p ."
   },
   "nyc": {
     "include": [
