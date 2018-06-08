@@ -17,8 +17,10 @@ export const storage = _storage
 import * as _transport from './util/transport'
 export const transport = _transport
 
-import * as _nodeList from './client/nodeList'
-export const NodeList = _nodeList
+import _NodeList, * as _nodeList from './client/nodeList'
+export const NodeList = _NodeList
+export const createRandomIndexes = _nodeList.createRandomIndexes
+
 
 import * as types from './types/types'
 export type RPCRequest = types.RPCRequest
@@ -32,4 +34,6 @@ export type LogProof = types.LogProof
 export type Proof = types.Proof
 export type RPCResponse = types.RPCResponse
 export type Signature = types.Signature
+export type Transport = _transport.Transport
+export const AxiosTransport = transport.AxiosTransport
 
