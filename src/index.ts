@@ -1,8 +1,6 @@
 import Client from './client/Client'
 export default Client
 
-import * as _types from './types/types'
-export const types = _types
 
 import * as _util from './util/util'
 export const util = _util
@@ -19,8 +17,19 @@ export const storage = _storage
 import * as _transport from './util/transport'
 export const transport = _transport
 
-
 import * as _nodeList from './client/nodeList'
 export const NodeList = _nodeList
 
+import * as types from './types/types'
+export type RPCRequest = types.RPCRequest
+export type AccountProof = types.AccountProof
+export type IN3Config = types.IN3Config
+export type IN3NodeConfig = types.IN3NodeConfig
+export type IN3NodeWeight = types.IN3NodeWeight
+export type IN3RPCRequestConfig = types.IN3RPCRequestConfig
+export type IN3ResponseConfig = types.IN3ResponseConfig
+export type LogProof = types.LogProof
+export type Proof = types.Proof
+export type RPCResponse = types.RPCResponse
+export type Signature = types.Signature
 
