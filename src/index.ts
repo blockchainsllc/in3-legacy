@@ -17,12 +17,16 @@ export const storage = _storage
 import * as _transport from './util/transport'
 export const transport = _transport
 
-import _ServerList, * as _nodeList from './client/serverList'
-export const ServerList = _ServerList
+
+import * as _chainData from './client/chainData'
+export const chainData = _chainData
+
+import * as _nodeList from './client/serverList'
 export const createRandomIndexes = _nodeList.createRandomIndexes
 
 
 import * as types from './types/types'
+
 export type RPCRequest = types.RPCRequest
 export type AccountProof = types.AccountProof
 export type IN3Config = types.IN3Config
@@ -35,5 +39,7 @@ export type Proof = types.Proof
 export type RPCResponse = types.RPCResponse
 export type Signature = types.Signature
 export type Transport = _transport.Transport
+export type ServerList = types.ServerList
+export type BlockData = _serialize.BlockData
+export type LogData = _serialize.LogData
 export const AxiosTransport = transport.AxiosTransport
-

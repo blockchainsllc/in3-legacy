@@ -1,6 +1,6 @@
-import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig } from '../types/types'
+import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig, ServerList } from '../types/types'
 import { verifyProof } from './verify'
-import ServerList, { canMultiChain, canProof } from './serverList'
+import { canMultiChain, canProof } from './serverList'
 import { Transport, AxiosTransport } from '../util/transport'
 import { getChainData } from './chainData'
 import { toChecksumAddress, keccak256 } from 'ethereumjs-util'

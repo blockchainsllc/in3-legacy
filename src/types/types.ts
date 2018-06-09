@@ -350,6 +350,28 @@
          */
         in3Node?: IN3NodeConfig
     }
+    /**
+     * a List of nodes
+     */
+    export interface ServerList {
+        /**
+         * last Block number
+         */
+        lastBlockNumber?: number
+        /**
+         * the list of nodes
+         */
+        nodes: IN3NodeConfig[]
+        /**
+         * IN3 Registry
+         */
+        contract?: string // ^0x[0-9a-fA-F]+$
+        /**
+         * number of servers
+         */
+        totalServers?: number
+        proof?: Proof
+    }
     export interface Signature {
         /**
          * the address of the signing node

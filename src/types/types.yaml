@@ -366,3 +366,26 @@ definitions:
                             type: string
                             description: the stored value 
                             pattern: ^0x[0-9a-fA-F]+$
+
+    ServerList:
+        type: object
+        description: a List of nodes
+        required: [ nodes ]
+        properties:
+            lastBlockNumber:
+                type: integer
+                description: last Block number 
+            nodes:
+                type: array
+                description: the list of nodes
+                items:
+                    $ref: "#/definitions/IN3NodeConfig"
+            contract:
+                type: string
+                description: IN3 Registry 
+                pattern: ^0x[0-9a-fA-F]+$
+            totalServers:
+                type: integer
+                description: number of servers
+            proof:
+                $ref: "#/definitions/Proof"

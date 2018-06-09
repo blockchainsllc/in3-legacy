@@ -1,24 +1,6 @@
 import { IN3NodeConfig } from '../types/types'
 import keccak256 from 'ethereumjs-util'
 
-export default class ServerList {
-
-  lastBlockNumber: number
-  nodes: IN3NodeConfig[]
-  proof: any
-  contract: string
-  totalServers: number
-
-  update(nodes: IN3NodeConfig[], lastBlock: number) {
-    this.nodes = nodes
-    this.lastBlockNumber = lastBlock
-  }
-
-  getAddress(adr: string) {
-    return this.nodes.find(_ => _.address === adr)
-  }
-
-}
 
 export function canProof(node: IN3NodeConfig) {
   return (node.props & 0x01) > 0
