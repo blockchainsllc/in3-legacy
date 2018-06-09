@@ -401,7 +401,7 @@ function isNotExistend(account: AccountProof) {
 
 /** general verification-function which handles it according to its given type. */
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true): Promise<boolean> {
-  const proof = response && response.in3 && response.in3.proof as any as Proof
+  const proof = response && response.in3 && response.in3.proof
   if (!proof) {
     if (allowedWithoutProof.indexOf(request.method) >= 0) return true
     // exceptions

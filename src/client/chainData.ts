@@ -10,7 +10,7 @@ export async function callContract(client: Client, contract: string, chainId: st
     data: '0x' + simpleEncode(signature, ...args).toString('hex')
   },
     'latest'], chainId, config)
-    .then(_ => _.error ? Promise.reject(new Error('Error handling call to ' + contract + ' :' + JSON.stringify(_.error))) as any : toBuffer(_.result + '')))
+    .then(_ => _.error ? Promise.reject(new Error('Error handling call to ' + contract + ' :' + JSON.stringify(_.error))) : toBuffer(_.result + '')))
 }
 
 export async function getChainData(client: Client, chainId: string, config?: IN3Config) {

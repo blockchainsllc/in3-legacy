@@ -1,4 +1,5 @@
 import * as ethUtil from 'ethereumjs-util'
+import { RPCResponse } from '../types/types'
 
 const BN = ethUtil.BN
 
@@ -18,6 +19,13 @@ export function promisify(self, fn, ...args: any[]): Promise<any> {
         resolve(res)
     }])
   })
+}
+
+
+export function checkForError<T extends RPCResponse | RPCResponse[]>(res: T): T {
+  if (Array.isArray(res))
+    return res.find(_ => !!_.error) ? Promise.reject(new Error(res.find(_ => !!_.error).error)) as any : res as T
+  return (res as RPCResponse).error ? Promise.reject(new Error((res as RPCResponse).error)) as any : res as T
 }
 
 
