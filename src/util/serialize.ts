@@ -23,7 +23,6 @@ export interface BlockData {
   mixHash?: string
   nonce?: string | number
   transactions?: any[]
-
 }
 
 export interface LogData {

@@ -1,4 +1,4 @@
-import * as ethUtil from 'ethereumjs-util'
+import { sha3, rlp } from 'ethereumjs-util'
 
 
 export default async function verify(rootHash: Buffer, path: Buffer, proof: Buffer[], expectedValue: Buffer, errorMsg?: string) {
@@ -10,12 +10,12 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
 
   for (let i = 0; i < proof.length; i++) {
     const p = proof[i]
-    const hash = ethUtil.sha3(p) as Buffer
+    const hash = sha3(p) as Buffer
     if (Buffer.compare(hash, wantHash))
       throw new Error('Bad proof node ' + i + ': hash mismatch')
 
     // create the node
-    const node = new Node(ethUtil.rlp.decode(p))
+    const node = new Node(rlp.decode(p))
 
     switch (node.type) {
       case 'branch':
