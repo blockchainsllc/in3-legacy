@@ -11,11 +11,11 @@ And there is another reason the BlockHash is so important. This is the only Valu
 Depending on the Method different Proofs would be needed, which are described in this document.
 
 - **[Block Proof](#blockproof)** - verifies the content of the BlockHeader
-- **[Transaction Proof](#transactionproof)** - verifies the input data of a transaction
-- **[Receipt Proof](#receiptproof)** - verifies the outcome of a transaction
-- **[Log Proof](#logproof)** - verifies the response of `eth_getPastLogs`
-- **[Account Proof](#accounttproof)** - verifies the state of an account
-- **[Call Proof](#callproof)** - verifies the result of a `eth_call` - response
+- **[Transaction Proof](#transaction-proof)** - verifies the input data of a transaction
+- **[Receipt Proof](#receipt-proof)** - verifies the outcome of a transaction
+- **[Log Proof](#log-proof)** - verifies the response of `eth_getPastLogs`
+- **[Account Proof](#account-proof)** - verifies the state of an account
+- **[Call Proof](#call-proof)** - verifies the result of a `eth_call` - response
 
 
 
@@ -114,7 +114,7 @@ expectedValue = transaction
 The Proof-Data will look like these:
 
 
-```json
+```js
 {
   "jsonrpc": "2.0",
   "id": 6,
@@ -183,3 +183,51 @@ root = blockHeader.transactionReceiptRoot,
 proof = in3.proof.merkleProof
 expectedValue = transactionReceipt
 ```
+
+## Log Proof
+
+Proofs for logs are only for the one transaction-method:
+
+- [eth_getPastLogs
+](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getpastlogs)
+
+Since logs or events are based on the TransactionReceipts, the only way to prove them is by proving the TransactionReceipt each event belongs to.
+
+That's why this proof needs to offer 
+- all blockheaders where these events occured
+- all TransactionReceipts + their MerkleProof of the logs
+
+The Proof datastructure will look like this:
+
+```ts
+  Proof {
+    type: 'logProof',
+    logProof: {
+      [blockNr: string]: {  // the blockNumber in hex as key
+        block : string  // serialized blockheader
+        receipts: {
+          [txHash: string]: {  // the transactionHash as key
+            txIndex: number // transactionIndex within the block
+            proof: string[] // the merkle Proof-Array
+          }
+        }
+      }
+    }
+  }
+
+```
+
+
+In order to verify we need :
+
+1. deserialize each blockheader and compare the blockhash with the signed hashes. (See [BlockProof](#blockproof))
+
+2. for each blockheader we verify all receipts by using 
+
+```js
+key = keccak256(receipt.txIndex),
+root = blockHeader.transactionReceiptRoot,
+proof = receipt.proof
+```
+
+3. The resulting values are the receipts. For each log-entry, we are comparing the verified values of the receipt and ensuring that they are correct. 

@@ -57,6 +57,8 @@ export function toBuffer(val, len = -1) {
   if (typeof val == 'number')
     val = Buffer.from(fixLength(val.toString(16)), 'hex')
 
+  if (!val) val = Buffer.allocUnsafe(0)
+
   if (len == 0 && val.toString('hex') === '00')
     return Buffer.allocUnsafe(0)
   if (len > 0 && Buffer.isBuffer(val) && val.length < len)

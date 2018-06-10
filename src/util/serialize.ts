@@ -3,15 +3,18 @@ import * as Transaction from 'ethereumjs-tx'
 import { toBuffer, toHex, toVariableBuffer } from './util'
 
 const rlp = ethUtil.rlp
+export type BlockHeader = Buffer[]
 
 export interface BlockData {
   hash: string
   parentHash: string
   sha3Uncles: string
   miner: string
+  coinbase?: string
   stateRoot: string
   transactionsRoot: string
   receiptsRoot: string
+  receiptRoot?: string
   logsBloom: string
   difficulty: string | number
   number: string | number
@@ -36,6 +39,26 @@ export interface LogData {
   data: string // contains one or more 32 Bytes non-indexed arguments of the log.
   topics: string[] //Array of DATA - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * encodes and decodes the blockheader
@@ -158,3 +181,42 @@ export function blockToHex(block: any) {
 export function blockFromHex(hex: string) {
   return new Block(hex)
 }
+
+
+
+
+
+// _______________
+
+const Bytes256 = val => toBuffer(val, 256)
+const Bytes32 = val => toBuffer(val, 32)
+const Bytes8 = val => toBuffer(val, 8)
+const Address = val => toBuffer(val, 20)
+const UInt = val => toBuffer(val, 0)
+
+
+export const toBlockHeader = (block: BlockData) => [
+  Bytes32(block.parentHash),
+  Bytes32(block.sha3Uncles),
+  Address(block.miner || block.coinbase),
+  Bytes32(block.stateRoot),
+  Bytes32(block.receiptsRoot || block.receiptRoot),
+  Bytes256(block.logsBloom),
+  UInt(block.difficulty),
+  UInt(block.number),
+  UInt(block.gasLimit),
+  UInt(block.gasUsed),
+  UInt(block.timestamp),
+  Bytes32(block.extraData),
+  Bytes32(block.extraData),
+
+  ... (block.sealFields
+    ? block.sealFields.map(s => rlp.decode(toBuffer(s)))
+    : [
+      Bytes32(block.mixHash),
+      Bytes8(block.nonce)
+    ]
+  )
+] as BlockHeader
+
+
