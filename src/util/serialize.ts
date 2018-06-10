@@ -1,19 +1,20 @@
 import * as ethUtil from 'ethereumjs-util'
-import * as Tx from 'ethereumjs-tx'
-import * as Trie from 'merkle-patricia-tree'
 import * as Transaction from 'ethereumjs-tx'
+import { toBuffer, toHex, toVariableBuffer } from './util'
 
-const BN = ethUtil.BN
 const rlp = ethUtil.rlp
+export type BlockHeader = Buffer[]
 
 export interface BlockData {
   hash: string
   parentHash: string
   sha3Uncles: string
   miner: string
+  coinbase?: string
   stateRoot: string
   transactionsRoot: string
   receiptsRoot: string
+  receiptRoot?: string
   logsBloom: string
   difficulty: string | number
   number: string | number
@@ -25,7 +26,6 @@ export interface BlockData {
   mixHash?: string
   nonce?: string | number
   transactions?: any[]
-
 }
 
 export interface LogData {
@@ -40,10 +40,30 @@ export interface LogData {
   topics: string[] //Array of DATA - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.)
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * encodes and decodes the blockheader
  */
-export default class Block {
+export class Block {
 
   /** the raw Buffer fields of the BlockHeader */
   raw: Buffer[]
@@ -105,42 +125,6 @@ export default class Block {
 
 }
 
-/** converts any value as hex-string */
-export function toHex(val: any, bytes?: number): string {
-  if (val === undefined) return undefined
-  let hex: string
-  if (typeof val === 'string')
-    hex = val.startsWith('0x') ? val.substr(2) : new BN(val).toString(16)
-  else if (typeof val === 'number')
-    hex = val.toString(16)
-  else if (BN.isBN(val))
-    hex = val.toString(16)
-  else
-    hex = ethUtil.bufferToHex(val).substr(2)
-  if (bytes)
-    hex = hex.padStart(bytes * 2, '0')
-  if (hex.length % 2)
-    hex = '0' + hex
-  return '0x' + hex.toLowerCase()
-}
-
-
-/** converts any value as Buffer */
-export function toBuffer(val, len = -1) {
-  if (typeof val == 'string')
-    val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toBuffer()
-  if (typeof val == 'number')
-    val = Buffer.from(fixLength(val.toString(16)), 'hex')
-
-  if (len == 0 && val.toString('hex') === '00')
-    return Buffer.allocUnsafe(0)
-  if (len > 0 && Buffer.isBuffer(val) && val.length < len)
-    val = Buffer.concat([Buffer.alloc(len - val.length), val])
-
-  return val as Buffer
-
-}
-
 /** creates a Transaction-object from the rpc-transaction-data */
 export function createTx(transaction) {
   const txParams = {
@@ -187,17 +171,52 @@ export function serializeReceipt(txReceipt: any) {
   )
 }
 
-// converts a string into a Buffer, but treating 0x00 as empty Buffer
-const fixLength = (hex: string) => hex.length % 2 ? '0' + hex : hex
-const toVariableBuffer = (val: string) => (val == '0x' || val === '0x0' || val === '0x00') ? Buffer.alloc(0) : ethUtil.toBuffer(val) as Buffer
 
-export function promisify(self, fn, ...args: any[]): Promise<any> {
-  return new Promise((resolve, reject) => {
-    fn.apply(self, [...args, (err, res) => {
-      if (err)
-        reject(err)
-      else
-        resolve(res)
-    }])
-  })
+/** converts blockdata to a hexstring*/
+export function blockToHex(block: any) {
+  return '0x' + new Block(block).serializeHeader().toString('hex')
 }
+
+/** converts a hexstring to a block-object */
+export function blockFromHex(hex: string) {
+  return new Block(hex)
+}
+
+
+
+
+
+// _______________
+
+const Bytes256 = val => toBuffer(val, 256)
+const Bytes32 = val => toBuffer(val, 32)
+const Bytes8 = val => toBuffer(val, 8)
+const Address = val => toBuffer(val, 20)
+const UInt = val => toBuffer(val, 0)
+
+
+export const toBlockHeader = (block: BlockData) => [
+  Bytes32(block.parentHash),
+  Bytes32(block.sha3Uncles),
+  Address(block.miner || block.coinbase),
+  Bytes32(block.stateRoot),
+  Bytes32(block.receiptsRoot || block.receiptRoot),
+  Bytes256(block.logsBloom),
+  UInt(block.difficulty),
+  UInt(block.number),
+  UInt(block.gasLimit),
+  UInt(block.gasUsed),
+  UInt(block.timestamp),
+  Bytes32(block.extraData),
+  Bytes32(block.extraData),
+
+  ... (block.sealFields
+    ? block.sealFields.map(s => rlp.decode(toBuffer(s)))
+    : [
+      Bytes32(block.mixHash),
+      Bytes8(block.nonce)
+    ]
+  )
+] as BlockHeader
+
+

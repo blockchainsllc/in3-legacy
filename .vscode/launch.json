@@ -16,7 +16,7 @@
         "999999",
         "--colors",
         "--grep",
-        "eth_uninstallFilter",
+        "eth_call",
         "${workspaceFolder}/js/test/*/*.js"
       ],
       "outFiles": [
@@ -37,9 +37,26 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Programm starten",
-      "program": "${workspaceFolder}/dist/src/index.js",
-      "preLaunchTask": "tsc: build - tsconfig.json",
+      "name": "Server starten",
+      "program": "${workspaceFolder}/js/src/server/server.js",
+      "outFiles": [
+        "${workspaceFolder}/js/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "testClient starten",
+      "program": "${workspaceFolder}/js/src/testClient.js",
+      "outFiles": [
+        "${workspaceFolder}/js/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "cbor starten",
+      "program": "${workspaceFolder}/js/src/types/cbor.js",
       "outFiles": [
         "${workspaceFolder}/js/**/*.js"
       ]

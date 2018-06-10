@@ -1,10 +1,10 @@
-import { RPCRequest, RPCResponse } from './config';
-import { writeFileSync } from 'fs';
-const cbor = require('cbor')
+import { RPCRequest, RPCResponse } from '../types/types'
+import * as cbor from 'cbor'
 
 export function encodeRequests(requests: RPCRequest[]): Buffer {
   return cbor.encode(requests.map(r => [r.id, r.method, convertToBuffer(r.params), convertToBuffer(r.in3)]))
 }
+
 export function decodeRequests(request: Buffer): RPCRequest[] {
   return cbor.decode(request).map(r => ({
     jsonrpc: '2.0',

@@ -1,68 +1,17 @@
 import * as util from 'ethereumjs-util'
-import * as Transaction from 'ethereumjs-tx'
-import * as Trie from 'merkle-patricia-tree'
-import { RPCRequest, RPCResponse } from '../types/config';
-import { Signature } from '../types/config';
-import Block, { toHex, createTx, BlockData, serializeReceipt, serializeAccount, toBuffer, promisify, LogData } from './block'
-import { StringifyOptions } from 'querystring';
-import * as request from 'request'
+import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList } from '../types/types'
+import { Signature } from '../types/types'
+import { Block, createTx, blockFromHex, serializeReceipt, serializeAccount, LogData } from '../util/serialize'
+import { toHex, toBuffer, promisify, toMinHex } from '../util/util'
 import { executeCall } from './call'
-import NodeList from './nodeList';
-import * as tx from '../server/tx'
-import { getStorageKeys, createRandomIndexes } from '../server/nodeListUpdater'
-import verifyMerkleProof from './merkleProof'
+import { createRandomIndexes } from './serverList'
+import verifyMerkleProof from '../util/merkleProof'
+import { getStorageArrayKey, getStringValue } from '../util/storage'
+import * as Trie from 'merkle-patricia-tree'
 
 
-export interface LogProof {
-  [blockNumber: string]: {
-    block: string
-    allReceipts?: any[]
-    receipts: {
-      [txHash: string]: {
-        txIndex: number
-        proof: string[]
-      }
-    }
-  }
-}
-export interface Proof {
-  type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'nodeListProof' | 'callProof' | 'logProof'
-  block?: string,
-  merkelProof?: string[],
-  transactions?: any[]
-  logProof?: LogProof
-  account?: AccountProof,
-  accounts?: { [adr: string]: AccountProof },
-  txIndex?,
-  signatures: Signature[]
-}
+const allowedWithoutProof = ['eth_blockNumber']
 
-export interface AccountProof {
-  accountProof: string[]
-  address: string,
-  balance: string
-  codeHash: string
-  code?: string
-  nonce: string
-  storageHash: string
-  storageProof: {
-    key: string
-    proof: string[]
-    value: string
-  }[]
-}
-
-const alloedWithoutProof = ['eth_blockNumber']
-
-/** converts blockdata to a hexstring*/
-export function blockToHex(block) {
-  return '0x' + new Block(block).serializeHeader().toString('hex')
-}
-
-/** converts a hexstring to a block-object */
-export function blockFromHex(hex) {
-  return new Block(hex)
-}
 
 /** verify the signatures of a blockhash */
 export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: string[], expectedBlockHash: string) {
@@ -97,77 +46,6 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
 
 
 
-/** creates the merkle-proof for a transation */
-export async function createTransactionProof(block: BlockData, txHash: string, signatures: Signature[]): Promise<Proof> {
-  // we always need the txIndex, since this is used as path inside the merkle-tree
-  const txIndex = block.transactions.findIndex(_ => _.hash === txHash)
-  if (txIndex < 0) throw new Error('tx not found')
-
-  // create trie
-  const trie = new Trie()
-  // fill in all transactions
-  await Promise.all(block.transactions.map(tx => new Promise((resolve, reject) =>
-    trie.put(
-      util.rlp.encode(parseInt(tx.transactionIndex)), // path as txIndex
-      createTx(tx).serialize(),  // raw transactions
-      error => error ? reject(error) : resolve(true)
-    )
-  )))
-
-  // check roothash
-  if (block.transactionsRoot !== '0x' + trie.root.toString('hex'))
-    throw new Error('The transactionHash is wrong! : ' + block.transactionsRoot + '!==0x' + trie.root.toString('hex'))
-
-  // create prove
-  return new Promise<Proof>((resolve, reject) =>
-    Trie.prove(trie, util.rlp.encode(txIndex), (err, prove) => {
-      if (err) return reject(err)
-      resolve({
-        type: 'transactionProof',
-        block: blockToHex(block),
-        merkelProof: prove.map(_ => _.toString('hex')),
-        txIndex, signatures
-      })
-    }))
-}
-
-/** creates the merkle-proof for a transation */
-export async function createTransactionReceiptProof(block: BlockData, receipts: any[], txHash: string, signatures: Signature[]): Promise<Proof> {
-  // we always need the txIndex, since this is used as path inside the merkle-tree
-  const txIndex = block.transactions.indexOf(txHash)
-  if (txIndex < 0)
-    throw new Error('tx not found')
-
-  // create trie
-  const trie = new Trie()
-  // fill in all transactions
-  await Promise.all(receipts.map(tx => new Promise((resolve, reject) =>
-    trie.put(
-      util.rlp.encode(parseInt(tx.transactionIndex)), // path as txIndex
-      serializeReceipt(tx),  // raw transactions
-      error => error ? reject(error) : resolve(true)
-    )
-  )))
-
-  // check roothash
-  if (block.receiptsRoot !== '0x' + trie.root.toString('hex'))
-    throw new Error('The receiptHash is wrong! : ' + block.receiptsRoot + '!==0x' + trie.root.toString('hex'))
-
-  // create prove
-  return new Promise<Proof>((resolve, reject) =>
-    Trie.prove(trie, util.rlp.encode(txIndex), (err, prove) => {
-      if (err) return reject(err)
-      resolve({
-        type: 'receiptProof',
-        block: blockToHex(block),
-        merkelProof: prove.map(_ => _.toString('hex')),
-        txIndex, signatures
-      })
-    }))
-}
-
-
-
 /** verifies a TransactionProof */
 export async function verifyTransactionProof(txHash: string, proof: Proof, expectedSigners: string[], txData: any) {
 
@@ -191,7 +69,7 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
   await verifyMerkleProof(
     block.transactionsTrie, // expected merkle root
     util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
-    proof.merkelProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
+    proof.merkleProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
     tx.serialize(),
     'The Transaction can not be verified'
   )
@@ -214,7 +92,7 @@ export async function verifyTransactionReceiptProof(txHash: string, proof: Proof
   await verifyMerkleProof(
     block.receiptTrie, // expected merkle root
     util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
-    proof.merkelProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
+    proof.merkleProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
     serializeReceipt(receipt),
     'The TransactionReceipt can not be verified'
   )
@@ -340,22 +218,26 @@ export async function verifyAccountProof(request: RPCRequest, value: any, proof:
   // TODO if we expect a specific block in the request, we should also check if the block is the one requested
   verifyBlock(block, proof.signatures, expectedSigners, null)
 
+  // get the account-proof
+  const accountProof = proof.accounts[Object.keys(proof.accounts)[0]]
+  if (!accountProof) throw new Error('Missing Account in Account-Proof')
+
   // verify the result
-  if (account.toLowerCase() !== proof.account.address.toLowerCase()) throw new Error('The Account does not match the account in the proof')
+  if (account.toLowerCase() !== accountProof.address.toLowerCase()) throw new Error('The Account does not match the account in the proof')
   switch (request.method) {
     case 'eth_getBalance':
-      if (value !== proof.account.balance) throw new Error('The Balance does not match the one in the proof')
+      if (value !== accountProof.balance) throw new Error('The Balance does not match the one in the proof')
       break
     case 'eth_getStorageAt':
-      const entry = proof.account.storageProof.find(_ => toHex(_.key) === toHex(request.params[1]))
+      const entry = accountProof.storageProof.find(_ => toHex(_.key) === toHex(request.params[1]))
       if (!entry) throw new Error('The proof for the storage value ' + request.params[1] + ' can not be found ')
       if (toHex(entry.value) !== toHex(value)) throw new Error('The Value does not match the one in the proof')
       break
     case 'eth_getCode':
-      if (proof.account.codeHash !== '0x' + util.keccak(value).toString('hex')) throw new Error('The codehash in the proof does not match the code')
+      if (accountProof.codeHash !== '0x' + util.keccak(value).toString('hex')) throw new Error('The codehash in the proof does not match the code')
       break
     case 'eth_getTransactionCount':
-      if (proof.account.nonce !== value) throw new Error('The nonce in the proof does not match the returned')
+      if (accountProof.nonce !== value) throw new Error('The nonce in the proof does not match the returned')
       break
     case 'in3_nodeList':
       verifyNodeListData(value, proof, block, request)
@@ -366,15 +248,17 @@ export async function verifyAccountProof(request: RPCRequest, value: any, proof:
   }
 
   // verify the merkle tree of the account proof
-  await verifyAccount(proof.account, block)
+  await verifyAccount(accountProof, block)
 }
 
-function verifyNodeListData(nl: NodeList, proof: Proof, block: Block, request: RPCRequest) {
-  // make it a real NodeList
-  (nl as any).__proto__ = NodeList.prototype
+function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request: RPCRequest) {
+
+  // get the one account to check with
+  const accountProof = proof.accounts[Object.keys(proof.accounts)[0]]
+  if (!accountProof) throw new Error('Missing Account in Account-Proof')
 
   // check the total servercount
-  checkStorage(proof.account, toHex(tx.getStorageArrayKey(0), 32), toHex(nl.totalServers, 32), 'wrong number of servers ')
+  checkStorage(accountProof, toHex(getStorageArrayKey(0), 32), toHex(nl.totalServers, 32), 'wrong number of servers ')
 
   // check blocknumber
   if (parseInt('0x' + block.number.toString('hex')) !== nl.lastBlockNumber)
@@ -421,17 +305,17 @@ function verifyNodeListData(nl: NodeList, proof: Proof, block: Block, request: R
 
   // verify the values of the proof
   for (const n of nl.nodes) {
-    checkStorage(proof.account, tx.getStorageArrayKey(0, n.index, 5, 1), toHex(n.address.toLowerCase(), 32), 'wrong owner ');
-    checkStorage(proof.account, tx.getStorageArrayKey(0, n.index, 5, 2), toHex(n.deposit, 32), 'wrong deposit ');
-    checkStorage(proof.account, tx.getStorageArrayKey(0, n.index, 5, 3), toHex(n.props, 32), 'wrong props ');
-    const urlKey = tx.getStorageArrayKey(0, n.index, 5, 0);
-    const urlVal = tx.getStringValue(getStorageValue(proof.account, urlKey), urlKey);
+    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 1), toHex(n.address.toLowerCase(), 32), 'wrong owner ');
+    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 2), toHex(n.deposit, 32), 'wrong deposit ');
+    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 3), toHex(n.props, 32), 'wrong props ');
+    const urlKey = getStorageArrayKey(0, n.index, 5, 0);
+    const urlVal = getStringValue(getStorageValue(accountProof, urlKey), urlKey);
     if (typeof urlVal === 'string') {
       if (urlVal !== n.url)
         throw new Error('Wrong url in proof ' + n.url);
     }
     else {
-      const url = Buffer.concat(urlVal.storageKeys.map(_ => toBuffer(getStorageValue(proof.account, _)))).slice(0, urlVal.len).toString('utf8');
+      const url = Buffer.concat(urlVal.storageKeys.map(_ => toBuffer(getStorageValue(accountProof, _)))).slice(0, urlVal.len).toString('utf8');
       if (url !== n.url)
         throw new Error('Wrong url in proof ' + n.url);
     }
@@ -443,13 +327,7 @@ function checkStorage(ap: AccountProof, key: string, value: string, msg?: string
     throw new Error(msg + ('The key has the wrong value (expected: ' + toMinHex(value) + ' proven:' + toMinHex(getStorageValue(ap, key))))
 }
 
-function toMinHex(key: string) {
-  for (let i = 2; i < key.length; i++) {
-    if (key[i] !== '0')
-      return '0x' + key.substr(i)
-  }
-  return '0x0'
-}
+
 
 export function getStorageValue(ap: AccountProof, key: string) {
 
@@ -484,14 +362,6 @@ export async function verifyCallProof(request: RPCRequest, value: string, proof:
     throw new Error('The result does not match the execution !')
 
 }
-
-
-
-
-
-
-
-
 
 
 async function verifyAccount(accountProof: AccountProof, block: Block) {
@@ -531,9 +401,9 @@ function isNotExistend(account: AccountProof) {
 
 /** general verification-function which handles it according to its given type. */
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true): Promise<boolean> {
-  const proof = response && response.in3 && response.in3.proof as any as Proof
+  const proof = response && response.in3 && response.in3.proof
   if (!proof) {
-    if (alloedWithoutProof.indexOf(request.method) >= 0) return true
+    if (allowedWithoutProof.indexOf(request.method) >= 0) return true
     // exceptions
     if (request.method === 'eth_getLogs' && response.result && (response.result as any).length === 0) return true
     if (request.method.startsWith('eth_getTransaction') && !response.result) return true
@@ -542,10 +412,6 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
   }
   try {
     switch (proof.type) {
-      case 'nodeListProof':
-        // TODO implement proof for nodelist
-        //        await verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
-        break
       case 'transactionProof':
         await verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
         break
@@ -574,10 +440,4 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     return false
   }
 }
-
-
-
-
-// converts a string into a Buffer, but treating 0x00 as empty Buffer
-const toVariableBuffer = (val: string) => (val == '0x' || val === '0x0' || val === '0x00') ? Buffer.alloc(0) : util.toBuffer(val) as Buffer
 

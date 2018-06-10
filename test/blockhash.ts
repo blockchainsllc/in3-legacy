@@ -1,14 +1,12 @@
 
-import { assert, expect, should } from 'chai'
+import { assert } from 'chai'
 import 'mocha'
-import * as logger from '../utils/memoryLogger'
-import Block, { toHex } from '../../src/client/block'
+import { serialize, util } from '../src/index'
 import * as ethUtil from 'ethereumjs-util'
 const BN = ethUtil.BN
+const toHex = util.toHex
 
 describe('Util-Functions', () => {
-
-
 
 
   it('calculate Blockhash for Kovan-Chain', () => {
@@ -247,7 +245,7 @@ describe('Util-Functions', () => {
 
 function verifyBlock(blockData: any) {
 
-  const b = new Block(blockData)
+  const b = new serialize.Block(blockData)
 
   //  assert.equal(b.raw.length, 15)
   //  assert.equal(b.sealedFields.length, 2)
@@ -272,7 +270,7 @@ function verifyBlock(blockData: any) {
 
 
 
-  const hash = new Block(blockData).hash()
+  const hash = new serialize.Block(blockData).hash()
   assert.equal('0x' + hash.toString('hex'), blockData.hash)
 
 }

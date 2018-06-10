@@ -1,6 +1,8 @@
 import Client from './Client';
-import { RPCRequest, RPCResponse } from '../types/config'
-
+import { RPCRequest, RPCResponse } from '../types/types'
+import { LogData } from '../util/serialize'
+import { checkForError } from '../util/util'
+export type FilterType = 'event' | 'block' | 'pending'
 export interface FilterOptions {
   fromBlock?: number | string
   toBlock?: number | string
@@ -22,7 +24,7 @@ export default class Filters {
     this.filters = {}
   }
 
-  async addFilter(client: Client, type: 'event' | 'block' | 'pending', options: FilterOptions) {
+  async addFilter(client: Client, type: FilterType, options: FilterOptions) {
     if (type === 'pending') throw new Error('Pending Transactions are not supported')
     const id = '0x' + (Object.keys(this.filters).reduce((a, b) => Math.max(a, parseInt(b)), 0) + 1).toString(16)
     this.filters[id] = { type, options, lastBlock: parseInt(await client.call('eth_blockNumber', [])) }
@@ -32,7 +34,7 @@ export default class Filters {
   handleFilter(request: RPCRequest, client: Client): Promise<RPCResponse> {
     switch (request.method) {
       case 'eth_newFilter':
-        return this.addFilter(client, 'event', request.params[0] as any)
+        return this.addFilter(client, 'event', request.params[0])
           .then(result => ({
             id: request.id,
             jsonrpc: request.jsonrpc,
@@ -57,7 +59,7 @@ export default class Filters {
           id: request.id,
           jsonrpc: request.jsonrpc,
           result: !!this.removeFilter(request.params[0])
-        } as any)
+        })
       case 'eth_getFilterChanges':
         return this.getFilterChanges(client, request.params[0])
           .then(result => ({
@@ -88,7 +90,10 @@ export default class Filters {
           method: 'eth_getLogs',
           params: [{ ...filter.options, fromBlock: '0x' + filter.lastBlock.toString(16) }]
         }
-      ]) as any).then(all => all.find(_ => _.error) ? Promise.reject(all.find(_ => _.error).error) as any : [parseInt(all[0].result), all[1].result as any])
+      ]) as Promise<RPCResponse[]>)
+        .then(checkForError)
+        .then(all => [parseInt(all[0].result), all[1].result] as [number, LogData])
+
       filter.lastBlock = blockNumber + 1
       return logs
     }
@@ -104,7 +109,7 @@ export default class Filters {
             params: ['0x' + i.toString(16), false]
           })
         filter.lastBlock = bN
-        return (client.send(requests) as any).then(r => r.map(_ => _.result.hash))
+        return (client.send(requests) as Promise<RPCResponse[]>).then(r => r.map(_ => _.result.hash))
       }
       return []
     }

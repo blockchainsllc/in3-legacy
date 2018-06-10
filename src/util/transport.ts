@@ -1,6 +1,6 @@
-import { RPCRequest, RPCResponse } from './config';
+import { RPCRequest, RPCResponse } from '../types/types';
 import axios from 'axios'
-import * as cbor from './cbor'
+import * as cbor from '../util/cbor'
 
 export interface Transport {
   handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]>
@@ -27,14 +27,7 @@ export class AxiosTransport implements Transport {
     if (this.format === 'cbor')
       Object.assign(conf, {
         transformRequest: cbor.encodeRequests,
-        transformResponse: cbor.decodeResponses /*{
-          console.log('received size:', r.length)
-          const decodec = cbor.decodeResponses(r)
-          console.log('decodec size:', JSON.stringify(decodec).length)
-          console.log('replaced refs size:', JSON.stringify(cbor.resolveRefs(decodec)).length)
-          return decodec
-
-        }*/,
+        transformResponse: cbor.decodeResponses,
         headers: { 'Content-Type': 'application/cbor' },
         responseType: 'arraybuffer'
       })

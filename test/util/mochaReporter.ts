@@ -1,5 +1,4 @@
 import * as mocha from 'mocha'
-import * as logger from 'winston'
 // tslint:disable-next-line:no-submodule-imports
 import * as mu from 'mocha/lib/utils'
 import * as fs from 'fs'
