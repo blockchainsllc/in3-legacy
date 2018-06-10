@@ -1,6 +1,6 @@
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature } from '../types/types'
-import { Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, Bytes32 } from '../util/serialize'
+import { Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, Bytes32, Address } from '../util/serialize'
 import { toHex, toBuffer, promisify, toMinHex } from '../util/util'
 import { executeCall } from './call'
 import { createRandomIndexes } from './serverList'
@@ -13,7 +13,7 @@ const allowedWithoutProof = ['eth_blockNumber']
 
 
 /** verify the signatures of a blockhash */
-export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: string[], expectedBlockHash: Buffer) {
+export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: Buffer[], expectedBlockHash: Buffer) {
 
   // calculate the blockHash
   const blockHash = b.hash()
@@ -46,7 +46,7 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
 
 
 /** verifies a TransactionProof */
-export async function verifyTransactionProof(txHash: string, proof: Proof, expectedSigners: string[], txData: any) {
+export async function verifyTransactionProof(txHash: string, proof: Proof, expectedSigners: Buffer[], txData: any) {
 
   if (!txData) throw new Error('No TransactionData!')
 
@@ -76,7 +76,7 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
 }
 
 /** verifies a TransactionProof */
-export async function verifyTransactionReceiptProof(txHash: string, proof: Proof, expectedSigners: string[], receipt: any) {
+export async function verifyTransactionReceiptProof(txHash: string, proof: Proof, expectedSigners: Buffer[], receipt: any) {
 
   if (!receipt) throw new Error('No TransactionData!')
 
@@ -100,7 +100,7 @@ export async function verifyTransactionReceiptProof(txHash: string, proof: Proof
 
 
 /** verifies a TransactionProof */
-export async function verifyLogProof(proof: Proof, expectedSigners: string[], logs: LogData[]) {
+export async function verifyLogProof(proof: Proof, expectedSigners: Buffer[], logs: LogData[]) {
 
   if (!logs) throw new Error('No Logs!')
   if (!logs.length) return
@@ -170,7 +170,7 @@ export async function verifyLogProof(proof: Proof, expectedSigners: string[], lo
 
 
 /** verifies a TransactionProof */
-export async function verifyBlockProof(request: RPCRequest, data: any, proof: Proof, expectedSigners: string[]) {
+export async function verifyBlockProof(request: RPCRequest, data: any, proof: Proof, expectedSigners: Buffer[]) {
   // decode the blockheader
   const block = new Block(proof.block || data)
   if (proof.transactions) block.transactions = proof.transactions.map(createTx)
@@ -206,7 +206,7 @@ export async function verifyBlockProof(request: RPCRequest, data: any, proof: Pr
 
 
 /** verifies a TransactionProof */
-export async function verifyAccountProof(request: RPCRequest, value: any, proof: Proof, expectedSigners: string[]) {
+export async function verifyAccountProof(request: RPCRequest, value: any, proof: Proof, expectedSigners: Buffer[]) {
   if (!value) throw new Error('No Accountdata!')
 
   // get the account this proof is based on
@@ -342,7 +342,7 @@ export function getStorageValue(ap: AccountProof, key: string) {
 }
 
 /** verifies a TransactionProof */
-export async function verifyCallProof(request: RPCRequest, value: string, proof: Proof, expectedSigners: string[]) {
+export async function verifyCallProof(request: RPCRequest, value: string, proof: Proof, expectedSigners: Buffer[]) {
 
   // verify the blockhash and the signatures
   const block = new Block(proof.block)
@@ -409,25 +409,26 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     if (throwException && !allowWithoutProof) throw new Error('the response does not contain any proof!')
     return allowWithoutProof
   }
+  const signatures: Buffer[] = request.in3 && request.in3.signatures && request.in3.signatures.map(Address)
   try {
     switch (proof.type) {
       case 'transactionProof':
-        await verifyTransactionProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
+        await verifyTransactionProof(request.params[0], proof, signatures, response.result && response.result as any)
         break
       case 'logProof':
-        await verifyLogProof(proof, request.in3 && request.in3.signatures, response.result && response.result as LogData[])
+        await verifyLogProof(proof, signatures, response.result && response.result as LogData[])
         break
       case 'receiptProof':
-        await verifyTransactionReceiptProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
+        await verifyTransactionReceiptProof(request.params[0], proof, signatures, response.result && response.result as any)
         break
       case 'blockProof':
-        await verifyBlockProof(request, response.result, proof, request.in3 && request.in3.signatures)
+        await verifyBlockProof(request, response.result, proof, signatures)
         break
       case 'accountProof':
-        await verifyAccountProof(request, response.result as string, proof, request.in3 && request.in3.signatures)
+        await verifyAccountProof(request, response.result as string, proof, signatures)
         break
       case 'callProof':
-        await verifyCallProof(request, response.result as string, proof, request.in3 && request.in3.signatures)
+        await verifyCallProof(request, response.result as string, proof, signatures)
         break
       default:
         throw new Error('Unsupported proof-type : ' + proof.type)
