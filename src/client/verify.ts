@@ -1,7 +1,6 @@
 import * as util from 'ethereumjs-util'
-import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList } from '../types/types'
-import { Signature } from '../types/types'
-import { Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData } from '../util/serialize'
+import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature } from '../types/types'
+import { Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, Bytes32 } from '../util/serialize'
 import { toHex, toBuffer, promisify, toMinHex } from '../util/util'
 import { executeCall } from './call'
 import { createRandomIndexes } from './serverList'
@@ -14,28 +13,28 @@ const allowedWithoutProof = ['eth_blockNumber']
 
 
 /** verify the signatures of a blockhash */
-export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: string[], expectedBlockHash: string) {
+export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: string[], expectedBlockHash: Buffer) {
 
   // calculate the blockHash
-  const blockHash = '0x' + b.hash().toString('hex').toLowerCase()
-  if (expectedBlockHash && blockHash !== expectedBlockHash.toLowerCase())
+  const blockHash = b.hash()
+  if (expectedBlockHash && !blockHash.equals(expectedBlockHash))
     throw new Error('The BlockHash is not the expected one!')
 
   // TODO in the future we are not allowing block verification without signature
   if (!signatures) return
 
   // verify the signatures for only the blocks matching the given
-  const messageHash = '0x' + util.sha3(blockHash + b.number.toString('hex').padStart(64, '0')).toString('hex')
+  const messageHash: Buffer = util.sha3(Buffer.concat([blockHash, Bytes32(b.number)]))
   if (!signatures.filter(_ => _.block.toString(16) === b.number.toString('hex')).reduce((p, signature, i) => {
 
-    if (messageHash !== signature.msgHash)
+    if (!messageHash.equals(Bytes32(signature.msgHash)))
       throw new Error('The signature signed the wrong message!')
 
     // recover the signer from the signature
-    const signer = '0x' + util.pubToAddress(util.ecrecover(util.toBuffer(messageHash), parseInt(signature.v), util.toBuffer(signature.r), util.toBuffer(signature.s))).toString('hex')
+    const signer: Buffer = util.pubToAddress(util.ecrecover(messageHash, parseInt(signature.v), util.toBuffer(signature.r), util.toBuffer(signature.s)))
 
     // make sure the signer is the expected one
-    if (signer.toLowerCase() !== expectedSigners[i].toLowerCase())
+    if (!signer.equals(toBuffer(expectedSigners[i])))
       throw new Error('The signature was not signed by ' + expectedSigners[i])
 
     // looks good ;-)
@@ -55,7 +54,7 @@ export async function verifyTransactionProof(txHash: string, proof: Proof, expec
   const block = blockFromHex(proof.block)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, txData.blockHash)
+  verifyBlock(block, proof.signatures, expectedSigners, Bytes32(txData.blockHash))
 
   // TODO the from-address is not directly part of the hash, so manipulating this property would not be detected! 
   // we would have to take the from-address from the signature
@@ -85,7 +84,7 @@ export async function verifyTransactionReceiptProof(txHash: string, proof: Proof
   const block = blockFromHex(proof.block)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, receipt.blockHash)
+  verifyBlock(block, proof.signatures, expectedSigners, Bytes32(receipt.blockHash))
 
   // since the blockhash is verified, we have the correct transaction root
   // verifiy the proof
@@ -176,14 +175,14 @@ export async function verifyBlockProof(request: RPCRequest, data: any, proof: Pr
   const block = new Block(proof.block || data)
   if (proof.transactions) block.transactions = proof.transactions.map(createTx)
 
-  let requiredHash = null
+  let requiredHash: Buffer = null
 
   if (request.method.endsWith('ByHash'))
-    requiredHash = request.params[0]
+    requiredHash = Bytes32(request.params[0])
   else if (parseInt(request.params[0]) && parseInt(request.params[0]) !== parseInt('0x' + block.number.toString('hex')))
     throw new Error('The Block does not contain the required blocknumber')
   if (!requiredHash && request.method.indexOf('Count') < 0 && data)
-    requiredHash = toHex(data.hash)
+    requiredHash = Bytes32(data.hash)
 
   // verify the blockhash and the signatures
   verifyBlock(block, proof.signatures, expectedSigners, requiredHash)
@@ -422,7 +421,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
         await verifyTransactionReceiptProof(request.params[0], proof, request.in3 && request.in3.signatures, response.result && response.result as any)
         break
       case 'blockProof':
-        await verifyBlockProof(request, response.result as any, proof, request.in3 && request.in3.signatures)
+        await verifyBlockProof(request, response.result, proof, request.in3 && request.in3.signatures)
         break
       case 'accountProof':
         await verifyAccountProof(request, response.result as string, proof, request.in3 && request.in3.signatures)

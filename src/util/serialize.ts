@@ -103,12 +103,12 @@ export const hash = (val: Block | Transaction | Receipt | Account) => ethUtil.rl
 
 // types ...
 
-const Bytes256 = val => toBuffer(val, 256)
-const Bytes32 = val => toBuffer(val, 32)
-const Bytes8 = val => toBuffer(val, 8)
-const Bytes = val => toBuffer(val)
-const Address = val => toBuffer(val, 20)
-const UInt = val => toBuffer(val, 0)
+export const Bytes256 = val => toBuffer(val, 256)
+export const Bytes32 = val => toBuffer(val, 32)
+export const Bytes8 = val => toBuffer(val, 8)
+export const Bytes = val => toBuffer(val)
+export const Address = val => toBuffer(val, 20)
+export const UInt = val => toBuffer(val, 0)
 
 /** create a Buffer[] from RPC-Response */
 export const toBlockHeader = (block: BlockData) => [
