@@ -1,7 +1,7 @@
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList } from '../types/types'
 import { Signature } from '../types/types'
-import { Block, createTx, blockFromHex, serializeReceipt, serializeAccount, LogData } from '../util/serialize'
+import { Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData } from '../util/serialize'
 import { toHex, toBuffer, promisify, toMinHex } from '../util/util'
 import { executeCall } from './call'
 import { createRandomIndexes } from './serverList'
@@ -93,7 +93,7 @@ export async function verifyTransactionReceiptProof(txHash: string, proof: Proof
     block.receiptTrie, // expected merkle root
     util.rlp.encode(proof.txIndex), // path, which is the transsactionIndex
     proof.merkleProof.map(_ => util.toBuffer('0x' + _)), // array of Buffer with the merkle-proof-data
-    serializeReceipt(receipt),
+    serialize(toReceipt(receipt)),
     'The TransactionReceipt can not be verified'
   )
 }
@@ -378,7 +378,7 @@ async function verifyAccount(accountProof: AccountProof, block: Block) {
       block.stateRoot, // expected merkle root
       util.keccak(accountProof.address), // path, which is the transsactionIndex
       accountProof.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
-      isNotExistend(accountProof) ? null : serializeAccount(accountProof.nonce, accountProof.balance, accountProof.storageHash, accountProof.codeHash),
+      isNotExistend(accountProof) ? null : serialize(toAccount(accountProof)),
       'The Account could not be verified'
     ),
 
