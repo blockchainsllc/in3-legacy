@@ -163,7 +163,7 @@ export const toAccount = (account: AccountData) => [
 export const toReceipt = (r: ReceiptData) => [
   UInt(r.status || r.root),
   UInt(r.cumulativeGasUsed),
-  Bytes256(r.logs),
+  Bytes256(r.logsBloom),
   r.logs.map(l => [
     Address(l.address),
     l.topics.map(Bytes32),
@@ -262,30 +262,10 @@ export function createTx(transaction) {
   return tx
 }
 
-// encode the account
-export function serializeAccount(nonce: string, balance: string, storageHash: string, codeHash: string): Buffer {
-
-  return rlp.encode([
-    nonce || '0x00',
-    balance || '0x00',
-    storageHash || '0x' + ethUtil.KECCAK256_RLP_S,
-    codeHash || '0x' + ethUtil.KECCAK256_NULL_S
-  ].map(toVariableBuffer))
-}
-
-export function serializeReceipt(txReceipt: any) {
-  return rlp.encode([
-    toBuffer(txReceipt.status || txReceipt.root),
-    toBuffer(txReceipt.cumulativeGasUsed),
-    toBuffer(txReceipt.logsBloom),
-    txReceipt.logs.map(l => [l.address, l.topics.map(toBuffer), l.data].map(toBuffer))]
-  )
-}
-
 
 /** converts blockdata to a hexstring*/
 export function blockToHex(block: any) {
-  return '0x' + new Block(block).serializeHeader().toString('hex')
+  return toHex(new Block(block).serializeHeader())
 }
 
 /** converts a hexstring to a block-object */
