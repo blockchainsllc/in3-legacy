@@ -283,7 +283,7 @@ definitions:
                 enum: [ transactionProof, receiptProof, blockProof, accountProof, callProof, logProof ]
             block:
                 type: string
-                description: the serialized blockheader as hex
+                description: the serialized blockheader as hex, required in most proofs 
             transactions:
                 type: array
                 description: the list of transactions of the block
