@@ -334,13 +334,18 @@ verifyMerkleProof(
 )
 ```
 
-    In case the account does exist yet, (which is the case if `none` == `startNonce` and `codeHash` == `'0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'`), the proof may end with one of these nodes:
-    1. the last node is a branch, where the child of the next step does not exist.
-    2. the last node is a leaf with different relative key
 
-    Both would prove, that this key does not exist.
+In case the account does exist yet, (which is the case if `none` == `startNonce` and `codeHash` == `'0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'`), the proof may end with one of these nodes:
+    
+- the last node is a branch, where the child of the next step does not exist.
+    
+- the last node is a leaf with different relative key
 
-4. verify each merkle Proof for the storage using the storageHash of the account:
+Both would prove, that this key does not exist.
+
+
+
+4. Verify each merkle Proof for the storage using the storageHash of the account:
 
 ```js
 verifyMerkleProof(
