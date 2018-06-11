@@ -71,7 +71,7 @@ export async function executeCall(args: {
 
   // return the returnValue
   if (missingDataError) throw missingDataError
-  return '0x' + result.vm.return.toString('hex')
+  return result.vm.return as Buffer
 }
 
 async function setStorageFromProof(trie, accounts: { [adr: string]: AccountProof }) {

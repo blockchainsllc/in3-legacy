@@ -1,6 +1,6 @@
 import * as ethUtil from 'ethereumjs-util'
 import * as Tx from 'ethereumjs-tx'
-import { toBuffer, toHex, toVariableBuffer } from './util'
+import { toBuffer, toHex } from './util'
 
 const rlp = ethUtil.rlp
 /** Buffer[] of the header */
@@ -83,6 +83,8 @@ export interface LogData {
 }
 
 export interface ReceiptData {
+  transactionIndex?: number
+  blockNumber?: string | number
   blockHash?: string
   status?: string | boolean
   root?: string
@@ -90,9 +92,6 @@ export interface ReceiptData {
   logsBloom?: string
   logs: LogData[]
 }
-
-
-
 
 
 /** serialize the data  */

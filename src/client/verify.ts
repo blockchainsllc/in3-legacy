@@ -343,7 +343,7 @@ export function getStorageValue(ap: AccountProof, storageKey: Buffer): Buffer {
 }
 
 /** verifies a TransactionProof */
-export async function verifyCallProof(request: RPCRequest, value: string, proof: Proof, expectedSigners: Buffer[]) {
+export async function verifyCallProof(request: RPCRequest, value: Buffer, proof: Proof, expectedSigners: Buffer[]) {
 
   // verify the blockhash and the signatures
   const block = new Block(proof.block)
@@ -358,7 +358,7 @@ export async function verifyCallProof(request: RPCRequest, value: string, proof:
   // now create a vm and run the transaction
   const result = await executeCall(request.params[0], proof.accounts, block.serializeHeader())
 
-  if (result !== value)
+  if (!result.equals(value))
     throw new Error('The result does not match the execution !')
 
 }
@@ -367,17 +367,15 @@ export async function verifyCallProof(request: RPCRequest, value: string, proof:
 async function verifyAccount(accountProof: AccountProof, block: Block) {
 
   // if we received the code, make sure the codeHash is correct!
-  if (accountProof.code && util.keccak(accountProof.code).toString('hex') !== accountProof.codeHash.substr(2))
+  if (accountProof.code && !util.keccak(accountProof.code).equals(bytes32(accountProof.codeHash)))
     throw new Error('The code does not math the correct codehash! ')
 
-  //  return Promise.all([
   return Promise.all([
-
 
     verifyMerkleProof(
       block.stateRoot, // expected merkle root
       util.keccak(accountProof.address), // path, which is the transsactionIndex
-      accountProof.accountProof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
+      accountProof.accountProof.map(bytes), // array of Buffer with the merkle-proof-data
       isNotExistend(accountProof) ? null : serialize(toAccount(accountProof)),
       'The Account could not be verified'
     ),
@@ -385,18 +383,18 @@ async function verifyAccount(accountProof: AccountProof, block: Block) {
     // and all storage proofs
     ...accountProof.storageProof.map(s =>
       verifyMerkleProof(
-        toBuffer(accountProof.storageHash),   // the storageRoot of the account
-        util.keccak(toHex(s.key, 32)),  // the path, which is the hash of the key
-        s.proof.map(util.toBuffer), // array of Buffer with the merkle-proof-data
-        parseInt(s.value) === 0 ? null : util.rlp.encode(s.value),
-        'The Srorage could not be verified'
+        bytes32(accountProof.storageHash),   // the storageRoot of the account
+        util.keccak(bytes32(s.key)),  // the path, which is the hash of the key
+        s.proof.map(bytes), // array of Buffer with the merkle-proof-data
+        toNumber(s.value) === 0 ? null : util.rlp.encode(s.value),
+        'The Storage could not be verified'
       ))
   ])
 }
 
 function isNotExistend(account: AccountProof) {
   // TODO how do I determine the default nonce? It is in the genesis-bock!
-  return parseInt(account.balance) === 0 && account.codeHash == '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' && parseInt(account.nonce) === 0
+  return toNumber(account.balance) === 0 && account.codeHash == '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' && toNumber(account.nonce) === 0
 }
 
 /** general verification-function which handles it according to its given type. */
@@ -429,7 +427,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
         await verifyAccountProof(request, response.result as string, proof, signatures)
         break
       case 'callProof':
-        await verifyCallProof(request, response.result as string, proof, signatures)
+        await verifyCallProof(request, bytes(response.result), proof, signatures)
         break
       default:
         throw new Error('Unsupported proof-type : ' + proof.type)
