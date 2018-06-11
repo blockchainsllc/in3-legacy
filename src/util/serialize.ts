@@ -98,7 +98,7 @@ export interface ReceiptData {
 export const serialize = (val: Block | Transaction | Receipt | Account) => rlp.encode(val) as Buffer
 
 /** returns the hash of the object */
-export const hash = (val: Block | Transaction | Receipt | Account) => ethUtil.rlphash(val) as Buffer
+export const hash = (val: Block | Transaction | Receipt | Account | Buffer) => Array.isArray(val) ? ethUtil.rlphash(val) as Buffer : ethUtil.sha3(val) as Buffer
 
 
 // types ...

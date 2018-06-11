@@ -1,7 +1,7 @@
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature } from '../types/types'
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData } from '../util/serialize'
-import { toHex, toNumber, toBuffer, promisify, toMinHex, toBN } from '../util/util'
+import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction } from '../util/serialize';
+import { toHex, toNumber, promisify, toMinHex, toBN } from '../util/util'
 import { executeCall } from './call'
 import { createRandomIndexes } from './serverList'
 import verifyMerkleProof from '../util/merkleProof'
@@ -92,13 +92,26 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, proof: Proof
 
   // since the blockhash is verified, we have the correct transaction root
   // verifiy the proof
-  await verifyMerkleProof(
-    block.receiptTrie, // expected merkle root
-    util.rlp.encode(toNumber(proof.txIndex)), // path, which is the transsactionIndex
-    proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-    serialize(toReceipt(receipt)),
-    'The TransactionReceipt can not be verified'
-  )
+  return Promise.all([
+    verifyMerkleProof(
+      block.receiptTrie, // expected merkle root
+      util.rlp.encode(toNumber(proof.txIndex)), // path, which is the transsactionIndex
+      proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
+      serialize(toReceipt(receipt)),
+      'The TransactionReceipt can not be verified'
+    ),
+    verifyMerkleProof(
+      block.transactionsTrie, // expected merkle root
+      util.rlp.encode(toNumber(proof.txIndex)), // path, which is the transsactionIndex
+      proof.txProof.map(bytes), // array of Buffer with the merkle-proof-data
+      undefined,
+      'The TransactionIndex can not be verified'
+    ).then(val => {
+      if (!hash(val).equals(txHash))
+        throw new Error('The TransactionHash does not match the prooved one')
+    })
+  ])
+
 }
 
 
@@ -418,7 +431,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
         await verifyLogProof(proof, signatures, response.result && response.result as LogData[])
         break
       case 'receiptProof':
-        await verifyTransactionReceiptProof(request.params[0], proof, signatures, response.result && response.result as any)
+        await verifyTransactionReceiptProof(bytes32(request.params[0]), proof, signatures, response.result && response.result as any)
         break
       case 'blockProof':
         await verifyBlockProof(request, response.result, proof, signatures)
