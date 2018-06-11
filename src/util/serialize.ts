@@ -83,6 +83,7 @@ export interface LogData {
 }
 
 export interface ReceiptData {
+  blockHash?: string
   status?: string | boolean
   root?: string
   cumulativeGasUsed?: string | number
@@ -103,34 +104,40 @@ export const hash = (val: Block | Transaction | Receipt | Account) => ethUtil.rl
 
 // types ...
 
-export const Bytes256 = val => toBuffer(val, 256)
-export const Bytes32 = val => toBuffer(val, 32)
-export const Bytes8 = val => toBuffer(val, 8)
-export const Bytes = val => toBuffer(val)
-export const Address = val => toBuffer(val, 20)
-export const UInt = val => toBuffer(val, 0)
+/** converts it to a Buffer with 256 bytes length */
+export const bytes256 = val => toBuffer(val, 256)
+/** converts it to a Buffer with 32 bytes length */
+export const bytes32 = val => toBuffer(val, 32)
+/** converts it to a Buffer with 8 bytes length */
+export const bytes8 = val => toBuffer(val, 8)
+/** converts it to a Buffer  */
+export const bytes = val => toBuffer(val)
+/** converts it to a Buffer with 20 bytes length */
+export const address = val => toBuffer(val, 20)
+/** converts it to a Buffer with a variable length. 0 = length 0*/
+export const uint = val => toBuffer(val, 0)
 
 /** create a Buffer[] from RPC-Response */
 export const toBlockHeader = (block: BlockData) => [
-  Bytes32(block.parentHash),
-  Bytes32(block.sha3Uncles),
-  Address(block.miner || block.coinbase),
-  Bytes32(block.stateRoot),
-  Bytes32(block.transactionsRoot),
-  Bytes32(block.receiptsRoot || block.receiptRoot),
-  Bytes256(block.logsBloom),
-  UInt(block.difficulty),
-  UInt(block.number),
-  UInt(block.gasLimit),
-  UInt(block.gasUsed),
-  UInt(block.timestamp),
-  Bytes(block.extraData),
+  bytes32(block.parentHash),
+  bytes32(block.sha3Uncles),
+  address(block.miner || block.coinbase),
+  bytes32(block.stateRoot),
+  bytes32(block.transactionsRoot),
+  bytes32(block.receiptsRoot || block.receiptRoot),
+  bytes256(block.logsBloom),
+  uint(block.difficulty),
+  uint(block.number),
+  uint(block.gasLimit),
+  uint(block.gasUsed),
+  uint(block.timestamp),
+  bytes(block.extraData),
 
   ... (block.sealFields
-    ? block.sealFields.map(s => rlp.decode(toBuffer(s)))
+    ? block.sealFields.map(s => rlp.decode(bytes(s)))
     : [
-      Bytes32(block.mixHash),
-      Bytes8(block.nonce)
+      bytes32(block.mixHash),
+      bytes8(block.nonce)
     ]
   )
 ] as BlockHeader
@@ -138,36 +145,37 @@ export const toBlockHeader = (block: BlockData) => [
 
 /** create a Buffer[] from RPC-Response */
 export const toTransaction = (tx: TransactionData) => [
-  UInt(tx.nonce),
-  UInt(tx.gasPrice),
-  UInt(tx.gas || tx.gasLimit),
-  UInt(tx.value),
-  Bytes(tx.input || tx.data),
-  UInt(tx.v),
-  UInt(tx.r),
-  UInt(tx.s)
+  uint(tx.nonce),
+  uint(tx.gasPrice),
+  uint(tx.gas || tx.gasLimit),
+  address(tx.to),
+  uint(tx.value),
+  bytes(tx.input || tx.data),
+  uint(tx.v),
+  uint(tx.r),
+  uint(tx.s)
 ] as Transaction
 
 
 // encode the account
 export const toAccount = (account: AccountData) => [
-  UInt(account.nonce),
-  UInt(account.balance),
-  Bytes32(account.storageHash || ethUtil.KECCAK256_RLP),
-  Bytes32(account.codeHash || ethUtil.KECCAK256_NULL)
+  uint(account.nonce),
+  uint(account.balance),
+  bytes32(account.storageHash || ethUtil.KECCAK256_RLP),
+  bytes32(account.codeHash || ethUtil.KECCAK256_NULL)
 ] as Account
 
 
 
 /** create a Buffer[] from RPC-Response */
 export const toReceipt = (r: ReceiptData) => [
-  UInt(r.status || r.root),
-  UInt(r.cumulativeGasUsed),
-  Bytes256(r.logsBloom),
+  uint(r.status || r.root),
+  uint(r.cumulativeGasUsed),
+  bytes256(r.logsBloom),
   r.logs.map(l => [
-    Address(l.address),
-    l.topics.map(Bytes32),
-    Bytes(l.data)
+    address(l.address),
+    l.topics.map(bytes32),
+    bytes(l.data)
   ])
 ] as Receipt
 

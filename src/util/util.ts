@@ -49,13 +49,31 @@ export function toHex(val: any, bytes?: number): string {
   return '0x' + hex.toLowerCase()
 }
 
+export function toNumber(val: any): number {
+  switch (typeof val) {
+    case 'number':
+      return val
+    case 'string':
+      return parseInt(val)
+    default:
+      if (Buffer.isBuffer(val))
+        return val.length == 0 ? 0 : val.readUIntBE(0, val.length)
+      else if (BN.isBN(val))
+        return val.bitLength() > 53 ? toNumber(val.toBuffer()) : val.toNumber()
+      else if (val === undefined || val === null)
+        return 0
+      throw new Error('can not convert a ' + (typeof val) + ' to number')
+  }
+}
 
 /** converts any value as Buffer */
 export function toBuffer(val, len = -1) {
   if (typeof val == 'string')
     val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toBuffer()
-  if (typeof val == 'number')
+  else if (typeof val == 'number')
     val = Buffer.from(fixLength(val.toString(16)), 'hex')
+  else if (BN.isBN(val))
+    val = val.toBuffer()
 
   if (!val) val = Buffer.allocUnsafe(0)
 
@@ -82,10 +100,19 @@ export function getAddress(pk: string) {
   return ethUtil.toChecksumAddress(ethUtil.privateToAddress(key).toString('hex'))
 }
 
-export function toMinHex(key: string) {
-  for (let i = 2; i < key.length; i++) {
-    if (key[i] !== '0')
-      return '0x' + key.substr(i)
+export function toMinHex(key: string | Buffer) {
+  if (typeof key === 'string') {
+    for (let i = 2; i < key.length; i++) {
+      if (key[i] !== '0')
+        return '0x' + key.substr(i)
+    }
+  }
+  else if (Buffer.isBuffer(key)) {
+    const hex = key.toString('hex')
+    for (let i = 0; i < hex.length; i++) {
+      if (hex[i] !== '0')
+        return '0x' + hex.substr(i)
+    }
   }
   return '0x0'
 }
