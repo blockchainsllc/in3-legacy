@@ -251,6 +251,10 @@
                     /**
                      * the merkleProof
                      */
+                    txProof?: string /* ^0x[0-9a-fA-F]+$ */ []
+                    /**
+                     * the merkleProof
+                     */
                     proof: string /* ^0x[0-9a-fA-F]+$ */ []
                 }
             }
@@ -265,7 +269,7 @@
          */
         type: "transactionProof" | "receiptProof" | "blockProof" | "accountProof" | "callProof" | "logProof"
         /**
-         * the serialized blockheader as hex
+         * the serialized blockheader as hex, required in most proofs
          */
         block?: string
         /**
@@ -276,6 +280,10 @@
          * the serialized merle-noodes beginning with the root-node
          */
         merkleProof?: string /* ^0x[0-9a-fA-F]+$ */ []
+        /**
+         * the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex
+         */
+        txProof?: string /* ^0x[0-9a-fA-F]+$ */ []
         /**
          * the Log Proof in case of a Log-Request
          */

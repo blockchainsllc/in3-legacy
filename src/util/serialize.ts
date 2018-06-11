@@ -1,9 +1,19 @@
 import * as ethUtil from 'ethereumjs-util'
-import * as Transaction from 'ethereumjs-tx'
-import { toBuffer, toHex, toVariableBuffer } from './util'
+import * as Tx from 'ethereumjs-tx'
+import { toBuffer, toHex } from './util'
 
 const rlp = ethUtil.rlp
+/** Buffer[] of the header */
 export type BlockHeader = Buffer[]
+
+/** Buffer[] of the transaction */
+export type Transaction = Buffer[]
+
+/** Buffer[] of the Account */
+export type Account = Buffer[]
+
+/** Buffer[] of the Receipt */
+export type Receipt = [Buffer, Buffer, Buffer, [Buffer, Buffer[], Buffer][]]
 
 export interface BlockData {
   hash: string
@@ -27,6 +37,38 @@ export interface BlockData {
   nonce?: string | number
   transactions?: any[]
 }
+export interface TransactionData {
+  hash: string
+  blockHash?: string
+  blockNumber?: number | string
+  chainId?: number | string
+  condition?: string
+  creates?: string
+  from?: string
+  gas?: number | string
+  gasLimit?: number | string
+  gasPrice?: number | string
+  input: string
+  data?: string
+  nonce: number | string
+  publicKey?: string
+  raw?: string
+  standardV?: string
+  to: string
+  transactionIndex: number,
+  r?: string
+  s?: string
+  v?: string
+  value: number | string
+}
+
+export interface AccountData {
+  nonce: string
+  balance: string
+  storageHash: string
+  codeHash: string
+  code?: string
+}
 
 export interface LogData {
   removed: boolean // true when the log was removed, due to a chain reorganization. false if its a valid log.
@@ -40,14 +82,100 @@ export interface LogData {
   topics: string[] //Array of DATA - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.)
 }
 
+export interface ReceiptData {
+  transactionIndex?: number
+  blockNumber?: string | number
+  blockHash?: string
+  status?: string | boolean
+  root?: string
+  cumulativeGasUsed?: string | number
+  logsBloom?: string
+  logs: LogData[]
+}
+
+
+/** serialize the data  */
+export const serialize = (val: Block | Transaction | Receipt | Account) => rlp.encode(val) as Buffer
+
+/** returns the hash of the object */
+export const hash = (val: Block | Transaction | Receipt | Account | Buffer) => Array.isArray(val) ? ethUtil.rlphash(val) as Buffer : ethUtil.sha3(val) as Buffer
+
+
+// types ...
+
+/** converts it to a Buffer with 256 bytes length */
+export const bytes256 = val => toBuffer(val, 256)
+/** converts it to a Buffer with 32 bytes length */
+export const bytes32 = val => toBuffer(val, 32)
+/** converts it to a Buffer with 8 bytes length */
+export const bytes8 = val => toBuffer(val, 8)
+/** converts it to a Buffer  */
+export const bytes = val => toBuffer(val)
+/** converts it to a Buffer with 20 bytes length */
+export const address = val => toBuffer(val, 20)
+/** converts it to a Buffer with a variable length. 0 = length 0*/
+export const uint = val => toBuffer(val, 0)
+
+/** create a Buffer[] from RPC-Response */
+export const toBlockHeader = (block: BlockData) => [
+  bytes32(block.parentHash),
+  bytes32(block.sha3Uncles),
+  address(block.miner || block.coinbase),
+  bytes32(block.stateRoot),
+  bytes32(block.transactionsRoot),
+  bytes32(block.receiptsRoot || block.receiptRoot),
+  bytes256(block.logsBloom),
+  uint(block.difficulty),
+  uint(block.number),
+  uint(block.gasLimit),
+  uint(block.gasUsed),
+  uint(block.timestamp),
+  bytes(block.extraData),
+
+  ...block.sealFields
+    ? block.sealFields.map(s => rlp.decode(bytes(s)))
+    : [
+      bytes32(block.mixHash),
+      bytes8(block.nonce)
+    ]
+] as BlockHeader
+
+
+/** create a Buffer[] from RPC-Response */
+export const toTransaction = (tx: TransactionData) => [
+  uint(tx.nonce),
+  uint(tx.gasPrice),
+  uint(tx.gas || tx.gasLimit),
+  address(tx.to),
+  uint(tx.value),
+  bytes(tx.input || tx.data),
+  uint(tx.v),
+  uint(tx.r),
+  uint(tx.s)
+] as Transaction
+
+
+// encode the account
+export const toAccount = (account: AccountData) => [
+  uint(account.nonce),
+  uint(account.balance),
+  bytes32(account.storageHash || ethUtil.KECCAK256_RLP),
+  bytes32(account.codeHash || ethUtil.KECCAK256_NULL)
+] as Account
 
 
 
-
-
-
-
-
+/** create a Buffer[] from RPC-Response */
+export const toReceipt = (r: ReceiptData) => [
+  uint(r.status || r.root),
+  uint(r.cumulativeGasUsed),
+  bytes256(r.logsBloom),
+  r.logs.map(l => [
+    address(l.address),
+    l.topics.map(bytes32),
+    bytes(l.data)
+  ])
+] as Receipt
 
 
 
@@ -66,10 +194,10 @@ export interface LogData {
 export class Block {
 
   /** the raw Buffer fields of the BlockHeader */
-  raw: Buffer[]
+  raw: BlockHeader
 
   /** the transaction-Object (if given) */
-  transactions: Transaction[]
+  transactions: Tx[]
 
   get parentHash() { return this.raw[0] }
   get uncleHash() { return this.raw[1] }
@@ -87,40 +215,28 @@ export class Block {
   get sealedFields() { return this.raw.slice(13) }
 
   /** creates a Block-Onject from either the block-data as returned from rpc, a buffer or a hex-string of the encoded blockheader */
-  constructor(data: any) {
-    this.raw = []
+  constructor(data: Buffer | string | BlockData) {
     if (Buffer.isBuffer(data))
       this.raw = ethUtil.rlp.decode(data)
     else if (typeof data === 'string')
       this.raw = ethUtil.rlp.decode(Buffer.from(data.replace('0x', ''), 'hex'))
     else if (typeof data === 'object') {
-      ['parentHash:32', 'sha3Uncles', 'miner,coinbase:20', 'stateRoot:32', 'transactionsRoot:32', 'receiptsRoot,receiptRoot', 'logsBloom', 'difficulty', 'number', 'gasLimit', 'gasUsed', 'timestamp', 'extraData:-1'].forEach(field => {
-        this.raw.push(toBuffer(field.split(':')[0].split(',').map(_ => data[_]).find(_ => _) || ethUtil.SHA3_NULL, parseInt(field.split(':')[1] || '0')))
-      })
-      if (data.sealFields && data.sealFields.length)
-        data.sealFields.forEach(s => this.raw.push(rlp.decode(toBuffer(s))))
-      else {
-        if (data.mixHash !== undefined)
-          this.raw.push(toBuffer(data.mixHash))
-        if (data.nonce !== undefined)
-          this.raw.push(toBuffer(data.nonce, 8))
-      }
+      this.raw = toBlockHeader(data)
 
       if (data.transactions && typeof data.transactions[0] === 'object')
         this.transactions = data.transactions.map(createTx)
-
     }
 
   }
 
   /** the blockhash as buffer */
   hash(): Buffer {
-    return ethUtil.rlphash(this.raw)
+    return hash(this.raw)
   }
 
   /** the serialized header as buffer */
   serializeHeader(): Buffer {
-    return ethUtil.rlp.encode(this.raw)
+    return serialize(this.raw)
   }
 
 }
@@ -139,7 +255,7 @@ export function createTx(transaction) {
   }
   const fromAddress = ethUtil.toBuffer(txParams.from)
   delete txParams.from
-  const tx = new Transaction(txParams)
+  const tx = new Tx(txParams)
   tx._from = fromAddress
   tx.getSenderAddress = function () { return fromAddress }
   if (txParams.hash && txParams.hash !== '0x' + ethUtil.sha3(tx.serialize()).toString('hex'))
@@ -152,29 +268,10 @@ export function createTx(transaction) {
   return tx
 }
 
-// encode the account
-export function serializeAccount(nonce: string, balance: string, storageHash: string, codeHash: string): Buffer {
-  return rlp.encode([
-    nonce || '0x00',
-    balance || '0x00',
-    storageHash || '0x' + ethUtil.KECCAK256_RLP_S,
-    codeHash || '0x' + ethUtil.KECCAK256_NULL_S
-  ].map(toVariableBuffer))
-}
-
-export function serializeReceipt(txReceipt: any) {
-  return rlp.encode([
-    toBuffer(txReceipt.status || txReceipt.root),
-    toBuffer(txReceipt.cumulativeGasUsed),
-    toBuffer(txReceipt.logsBloom),
-    txReceipt.logs.map(l => [l.address, l.topics.map(toBuffer), l.data].map(toBuffer))]
-  )
-}
-
 
 /** converts blockdata to a hexstring*/
 export function blockToHex(block: any) {
-  return '0x' + new Block(block).serializeHeader().toString('hex')
+  return toHex(new Block(block).serializeHeader())
 }
 
 /** converts a hexstring to a block-object */
@@ -183,40 +280,5 @@ export function blockFromHex(hex: string) {
 }
 
 
-
-
-
-// _______________
-
-const Bytes256 = val => toBuffer(val, 256)
-const Bytes32 = val => toBuffer(val, 32)
-const Bytes8 = val => toBuffer(val, 8)
-const Address = val => toBuffer(val, 20)
-const UInt = val => toBuffer(val, 0)
-
-
-export const toBlockHeader = (block: BlockData) => [
-  Bytes32(block.parentHash),
-  Bytes32(block.sha3Uncles),
-  Address(block.miner || block.coinbase),
-  Bytes32(block.stateRoot),
-  Bytes32(block.receiptsRoot || block.receiptRoot),
-  Bytes256(block.logsBloom),
-  UInt(block.difficulty),
-  UInt(block.number),
-  UInt(block.gasLimit),
-  UInt(block.gasUsed),
-  UInt(block.timestamp),
-  Bytes32(block.extraData),
-  Bytes32(block.extraData),
-
-  ... (block.sealFields
-    ? block.sealFields.map(s => rlp.decode(toBuffer(s)))
-    : [
-      Bytes32(block.mixHash),
-      Bytes8(block.nonce)
-    ]
-  )
-] as BlockHeader
 
 

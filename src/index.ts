@@ -42,4 +42,6 @@ export type Transport = _transport.Transport
 export type ServerList = types.ServerList
 export type BlockData = _serialize.BlockData
 export type LogData = _serialize.LogData
+export type ReceiptData = _serialize.ReceiptData
+export type TransactionData = _serialize.TransactionData
 export const AxiosTransport = transport.AxiosTransport

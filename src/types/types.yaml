@@ -265,6 +265,12 @@ definitions:
                             txIndex: 
                                 type: integer
                                 description: the transactionIndex within the block
+                            txProof:
+                                type: array
+                                description: the merkleProof
+                                items:
+                                    type: string
+                                    pattern: ^0x[0-9a-fA-F]+$
                             proof:
                                 type: array
                                 description: the merkleProof
@@ -290,6 +296,12 @@ definitions:
             merkleProof: 
                 type: array
                 description: the serialized merle-noodes beginning with the root-node
+                items:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]+$
+            txProof: 
+                type: array
+                description: the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex
                 items:
                     type: string
                     pattern: ^0x[0-9a-fA-F]+$

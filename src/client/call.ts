@@ -5,7 +5,7 @@ import * as Block from 'ethereumjs-block'
 import * as Trie from 'merkle-patricia-tree'
 import * as rlp from 'rlp'
 import * as utils from 'ethereumjs-util'
-import { createTx } from '../util/serialize'
+import { createTx, bytes32 } from '../util/serialize'
 import { promisify, toBuffer } from '../util/util'
 import { AccountProof } from '../types/types'
 
@@ -49,7 +49,7 @@ export async function executeCall(args: {
 
       case 'SLOAD':
         const contract = utils.toChecksumAddress(ev.address.toString('hex'))
-        const key = '0x' + ev.stack[ev.stack.length - 1].toString(16)
+        const key = bytes32(ev.stack[ev.stack.length - 1])
         const ac = accounts[contract] || accounts[contract.toLowerCase()]
 
         // check if this key is part of the acountProof, if not the result can not be trusted
@@ -71,7 +71,7 @@ export async function executeCall(args: {
 
   // return the returnValue
   if (missingDataError) throw missingDataError
-  return '0x' + result.vm.return.toString('hex')
+  return result.vm.return as Buffer
 }
 
 async function setStorageFromProof(trie, accounts: { [adr: string]: AccountProof }) {
