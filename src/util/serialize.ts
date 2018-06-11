@@ -132,13 +132,12 @@ export const toBlockHeader = (block: BlockData) => [
   uint(block.timestamp),
   bytes(block.extraData),
 
-  ... (block.sealFields
+  ...block.sealFields
     ? block.sealFields.map(s => rlp.decode(bytes(s)))
     : [
       bytes32(block.mixHash),
       bytes8(block.nonce)
     ]
-  )
 ] as BlockHeader
 
 

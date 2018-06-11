@@ -43,32 +43,37 @@ The Blockhash is calculated by serializing the blockdata with [rlp](https://gith
 
 ```js
 blockHeader = rlp.encode([
-	parentHash: BlockHash,
-	uncleHash: BlockHash[],
-	minerAddress: Address,
-	stateRoot: StateRoot,
-	transactionRoot: TransactionRoot,
-	transactionReceiptRoot: TransactionReceiptRoot,
-	logsBloom: BloomFilter,
-	difficulty: UInt256,
-	number: UInt256,
-	gasLimit: UInt64,
-	gasUsed: UInt64,
-	timestamp: UInt256,
-	extraData: UInt8[32],
-	proofOfWork: Keccak256, // AKA: MixHash; AKA: MixDigest
-	nonce: UInt8[8]
+  bytes32( b.parentHash ),
+  bytes32( b.sha3Uncles ),
+  address( b.miner || b.coinbase ),
+  bytes32( b.stateRoot ),
+  bytes32( b.transactionsRoot ),
+  bytes32( b.receiptsRoot || b.receiptRoot ),
+  bytes256( b.logsBloom ),
+  uint( b.difficulty ),
+  uint( b.number ),
+  uint( b.gasLimit ),
+  uint( b.gasUsed ),
+  uint( b.timestamp ),
+  bytes( b.extraData ),
+
+  ... b.sealFields
+    ? b.sealFields.map(s => rlp.decode(bytes(s)))
+    : [
+      bytes32( b.mixHash ),
+      bytes8( b.nonce )
+    ]
 ])
 ```
 
-For POA-Chains the blockheader will use the `sealFields` (instead of ProofOfWork and Nonce) which are already rlp-encoded and should be added as raw data when using rlp.encode.
+For POA-Chains the blockheader will use the `sealFields` (instead of mixHash and nonce) which are already rlp-encoded and should be added as raw data when using rlp.encode.
 
 ```js
 if (keccak256(blockHeader) !== singedBlockHash) 
   throw new Error('Invalid Block')
 ```
 
-In case of the `eth_getBlockTransactionCountBy...` the proof contains the full blockHeader already serilalized + all transactionHashes. This is needed in order to verify them in a merkleTree and compare them with the `TransactionRoot`
+In case of the `eth_getBlockTransactionCountBy...` the proof contains the full blockHeader already serilalized + all transactionHashes. This is needed in order to verify them in a merkleTree and compare them with the `transactionRoot`
 
 
 ## Transaction Proof
@@ -90,29 +95,30 @@ In order to verify we need :
 
 ```js
 transaction = rlp.encode([
-	accountNonce: UInt64
-	price: UInt256
-	gasLimit: UInt64
-	amount: UInt256
-	payload: UInt8[]
-	v: UInt256
-	r: UInt256
-	s: UInt256
+  uint( tx.nonce ),
+  uint( tx.gasPrice ),
+  uint( tx.gas || tx.gasLimit ),
+  address( tx.to ),
+  uint( tx.value ),
+  bytes( tx.input || tx.data ),
+  uint( tx.v ),
+  uint( tx.r ),
+  uint( tx.s )
 ])
 ``` 
 
 3. verify the merkleProof of the transaction with
 
 ```js
-key = keccak256(in3.proof.txIndex),
-root = blockHeader.transactionRoot,
-proof = in3.proof.merkleProof
-expectedValue = transaction
+verifyMerkleProof(
+  blockHeader.transactionRoot, /* root */,
+  keccak256(proof.txIndex), /* key or path */
+  proof.merkleProof, /* serialized nodes starting with the root-node */
+  transaction /* expected value */
+)
 ```
 
-
 The Proof-Data will look like these:
-
 
 ```js
 {
@@ -126,22 +132,14 @@ The Proof-Data will look like these:
     "gasPrice": "0x0",
     "hash": "0xe9c15c3b26342e3287bb069e433de48ac3fa4ddd32a31b48e426d19d761d7e9b",
     "input": "0x00",
-    "nonce": "0x36",
-    "publicKey": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
-    "r": "0xdc967310342af5042bb64c34d3b92799345401b26713b43faf253bd4bf972cbb",
-    "raw": "0xf86136808255f0942b5ad5c4795c026514f8317c7a215e218dccd6cf8203e8001ca0dc967310342af5042bb64c34d3b92799345401b26713b43faf253bd4bf972cbba0464bade028ba54e0f78482757feeda354f3abedac35955ec07f822aad8d020c4",
-    "s": "0x464bade028ba54e0f78482757feeda354f3abedac35955ec07f822aad8d020c4",
-    "standardV": "0x1",
-    "to": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
-    "transactionIndex": "0x0",
-    "v": "0x1c",
     "value": "0x3e8"
+    ...
   },
   "in3": {
     "proof": {
       "type": "transactionProof",
       "block": "0xf901e6a040997a53895b48...", // serialized blockheader
-      "merkleProof": [
+      "merkleProof": [  /* serialized nodes starting with the root-node */
         "f868822080b863f86136808255f0942b5ad5c4795c026514f8317c7a215e218dccd6cf8203e8001ca0dc967310342af5042bb64c34d3b92799345401b26713b43faf253bd4bf972cbba0464bade028ba54e0f78482757feeda354f3abedac35955ec07f822aad8d020c4"
       ],
       "txIndex": 0,
@@ -168,36 +166,45 @@ In order to verify we need :
 
 ```js
 transactionReceipt = rlp.encode([
-	postStateOrStatus: stateRoot|UInt32, 
-	cumulativeGasUsed: UInt64,
-	logsBloom: BloomFilter,
-	logs: Log[]
+  uint( r.status || r.root ),
+  uint( r.cumulativeGasUsed ),
+  bytes256( r.logsBloom ),
+  r.logs.map(l => [
+    address( l.address ),
+    l.topics.map( bytes32 ),
+    bytes( l.data )
+  ])
 ])
 ``` 
 
 3. verify the merkleProof of the transaction receipt with
 
 ```js
-key = keccak256(in3.proof.txIndex),
-root = blockHeader.transactionReceiptRoot,
-proof = in3.proof.merkleProof
-expectedValue = transactionReceipt
+verifyMerkleProof(
+  blockHeader.transactionReceiptRoot, /* root */,
+  keccak256(proof.txIndex), /* key or path */
+  proof.merkleProof, /* serialized nodes starting with the root-node */
+  transactionReceipt /* expected value */
+)
 ```
+
+4. Since the merkle-Proof is only proving the value for the given transactionIndex, we also nned to prove that the transactionIndex matches the transactionHash requested. This is done by adding another MerkleProof for the Transaction itself as already done desribed in the [Transaction Proof](#transaction-proof)
 
 ## Log Proof
 
-Proofs for logs are only for the one transaction-method:
+Proofs for logs are only for the one rpc-method:
 
 - [eth_getPastLogs
 ](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getpastlogs)
 
 Since logs or events are based on the TransactionReceipts, the only way to prove them is by proving the TransactionReceipt each event belongs to.
 
-That's why this proof needs to offer 
+That's why this proof needs to provide
 - all blockheaders where these events occured
 - all TransactionReceipts + their MerkleProof of the logs
+- all MerkleProofs for the transactions in order to prove the transactionIndex
 
-The Proof datastructure will look like this:
+The Proof data structure will look like this:
 
 ```ts
   Proof {
@@ -208,13 +215,13 @@ The Proof datastructure will look like this:
         receipts: {
           [txHash: string]: {  // the transactionHash as key
             txIndex: number // transactionIndex within the block
-            proof: string[] // the merkle Proof-Array
+            txProof: string[] // the merkle Proof-Array for the transaction
+            proof: string[] // the merkle Proof-Array for the receipts
           }
         }
       }
     }
   }
-
 ```
 
 
@@ -225,9 +232,192 @@ In order to verify we need :
 2. for each blockheader we verify all receipts by using 
 
 ```js
-key = keccak256(receipt.txIndex),
-root = blockHeader.transactionReceiptRoot,
-proof = receipt.proof
+verifyMerkleProof(
+  blockHeader.transactionReceiptRoot, /* root */,
+  keccak256(proof.txIndex), /* key or path */
+  proof.merkleProof, /* serialized nodes starting with the root-node */
+  transactionReceipt /* expected value */
+)
 ```
 
-3. The resulting values are the receipts. For each log-entry, we are comparing the verified values of the receipt and ensuring that they are correct. 
+3. The resulting values are the receipts. For each log-entry, we are comparing the verified values of the receipt with the returned logs to ensure that they are correct. 
+
+## Account Proof
+
+Prooving an account-value applies to these functions:
+
+- [eth_getBalance](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getbalance)
+- [eth_getCode](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getcode)
+- [eth_getTransactionCount](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactioncount)
+- [eth_getStorageAt](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getstorageat)
+
+### eth_getProof
+
+For the Transaction or Block Proofs all needed data can be found in the block itself and retrieved through standard rpc calls, but if we want to approve the values of an account, we need the MerkleTree of the state, which is not accessable through the standard rpc. That's why we have forked [parity](https://github.com/slockit/parity) and added one additional rpc-method: `eth_getProof`
+
+This function works accepts 3 parameter :
+1. `account` - the address of the account to proof
+2. `storage` - a array of storage-keys to include in the proof.
+3. `block` - integer block number, or the string "latest", "earliest" or "pending"
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "eth_getProof",
+  "params": [
+    "0x7F0d15C7FAae65896648C8273B6d7E43f58Fa842",
+    [  "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421" ],
+    "latest"
+  ]
+}
+```
+
+The result will look like this:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "accountProof": [
+      "0xf90211a...0701bc80",
+      "0xf90211a...0d832380",
+      "0xf90211a...5fb20c80",
+      "0xf90211a...0675b80",
+      "0xf90151a0...ca08080"
+    ],
+    "address": "0x7f0d15c7faae65896648c8273b6d7e43f58fa842",
+    "balance": "0x0",
+    "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+    "nonce": "0x0",
+    "storageHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+    "storageProof": [
+      {
+        "key": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "proof": [
+          "0xf90211a...0701bc80",
+          "0xf90211a...0d832380"
+        ],
+        "value": "0x1"
+      }
+    ]
+  },
+  "id": 1
+}
+```
+
+In order to run the verification the blockheader is needed as well.
+
+The Verification of such a proof is done in the following steps:
+
+1. serialize the blockheader and compare the blockhash with the signed hash as well as with the blockHash and number of the transaction. (See [BlockProof](#blockproof))
+
+2. Serialize the account, which holds the 4 values:
+
+```js
+account = rlp.encode([
+  uint( nonce),
+  uint( balance),
+  bytes32( storageHash || ethUtil.KECCAK256_RLP),
+  bytes32( codeHash || ethUtil.KECCAK256_NULL)
+])
+```
+
+3. verify the merkle Proof for the account using the stateRoot of the blockHeader:
+
+```js
+verifyMerkleProof(
+ block.stateRoot, // expected merkle root
+ util.keccak(accountProof.address), // path, which is the hashed address
+ accountProof.accountProof.map(bytes), // array of Buffer with the merkle-proof-data
+ isNotExistend(accountProof) ? null : serializeAccount(accountProof), // the expected serialized account
+)
+```
+
+    In case the account does exist yet, (which is the case if `none` == `startNonce` and `codeHash` == `'0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'`), the proof may end with one of these nodes:
+    1. the last node is a branch, where the child of the next step does not exist.
+    2. the last node is a leaf with different relative key
+
+    Both would prove, that this key does not exist.
+
+4. verify each merkle Proof for the storage using the storageHash of the account:
+
+```js
+verifyMerkleProof(
+  bytes32( accountProof.storageHash ),   // the storageRoot of the account
+  util.keccak(bytes32(s.key)),  // the path, which is the hash of the key
+  s.proof.map(bytes), // array of Buffer with the merkle-proof-data
+  s.value === '0x0' ? null : util.rlp.encode(s.value) // the expected value or none to proof non-existence
+))
+```
+
+
+
+## Call Proof
+
+Call Proofs are used whenever you are calling a read-only function of smart contract:
+
+- [eth_call](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_call)
+
+
+Verifying the result of a `eth_call` is a little bit more complex. Because the response is a result of executing opcodes in the vm. The only way to do so, is to reproduce it and execute the same code. That's why a Call Proof needs to provide all data used within the call. This means :
+
+- all referred accounts including the code (if it is a contract), storageHash, nonce and balance.
+- all storage keys, which are used ( This can be found by tracing the transaction and collecting data based on th `SLOAD`-opcode )
+- all blockdata, which are referred at (besides the current one, also the `BLOCKHASH`-opcodes are referring to former blocks) 
+
+For Verifying you need to follow these steps:
+
+1. serialize all used blockheaders and compare the blockhash with the signed hashes. (See [BlockProof](#blockproof))
+
+2. Verify all used accounts and their storage as showed in [Account Proof](#account-proof)
+
+3. create a new [VM](https://github.com/ethereumjs/ethereumjs-vm) with a MerkleTree as state and fill in all used value in the state:
+
+
+```js 
+  // create new state for a vm
+  const state = new Trie()
+  const vm = new VM({ state })
+
+  // fill in values
+  for (const adr of Object.keys(accounts)) {
+    const ac = accounts[adr]
+
+    // create an account-object
+    const account = new Account([ac.nonce, ac.balance, ac.stateRoot, ac.codeHash])
+
+    // if we have a code, we will set the code
+    if (ac.code) account.setCode( trie, bytes( ac.code ))
+
+    // set all storage-values
+    for (const s of ac.storageProof)
+      account.setStorage( trie, bytes32( s.key ), rlp.encode( bytes32( s.value )))
+
+    // set the account data
+    trie.put( address( adr ), account.serialize())
+  }
+
+  // add listener on each step to make sure it uses only values found in the proof
+  vm.on('step', ev => {
+     if (ev.opcode.name === 'SLOAD') {
+        const contract = toHex( ev.address ) // address of the current code
+        const storageKey = bytes32( ev.stack[ev.stack.length - 1] ) // last element on the stack is the key
+        if (!getStorageValue(contract, storageKey))
+          throw new Error(`incomplete data: missing key ${storageKey}`)
+     }
+     /// ... check other opcodes as well
+  })
+
+  // create a transaction
+  const tx = new Transaction(txData)
+
+  // run it
+  const result = await vm.runTx({ tx, block: new Block([block, [], []]) })
+
+  // use the return value
+  return result.vm.return
+```
+
+
+
