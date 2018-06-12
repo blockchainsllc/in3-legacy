@@ -4,7 +4,8 @@ import { RPCResponse } from '../types/types'
 const BN = ethUtil.BN
 
 
-export const fixLength = (hex: string) => hex.length % 2 ? '0' + hex : hex
+
+const fixLength = (hex: string) => hex.length % 2 ? '0' + hex : hex
 
 export function promisify(self, fn, ...args: any[]): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -81,10 +82,16 @@ export function toBuffer(val, len = -1) {
 
   if (!val) val = Buffer.allocUnsafe(0)
 
+  // since rlp encodes an empty array for a 0 -value we create one if the required len===0
   if (len == 0 && val.length == 1 && val[0] === 0)
     return Buffer.allocUnsafe(0)
-  if (len > 0 && Buffer.isBuffer(val) && val.length < len)
-    val = Buffer.concat([Buffer.alloc(len - val.length), val])
+
+
+  // if we have a defined length, we should padLeft 00 or cut the left content to ensure length
+  if (len > 0 && Buffer.isBuffer(val) && val.length !== len)
+    return val.length < len
+      ? Buffer.concat([Buffer.alloc(len - val.length), val])
+      : val.slice(val.length - len)
 
   return val as Buffer
 
