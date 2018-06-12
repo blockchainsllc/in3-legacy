@@ -34,4 +34,4 @@ const block = await web.eth.getBlockByNumber('latest')
 
 # Verification
 
-For a full documentation on how the verification works read this [document](https://github.com/slockit/in3/blob/master/verification.md).
+For a full documentation on how the verification works read this [document](https://github.com/slockit/in3/blob/master/doc/verification.md).
