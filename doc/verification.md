@@ -39,26 +39,26 @@ The `eth_getBlockBy...` methods return the Block-Data. In this case all we need 
 
 The Verification is then simply by creating the blockhash and comparing this to the signed one.
 
-The Blockhash is calculated by serializing the blockdata with [rlp](https://github.com/ethereum/wiki/wiki/RLP) and hashing it:
+The Blockhash is calculated by [serializing the blockdata](https://github.com/slockit/in3/blob/master/src/util/serialize.ts#L120) with [rlp](https://github.com/ethereum/wiki/wiki/RLP) and hashing it:
 
 ```js
 blockHeader = rlp.encode([
-  bytes32( b.parentHash ),
-  bytes32( b.sha3Uncles ),
-  address( b.miner || b.coinbase ),
-  bytes32( b.stateRoot ),
-  bytes32( b.transactionsRoot ),
-  bytes32( b.receiptsRoot || b.receiptRoot ),
-  bytes256( b.logsBloom ),
-  uint( b.difficulty ),
-  uint( b.number ),
-  uint( b.gasLimit ),
-  uint( b.gasUsed ),
-  uint( b.timestamp ),
-  bytes( b.extraData ),
+  bytes32( parentHash ),
+  bytes32( sha3Uncles ),
+  address( miner || coinbase ),
+  bytes32( stateRoot ),
+  bytes32( transactionsRoot ),
+  bytes32( receiptsRoot || receiptRoot ),
+  bytes256( logsBloom ),
+  uint( difficulty ),
+  uint( number ),
+  uint( gasLimit ),
+  uint( gasUsed ),
+  uint( timestamp ),
+  bytes( extraData ),
 
-  ... b.sealFields
-    ? b.sealFields.map(s => rlp.decode(bytes(s)))
+  ... sealFields
+    ? sealFields.map( rlp.decode )
     : [
       bytes32( b.mixHash ),
       bytes8( b.nonce )
@@ -188,14 +188,14 @@ verifyMerkleProof(
 )
 ```
 
-4. Since the merkle-Proof is only proving the value for the given transactionIndex, we also nned to prove that the transactionIndex matches the transactionHash requested. This is done by adding another MerkleProof for the Transaction itself as already done desribed in the [Transaction Proof](#transaction-proof)
+4. Since the merkle-Proof is only proving the value for the given transactionIndex, we also need to prove that the transactionIndex matches the transactionHash requested. This is done by adding another MerkleProof for the Transaction itself as described in the [Transaction Proof](#transaction-proof)
 
 ## Log Proof
 
 Proofs for logs are only for the one rpc-method:
 
-- [eth_getPastLogs
-](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getpastlogs)
+- [eth_getLogs
+](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getlogs)
 
 Since logs or events are based on the TransactionReceipts, the only way to prove them is by proving the TransactionReceipt each event belongs to.
 
