@@ -7,13 +7,14 @@ import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
 import Filters from './filter'
 import { toHex, toNumber } from '../util/util'
 import { resolveRefs } from '../util/cbor'
+import { EventEmitter } from 'events'
 
 
 /**
  * Client for N3.
  * 
  */
-export default class Client {
+export default class Client extends EventEmitter {
 
   public defConfig: IN3Config
   private transport: Transport
@@ -25,6 +26,7 @@ export default class Client {
    * @param transport a optional transport-object. default: AxiosTransport
    */
   public constructor(config?: Partial<IN3Config>, transport?: Transport) {
+    super()
     this.filters = new Filters()
     this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
@@ -61,6 +63,7 @@ export default class Client {
    * @param chainId if given, the list for the given chainId will be updated otherwise the chainId is taken from the config
    */
   public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>, retryCount = 5): Promise<void> {
+    this.emit('nodeUpdateStarted', { chainId, conf, retryCount })
     const config = { ...this.defConfig, ...conf }
     const chain = toHex(chainId || this.defConfig.chainId || '0x01', 32)
     if (!chain) throw new Error('No ChainId found to update')
@@ -114,6 +117,7 @@ export default class Client {
     servers.nodeList = nl.nodes
     servers.lastBlock = nl.lastBlockNumber
 
+    this.emit('nodeUpdateFinished', { chainId, conf, retryCount })
   }
 
   /**
@@ -214,7 +218,7 @@ export default class Client {
       externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))
     )
 
-    checkForAutoUpdates(conf, result)
+    checkForAutoUpdates(conf, result, this)
 
     // merge the intern and extern results
     if (internResponses.length) {
@@ -234,13 +238,14 @@ export default class Client {
 
 let idCount = 1
 
-function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[]) {
-  if (conf.autoUpdateList) {
+function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: Client) {
+  if (conf.autoUpdateList && !responses.find(_ => _.result.contract && _.result.totalServers && _.result.nodes)) {
     const blockNumber = responses.reduce((p, c) => Math.max(toNumber(c.in3 && c.in3.lastNodeList), p), 0)
     const lastUpdate = conf.servers[conf.chainId].lastBlock
     if (blockNumber > lastUpdate) {
       conf.servers[conf.chainId].lastBlock = blockNumber
-      this.updateNodeList(conf.chainId).catch(err => {
+      client.updateNodeList(conf.chainId).catch(err => {
+        client.emit('error', err)
         conf.servers[conf.chainId].lastBlock = lastUpdate
         console.error('Error updating the nodeList!')
       })
