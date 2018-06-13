@@ -214,7 +214,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 
   if (request.method.endsWith('ByHash'))
     requiredHash = bytes32(request.params[0])
-  else if (parseInt(request.params[0]) && parseInt(request.params[0]) !== parseInt('0x' + block.number.toString('hex')))
+  else if (parseInt(request.params[0]) && toNumber(request.params[0]) !== toNumber(block.number))
     throw new Error('The Block does not contain the required blocknumber')
   if (!requiredHash && request.method.indexOf('Count') < 0 && data)
     requiredHash = bytes32((data as BlockData).hash)
@@ -230,7 +230,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
     ))
     const thash: Buffer = block.transactions.length ? trie.root : util.SHA3_RLP
     if (!thash.equals(block.transactionsTrie))
-      throw new Error('The Transaction of do not hash to the given transactionHash!')
+      throw new Error('The Transactions do not match transactionRoot!')
   }
 
   if (request.method.indexOf('Count') > 0 && toHex(block.transactions.length) != toHex(data))
