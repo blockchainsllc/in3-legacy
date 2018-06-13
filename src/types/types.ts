@@ -101,6 +101,10 @@
          */
         mainChain?: string // ^0x[0-9a-fA-F]+$
         /**
+         * if true the nodelist will be automaticly updated if the lastBlock is newer
+         */
+        autoUpdateList?: boolean
+        /**
          * the nodelist per chain
          */
         servers?: {
@@ -109,6 +113,10 @@
                  * a list of addresses which should always be part of the nodelist when getting an update
                  */
                 initAddresses?: string[]
+                /**
+                 * the blockNumber of the last event in the registry
+                 */
+                lastBlock?: number
                 /**
                  * the address of the registry contract
                  */

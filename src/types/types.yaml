@@ -162,6 +162,10 @@ definitions:
                 type: string
                 pattern: ^0x[0-9a-fA-F]+$
                 description: main chain-id, where the chain registry is running.
+            autoUpdateList:
+                type: boolean
+                description: if true the nodelist will be automaticly updated if the lastBlock is newer
+
             servers:
                 type: object
                 description: the nodelist per chain
@@ -173,6 +177,9 @@ definitions:
                             type: array
                             items:
                                 type: string 
+                        lastBlock:
+                            type: integer
+                            description: the blockNumber of the last event in the registry                                
                         contract:
                             type: string
                             description: the address of the registry contract

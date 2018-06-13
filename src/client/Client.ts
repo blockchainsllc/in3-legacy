@@ -5,7 +5,7 @@ import { Transport, AxiosTransport } from '../util/transport'
 import { getChainData } from './chainData'
 import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
 import Filters from './filter'
-import { toHex } from '../util/util'
+import { toHex, toNumber } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 
 
@@ -31,6 +31,7 @@ export default class Client {
       proof: false,
       signatureCount: 0,
       minDeposit: 0,
+      autoUpdateList: true,
       requestCount: 3,
       chainId: '0x000000000000000000000000000000000000000000000000000000000000002a',
       mainChain: '0x000000000000000000000000000000000000000000000000000000000000002a',
@@ -59,7 +60,7 @@ export default class Client {
    * fetches the nodeList from the servers.
    * @param chainId if given, the list for the given chainId will be updated otherwise the chainId is taken from the config
    */
-  public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>, retryCount = 5) {
+  public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>, retryCount = 5): Promise<void> {
     const config = { ...this.defConfig, ...conf }
     const chain = toHex(chainId || this.defConfig.chainId || '0x01', 32)
     if (!chain) throw new Error('No ChainId found to update')
@@ -106,7 +107,13 @@ export default class Client {
       throw new Error('The server responded with the wrong contract-address : ' + nl.contract)
 
     }
+
+    if (servers.lastBlock && servers.lastBlock > nl.lastBlockNumber)
+      throw new Error('The new nodelist has an older blockNumber than the last known!')
+
     servers.nodeList = nl.nodes
+    servers.lastBlock = nl.lastBlockNumber
+
   }
 
   /**
@@ -206,16 +213,16 @@ export default class Client {
     const result: RPCResponse[] = await Promise.all(
       externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))
     )
-      // clean it, so we don't give the in3Node to the client
-      .then(_ => conf.keepIn3 ? _ : _.map(cleanResult))
+
+    checkForAutoUpdates(conf, result)
 
     // merge the intern and extern results
     if (internResponses.length) {
       const result2 = await Promise.all(internResponses)
-      return requests.map(r => result.find(_ => _.id === r.id) || result2.find(_ => _.id === r.id))
+      return requests.map(r => result.find(_ => _.id === r.id) || result2.find(_ => _.id === r.id)).map(conf.keepIn3 ? _ => _ : cleanResult)
     }
     else
-      return result
+      return conf.keepIn3 ? result : result.map(cleanResult)
   }
 
 
@@ -227,12 +234,18 @@ export default class Client {
 
 let idCount = 1
 
-/**
- * 
- * verifies all responses and removed the invalid ones.
- */
-async function verifyProofs(request: RPCRequest, responses: RPCResponse[]): Promise<RPCResponse[]> {
-  return Promise.all(responses.map(r => verifyProof(request, r).then(_ => _ ? r : null))).then(r => r.filter(_ => _))
+function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[]) {
+  if (conf.autoUpdateList) {
+    const blockNumber = responses.reduce((p, c) => Math.max(toNumber(c.in3 && c.in3.lastNodeList), p), 0)
+    const lastUpdate = conf.servers[conf.chainId].lastBlock
+    if (blockNumber > lastUpdate) {
+      conf.servers[conf.chainId].lastBlock = blockNumber
+      this.updateNodeList(conf.chainId).catch(err => {
+        conf.servers[conf.chainId].lastBlock = lastUpdate
+        console.error('Error updating the nodeList!')
+      })
+    }
+  }
 }
 
 /**
@@ -452,7 +465,7 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
   return res
 }
 
-function cleanResult(r: RPCResponse) {
+function cleanResult(r: RPCResponse): RPCResponse {
   return r.error
     ? { jsonrpc: r.jsonrpc, id: r.id, error: r.error }
     : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
