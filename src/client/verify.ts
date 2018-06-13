@@ -8,7 +8,6 @@ import verifyMerkleProof from '../util/merkleProof'
 import { getStorageArrayKey, getStringValue } from '../util/storage'
 import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util';
-import { toChecksumAddress } from 'ethereumjs-util';
 
 
 const allowedWithoutProof = ['eth_blockNumber']
