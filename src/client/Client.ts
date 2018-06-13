@@ -1,5 +1,5 @@
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig, ServerList } from '../types/types'
-import { verifyProof } from './verify'
+import { verifyProof, BlackListError } from './verify'
 import { canMultiChain, canProof } from './serverList'
 import { Transport, AxiosTransport } from '../util/transport'
 import { getChainData } from './chainData'
@@ -352,8 +352,22 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     return responses
   }
   catch (err) {
-    // locally blacklist this node for one hour if it did not respond within the timeout or could not be verified
-    stats.blacklistedUntil = Date.now() + 3600000
+
+    if (err instanceof BlackListError) {
+
+      const n = excludes.indexOf(node.address)
+      if (n >= 0)
+        excludes.splice(n, 1)
+
+      err.addresses.forEach(adr => {
+        conf.servers[conf.chainId].weights[adr].blacklistedUntil = Date.now() + 3600000 * 2
+      })
+    }
+    else
+
+
+      // locally blacklist this node for one hour if it did not respond within the timeout or could not be verified
+      stats.blacklistedUntil = Date.now() + 3600000
 
     let otherNodes: IN3NodeConfig[] = null
 

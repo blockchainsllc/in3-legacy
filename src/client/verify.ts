@@ -7,28 +7,48 @@ import { createRandomIndexes } from './serverList'
 import verifyMerkleProof from '../util/merkleProof'
 import { getStorageArrayKey, getStringValue } from '../util/storage'
 import * as Trie from 'merkle-patricia-tree'
+import * as ethUtil from 'ethereumjs-util';
+import { toChecksumAddress } from 'ethereumjs-util';
 
 
 const allowedWithoutProof = ['eth_blockNumber']
 
+export class BlackListError extends Error {
+  addresses: string[]
+  constructor(msg: string, addresses: string[]) {
+    super(msg)
+    this.addresses = addresses
+  }
+}
 
 /** verify the signatures of a blockhash */
 export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: Buffer[], expectedBlockHash: Buffer) {
+
 
   // calculate the blockHash
   const blockHash = b.hash()
   if (expectedBlockHash && !blockHash.equals(expectedBlockHash))
     throw new Error('The BlockHash is not the expected one!')
 
+  // if we don't expect signatures, we don't need to verify them.
+  if (!expectedSigners || expectedSigners.length === 0) return
+
+
   // TODO in the future we are not allowing block verification without signature
-  if (!signatures) return
+  if (!signatures || signatures.length === 0) throw new Error('No signatures found ')
+
+  // filter valid signatures for the current block
+  const signaturesForBlock = signatures.filter(_ => _ && toNumber(_.block) === toNumber(b.number))
+  if (signaturesForBlock.length === 0)
+    throw new BlackListError('No signatures found for block ', expectedSigners.map(_ => ethUtil.toChecksumAddress(toHex(_))))
+
 
   // verify the signatures for only the blocks matching the given
   const messageHash: Buffer = util.sha3(Buffer.concat([blockHash, bytes32(b.number)]))
-  if (!signatures.filter(_ => toNumber(_.block) === toNumber(b.number)).reduce((p, signature, i) => {
+  if (!signaturesForBlock.reduce((p, signature, i) => {
 
     if (!messageHash.equals(bytes32(signature.msgHash)))
-      throw new Error('The signature signed the wrong message!')
+      throw new BlackListError('The signature signed the wrong message!', expectedSigners.map(_ => ethUtil.toChecksumAddress(toHex(_))))
 
     // recover the signer from the signature
     const signer: Buffer = util.pubToAddress(util.ecrecover(messageHash, toNumber(signature.v), bytes(signature.r), bytes(signature.s)))

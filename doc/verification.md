@@ -255,7 +255,7 @@ Prooving an account-value applies to these functions:
 
 For the Transaction or Block Proofs all needed data can be found in the block itself and retrieved through standard rpc calls, but if we want to approve the values of an account, we need the MerkleTree of the state, which is not accessable through the standard rpc. That's why we have forked [parity](https://github.com/slockit/parity) and added one additional rpc-method: `eth_getProof`
 
-This function works accepts 3 parameter :
+This function accepts 3 parameter :
 1. `account` - the address of the account to proof
 2. `storage` - a array of storage-keys to include in the proof.
 3. `block` - integer block number, or the string "latest", "earliest" or "pending"
