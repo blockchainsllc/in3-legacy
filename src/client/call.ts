@@ -6,7 +6,7 @@ import * as Trie from 'merkle-patricia-tree'
 import * as rlp from 'rlp'
 import * as utils from 'ethereumjs-util'
 import { createTx, bytes32 } from '../util/serialize'
-import { promisify, toBuffer } from '../util/util'
+import { promisify, toBuffer, toHex } from '../util/util'
 import { AccountProof } from '../types/types'
 
 /** executes a transaction-call to a smart contract */
@@ -16,6 +16,9 @@ export async function executeCall(args: {
   value?: string
   from?: string
 }, accounts: { [adr: string]: AccountProof }, block: Buffer) {
+
+  // fix account-keys, so all the addresses are formated the same way
+  Object.keys(accounts).forEach(a => accounts[toHex(a, 20).toLowerCase()] = accounts[a])
 
   // create new state for a vm
   const state = new Trie()
@@ -42,19 +45,19 @@ export async function executeCall(args: {
     // - STATIONCALL
     switch (ev.opcode.name) {
       case 'BALANCE':
-        const balanceContract = utils.toChecksumAddress('0x' + ev.stack[ev.stack.length - 1].toString(16))
-        if (!(accounts[balanceContract] || accounts[balanceContract.toLowerCase()]))
+        const balanceContract = toHex('0x' + ev.stack[ev.stack.length - 1].toString(16), 20)
+        if (!(accounts[balanceContract]))
           missingDataError = new Error('The contract ' + balanceContract + ' is used to get the balance but is missing in the proof!')
         break
 
       case 'SLOAD':
-        const contract = utils.toChecksumAddress(ev.address.toString('hex'))
+        const contract = toHex(ev.address, 20)
         const key = bytes32(ev.stack[ev.stack.length - 1])
-        const ac = accounts[contract] || accounts[contract.toLowerCase()]
+        const ac = accounts[contract]
 
         // check if this key is part of the acountProof, if not the result can not be trusted
         if (!ac)
-          missingDataError = new Error('The contract ' + contract + ' is used but is missing in the proof!')
+          missingDataError = new Error('The contract ' + contract + ' is used but is missing in the proof! proof=' + JSON.stringify(accounts, null, 2))
         else if (!getStorageValue(ac, key))
           missingDataError = new Error('The storage value ' + key + ' in ' + contract + ' is used but is missing in the proof!')
         break
