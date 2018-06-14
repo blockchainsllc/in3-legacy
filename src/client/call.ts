@@ -37,9 +37,6 @@ export async function executeCall(args: {
     // - BLOCKHASH
     // - COINBASE ( since we are currently not using a real block!)
     // and we need to check if the target contract exists (even though it would most likely fail if not)
-    // - CALL
-    // - CALLCODE
-    // - DELEGATECALL
     // - STATIONCALL
     switch (ev.opcode.name) {
       case 'BALANCE':
