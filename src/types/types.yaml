@@ -420,6 +420,20 @@ definitions:
                 type: integer
                 default: 8500
                 description: the listeneing port for the server
+            logging:
+                type: object
+                description: logger config
+                properties:
+                    file: 
+                        type: string
+                        description: the path to the logile
+                    level:
+                        type: string
+                        description: Loglevel
+                    colors:
+                        type: boolean
+                        description: if true colors will be used
+
             chains:
                 type: object
                 description: a definition of the Handler per chain

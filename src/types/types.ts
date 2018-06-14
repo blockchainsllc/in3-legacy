@@ -213,6 +213,23 @@
          */
         port?: number
         /**
+         * logger config
+         */
+        logging?: {
+            /**
+             * the path to the logile
+             */
+            file?: string
+            /**
+             * Loglevel
+             */
+            level?: string
+            /**
+             * if true colors will be used
+             */
+            colors?: boolean
+        }
+        /**
          * a definition of the Handler per chain
          */
         chains?: {
