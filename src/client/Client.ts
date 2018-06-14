@@ -5,7 +5,7 @@ import { Transport, AxiosTransport } from '../util/transport'
 import { getChainData } from './chainData'
 import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
 import Filters from './filter'
-import { toHex, toNumber } from '../util/util'
+import { toHex, toNumber, toMinHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
 
@@ -65,7 +65,7 @@ export default class Client extends EventEmitter {
   public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>, retryCount = 5): Promise<void> {
     this.emit('nodeUpdateStarted', { chainId, conf, retryCount })
     const config = { ...this.defConfig, ...conf }
-    const chain = toHex(chainId || this.defConfig.chainId || '0x01', 32)
+    const chain = toMinHex(chainId || this.defConfig.chainId || '0x1')
     if (!chain) throw new Error('No ChainId found to update')
 
     const servers = this.defConfig.servers[chain] || (this.defConfig.servers[chain] = {})

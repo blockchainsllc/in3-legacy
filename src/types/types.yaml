@@ -408,3 +408,52 @@ definitions:
                 description: number of servers
             proof:
                 $ref: "#/definitions/Proof"
+
+    IN3RPCConfig:
+        type: object
+        description: the configuration for the rpc-handler
+        properties:
+            defaultChain:
+                type: string
+                description: the default chainId in case the request does not contain one.
+            port:
+                type: integer
+                default: 8500
+                description: the listeneing port for the server
+            chains:
+                type: object
+                description: a definition of the Handler per chain
+                additionalProperties:
+                    $ref: "#/definitions/IN3RPCHandlerConfig"
+
+    IN3RPCHandlerConfig:
+        type: object
+        description: the configuration for the rpc-handler
+        required: [ rpcUrl,privateKey,registry]
+        properties:
+            handler:
+                type: string
+                description: the impl used to handle the calls
+                enum: [ eth, ipfs, btc ]
+            rpcUrl: 
+                type: string
+                description: the url of the client
+            minBlockHeight:
+                type: integer
+                description: the minimal blockheight in order to sign
+            persistentFile:
+                type: string
+                description: the filename of the file keeping track of the last handled blocknumber
+            watchInterval:
+                type: integer
+                description: the number of seconds of the interval for checking for new events
+            privateKey:
+                type: string
+                description: the private key used to sign blockhashes
+            registry:
+                type: string
+                description: the address of the server registry used in order to update the nodeList
+            registryRPC:
+                type: string
+                description: the url of the client in case the registry is not on the same chain.
+

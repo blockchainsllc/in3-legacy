@@ -201,6 +201,62 @@
         blacklistedUntil?: number
     }
     /**
+     * the configuration for the rpc-handler
+     */
+    export interface IN3RPCConfig {
+        /**
+         * the default chainId in case the request does not contain one.
+         */
+        defaultChain?: string
+        /**
+         * the listeneing port for the server
+         */
+        port?: number
+        /**
+         * a definition of the Handler per chain
+         */
+        chains?: {
+            [name: string]: IN3RPCHandlerConfig
+        }
+    }
+    /**
+     * the configuration for the rpc-handler
+     */
+    export interface IN3RPCHandlerConfig {
+        /**
+         * the impl used to handle the calls
+         */
+        handler?: "eth" | "ipfs" | "btc"
+        /**
+         * the url of the client
+         */
+        rpcUrl: string
+        /**
+         * the minimal blockheight in order to sign
+         */
+        minBlockHeight?: number
+        /**
+         * the filename of the file keeping track of the last handled blocknumber
+         */
+        persistentFile?: string
+        /**
+         * the number of seconds of the interval for checking for new events
+         */
+        watchInterval?: number
+        /**
+         * the private key used to sign blockhashes
+         */
+        privateKey: string
+        /**
+         * the address of the server registry used in order to update the nodeList
+         */
+        registry: string
+        /**
+         * the url of the client in case the registry is not on the same chain.
+         */
+        registryRPC?: string
+    }
+    /**
      * additional config for a IN§ RPC-Request
      */
     export interface IN3RPCRequestConfig {

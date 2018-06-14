@@ -44,4 +44,7 @@ export type BlockData = _serialize.BlockData
 export type LogData = _serialize.LogData
 export type ReceiptData = _serialize.ReceiptData
 export type TransactionData = _serialize.TransactionData
+export type IN3RPCConfig = types.IN3RPCConfig
+export type IN3RPCHandlerConfig = types.IN3RPCHandlerConfig
+
 export const AxiosTransport = transport.AxiosTransport

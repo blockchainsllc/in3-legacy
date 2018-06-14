@@ -112,7 +112,9 @@ export function getAddress(pk: string) {
 }
 
 /** removes all leading 0 in the hexstring */
-export function toMinHex(key: string | Buffer) {
+export function toMinHex(key: string | Buffer | number) {
+  if (typeof key === 'number')
+    key = toHex(key)
   if (typeof key === 'string') {
     for (let i = 2; i < key.length; i++) {
       if (key[i] !== '0')
