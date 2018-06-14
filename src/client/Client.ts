@@ -158,6 +158,13 @@ export default class Client extends EventEmitter {
       return p.then(_ => Array.isArray(request) ? _ : _[0])
   }
 
+  /**
+   * clears all stats and weights, like blocklisted nodes
+   */
+  public clearStats() {
+    Object.values(this.defConfig.servers).forEach(s => delete s.weights)
+  }
+
 
 
 

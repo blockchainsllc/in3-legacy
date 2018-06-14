@@ -34,8 +34,6 @@ export async function executeCall(args: {
   let missingDataError: Error = null
   vm.on('step', ev => {
     // TODO als check the following opcodes:
-    // - EXTCODESIZE
-    // - EXTCODECOPY
     // - BLOCKHASH
     // - COINBASE ( since we are currently not using a real block!)
     // and we need to check if the target contract exists (even though it would most likely fail if not)
@@ -45,9 +43,20 @@ export async function executeCall(args: {
     // - STATIONCALL
     switch (ev.opcode.name) {
       case 'BALANCE':
+      case 'EXTCODESIZE':
+      case 'EXTCODECOPY':
         const balanceContract = toHex('0x' + ev.stack[ev.stack.length - 1].toString(16), 20)
         if (!(accounts[balanceContract]))
           missingDataError = new Error('The contract ' + balanceContract + ' is used to get the balance but is missing in the proof!')
+        break
+
+      case 'CALL':
+      case 'CALLCODE':
+      case 'DELEGATECALL':
+        const callContract = toHex('0x' + ev.stack[ev.stack.length - 2].toString(16), 20)
+        if (!(accounts[callContract]))
+          missingDataError = new Error('The contract ' + callContract + ' is used to get the balance but is missing in the proof!')
+
         break
 
       case 'SLOAD':

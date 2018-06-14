@@ -18,6 +18,10 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
     const node = new Node(rlp.decode(p))
 
     switch (node.type) {
+      case 'empty':
+        if (i == 0 && expectedValue === null)
+          return null
+        throw new Error('invalid empty node here')
       case 'branch':
         // we reached the end of the path
         if (key.length === 0) {
@@ -116,7 +120,7 @@ class Node {
   raw: Buffer[]
   key: number[]
   value: Buffer
-  type: 'branch' | 'leaf' | 'extension'
+  type: 'branch' | 'leaf' | 'extension' | 'empty'
 
   constructor(data: Buffer[]) {
     this.raw = data
@@ -129,6 +133,8 @@ class Node {
       this.value = data[1]
       this.key = stringToNibbles(data[0]).slice((data[0][0] >> 4) % 2 ? 1 : 2)
     }
+    else if (data.length === 0)
+      this.type = 'empty'
 
   }
 
