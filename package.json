@@ -4,6 +4,7 @@
   "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
   "scripts": {
+    "docu": "typedoc  --exclude test --excludePrivate  --readme none --ignoreCompilerErrors --target ES6  --mode 'modules' --json doc.json src/index.ts ; cat  doc.json | slockit-docu index slockit/in3/blob/master/src \"#INCUBED API\" >  src/README.md ; rm doc.json",
     "build": "tsc -p .",
     "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
     "updateTypes": "dtsgen src/types/types.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' | sed 's/;//g' > src/types/types.ts ",
@@ -53,14 +54,16 @@
     "babelify": "^9.0.0",
     "browserify": "^16.2.2",
     "chai": "^4.1.2",
+    "disc": "^1.3.3",
     "dtsgenerator": "^0.9.9",
     "mocha": "^5.1.1",
     "nyc": "^11.8.0",
+    "slockit-generator": "git+ssh://git@github.com/slockit/generator.git#master",
     "source-map-support": "^0.5.6",
     "ts-node": "^6.0.3",
+    "typedoc": "^0.11.1",
     "typescript": "^2.7.2",
-    "uglify-es": "^3.2.0",
-    "disc": "^1.3.3"
+    "uglify-es": "^3.2.0"
   },
   "dependencies": {
     "axios": "^0.18.0",

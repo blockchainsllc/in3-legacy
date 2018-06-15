@@ -45,7 +45,7 @@ export function toHex(val: any, bytes?: number): string {
   else
     hex = ethUtil.bufferToHex(val).substr(2)
   if (bytes)
-    hex = hex.padStart(bytes * 2, '0')
+    hex = (hex as any).padStart(bytes * 2, '0') as string  // workarounf for ts-error in older js
   if (hex.length % 2)
     hex = '0' + hex
   return '0x' + hex.toLowerCase()
