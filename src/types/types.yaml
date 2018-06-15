@@ -42,6 +42,7 @@ definitions:
             address:
                 description: the address of the node, which is the public address it iis signing with.
                 type: string
+                format: address
                 example: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
             url:
                 description: the endpoint to post to
@@ -53,7 +54,7 @@ definitions:
                 type: array
                 items:
                     type: string
-                    pattern: ^0x[0-9a-fA-F]+$
+                    format: hex
             deposit:
                 description: the deposit of the node in wei
                 type: integer
@@ -72,6 +73,7 @@ definitions:
                 description: the requested chainId
                 type: string
                 example: '0x1'
+                format: hex
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean
@@ -89,27 +91,35 @@ definitions:
             signatures: 
                 description: a list of addresses requested to sign the blockhash
                 type: array
-                exmaple: [ '0x6C1a01C2aB554930A937B0a2E8105fB47946c679' ]
+                example: [ '0x6C1a01C2aB554930A937B0a2E8105fB47946c679' ]
                 items:
                     type: string
                     format: address
 
     Signature:
+        description: Verified ECDSA Signature. Signatures are a pair (r, s). Where r is computed as the X coordinate of a point R, modulo the curve order n.
         type: object
+        required: [r, s,v, msgHash, block, blockHash] 
         properties:
             address:
                 type: string
                 description: the address of the signing node
+                format: address
+                example: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
             block:
                 type: number
                 description: the blocknumber
+                example: 3123874
             blockHash:
                 type: string
                 description: the hash of the block
+                example: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679'
+                format: bytes32
             msgHash:
                 type: string
                 description: hash of the message
                 format: bytes32
+                example: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
             r: 
                 type: string
                 description: Positive non-zero Integer signature.r
@@ -125,7 +135,7 @@ definitions:
             
     IN3ResponseConfig:
         type: object
-        description: additional config for a IN§ RPC-Request
+        description: additional data returned from a IN3 Server
         properties:
             proof:
                 description: the Proof-data

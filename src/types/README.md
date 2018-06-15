@@ -69,9 +69,9 @@ const iN3NodeConfig:types.IN3NodeConfig = {
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
 *  **index** `integer` - the index within the contract   
-*  **address** `string` (required)  - the address of the node, which is the public address it iis signing with.   
+*  **address** `string<address>` (required)  - the address of the node, which is the public address it iis signing with.   
 *  **url** `string` (required)  - the endpoint to post to   
-*  **chainIds** `string[]` (required)  - the list of supported chains   
+*  **chainIds** `string<hex>[]` (required)  - the list of supported chains   
 *  **deposit** `integer` (required)  - the deposit of the node in wei   
 *  **props** `integer` - the properties of the node.   
 
@@ -86,13 +86,13 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
   includeCode: true,
   verification: 'proof',
   signatures: [
-    null
+    '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
   ]
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
-*  **chainId** `string` (required)  - the requested chainId   
+*  **chainId** `string<hex>` (required)  - the requested chainId   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **latestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **verification** `string` - defines the kind of proof the client is asking for   
@@ -101,24 +101,30 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 
 ### Signature
 
+Verified ECDSA Signature. Signatures are a pair (r, s). Where r is computed as the X coordinate of a point R, modulo the curve order n.
 
 ```javascript
 import {types} from 'in3'
-const signature:types.Signature = {}
+const signature:types.Signature = {
+  address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+  block: 3123874,
+  blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
+  msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+}
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
-*  **address** `string` - the address of the signing node   
-*  **block** `number` - the blocknumber   
-*  **blockHash** `string` - the hash of the block   
-*  **msgHash** `string<bytes32>` - hash of the message   
-*  **r** `string<hex>` - Positive non-zero Integer signature.r   
-*  **s** `string<hex>` - Positive non-zero Integer signature.s   
-*  **v** `string<hex>` - Calculated curve point, or identity element O.   
+*  **address** `string<address>` - the address of the signing node   
+*  **block** `number` (required)  - the blocknumber   
+*  **blockHash** `string<bytes32>` (required)  - the hash of the block   
+*  **msgHash** `string<bytes32>` (required)  - hash of the message   
+*  **r** `string<hex>` (required)  - Positive non-zero Integer signature.r   
+*  **s** `string<hex>` (required)  - Positive non-zero Integer signature.s   
+*  **v** `string<hex>` (required)  - Calculated curve point, or identity element O.   
 
 ### IN3ResponseConfig
 
-additional config for a IN§ RPC-Request
+additional data returned from a IN3 Server
 
 ```javascript
 import {types} from 'in3'
@@ -132,7 +138,12 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
       null
     ],
     signatures: [
-      {}
+      {
+        address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+        block: 3123874,
+        blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
+        msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+      }
     ]
   }
 }
@@ -193,7 +204,7 @@ const rPCRequest:types.RPCRequest = {
     includeCode: true,
     verification: 'proof',
     signatures: [
-      null
+      '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
     ]
   }
 }
@@ -225,7 +236,12 @@ const rPCResponse:types.RPCResponse = {
         null
       ],
       signatures: [
-        {}
+        {
+          address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+          block: 3123874,
+          blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
+          msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+        }
       ]
     }
   },
@@ -277,7 +293,12 @@ const proof:types.Proof = {
     null
   ],
   signatures: [
-    {}
+    {
+      address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+      block: 3123874,
+      blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
+      msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+    }
   ]
 }
 ```
@@ -357,7 +378,12 @@ const serverList:types.ServerList = {
       null
     ],
     signatures: [
-      {}
+      {
+        address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+        block: 3123874,
+        blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
+        msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+      }
     ]
   }
 }
