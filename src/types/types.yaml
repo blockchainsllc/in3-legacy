@@ -1,56 +1,67 @@
 $schema: http://json-schema.org/schema#
-description: configuration-data, which represents the structure of the config-file.
+description: configuration-data for the Incubed-client / server
 definitions: 
 
     IN3NodeWeight: 
-        description: a local weight of a n3-node.
+        description: a local weight of a n3-node. (This is used internally to weight the requests)
         type: object
         properties:
             weight:
                 description: factor the weight this noe (default 1.0)
                 type: number
+                example: 0.5
             responseCount:
                 description: number of uses.
                 type: integer
+                example: 147
             avgResponseTime:
-                description: average time of a response
+                description: average time of a response in ms
                 type: number
+                example: 240
             pricePerRequest:
                 description: last price
                 type: integer
             lastRequest:
                 description: timestamp of the last request in ms
                 type: integer
+                example: 1529074632623
             blacklistedUntil: 
                 description: blacklisted because of failed requests until the timestamp
                 type: integer
+                example: 1529074639623
 
     IN3NodeConfig: 
-        description: a config of a n3-node.
+        description: a configuration of a in3-server. 
         type: object
         required: [ address,url,deposit, chainIds]
         properties:
             index :
                 description : the index within the contract
                 type: integer
+                example: 13
             address:
                 description: the address of the node, which is the public address it iis signing with.
                 type: string
+                example: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
             url:
                 description: the endpoint to post to
                 type: string
+                example: 'https://in3.slock.it'
             chainIds:
                 description: the list of supported chains
+                example: [ '0x1']
                 type: array
                 items:
                     type: string
                     pattern: ^0x[0-9a-fA-F]+$
             deposit:
-                description: the deposit of the node
+                description: the deposit of the node in wei
                 type: integer
+                example: 12350000
             props:
-                description: the properties of the node
+                description: the properties of the node.
                 type: integer
+                example: 3
 
 
     IN3RPCRequestConfig:

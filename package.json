@@ -7,7 +7,7 @@
     "docu": "typedoc  --exclude test --excludePrivate  --readme none --ignoreCompilerErrors --target ES6  --mode 'modules' --json doc.json src/index.ts ; cat  doc.json | slockit-docu index slockit/in3/blob/master/src \"# INCUBED API\n\nThis documentation contains a list of all Datastructures and Classes used within the IN3 Client.\n\" >  doc/README.md ; rm doc.json",
     "build": "tsc -p .",
     "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
-    "updateTypes": "dtsgen src/types/types.yaml | tail -n +2 | sed -e '$ d' | sed -e '$ d' | sed 's/;//g' > src/types/types.ts ",
+    "updateTypes": "slockit-types ",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
     "postinstall": "tsc -p ."
@@ -66,13 +66,14 @@
     "uglify-es": "^3.2.0"
   },
   "dependencies": {
+    "ajv": "^6.5.1",
     "axios": "^0.18.0",
     "cbor": "^4.0.0",
     "ethereumjs-abi": "0.6.5",
     "ethereumjs-account": "2.0.5",
     "ethereumjs-tx": "1.3.4",
-    "ethereumjs-vm": "2.3.5",
     "ethereumjs-util": "5.2.0",
+    "ethereumjs-vm": "2.3.5",
     "ethjs-util": "0.1.4",
     "merkle-patricia-tree": "^2.3.1"
   }
