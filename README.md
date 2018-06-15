@@ -31,6 +31,9 @@ const block = await web.eth.getBlockByNumber('latest')
 
 
 ```
+# API
+
+A documentation of the API can be found [here](https://github.com/slockit/in3/blob/master/doc/README.md).
 
 # Verification
 
