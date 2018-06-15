@@ -81,7 +81,7 @@ definitions:
             latestBlock:
                 description: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
                 type: integer
-                exmaple: 6
+                example: 6
 
             verification: 
                 description: defines the kind of proof the client is asking for
@@ -124,14 +124,17 @@ definitions:
                 type: string
                 description: Positive non-zero Integer signature.r
                 format: hex
+                example: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1f'
             s: 
                 type: string
                 description: Positive non-zero Integer signature.s
                 format: hex
+                example: '0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda'
             v: 
-                type: string
+                type: integer
                 description: Calculated curve point, or identity element O.
                 format: hex
+                example: 28
             
     IN3ResponseConfig:
         type: object
@@ -141,65 +144,79 @@ definitions:
                 description: the Proof-data
                 $ref: "#/definitions/Proof"
             lastNodeList: 
-                description: the blocknumber for the last block updating the nodelist
+                description: the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.
                 type: number
+                example: 326478
 
     IN3Config:
-        description: the definition of the config-file.
+        description: the iguration of the IN§-Client. This can be paritally overriden for every request.
         type: object
         required: [ minDeposit, requestCount, chainId]
         properties:
             nodeLimit:
-                description: the limit of nodes to store in the client
+                description: the limit of nodes to store in the client. 
                 type: number
+                example: 150
             keepIn3:
-                description: if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data.
+                description: if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.
                 type: boolean
+                example: false
             format:
-                 description: the format for sending the data to the client
-                 type: string
-                 enum: ["json","cbor"]
+                description: the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding
+                type: string
+                enum: ["json","cbor"]
+                example: json
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean
+                example: truw
             proof: 
                 description: if true the nodes should send a proof of the response
                 type: boolean
+                example: true
             signatureCount: 
                 description: number of signatures requested
                 type: number
+                example: 2
             minDeposit:
                 type: number
                 description: min stake of the server. Only nodes owning at least this amount will be chosen.
+                example: 0
             replaceLatestBlock:
                 description: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
                 type: integer
+                example: 6
             requestCount:
                 type: number
                 min: 1
                 default: 1
                 description: the number of request send when getting a first answer
+                example: 3
             timeout:
                 type: number
                 min: 1
-                default: 1
-                description: specifies the number of milliseconds before the request times out.
+                default: 2000
+                description: specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
+                example: 3000
             chainId:
                 type: string
                 pattern: ^0x[0-9a-fA-F]+$
                 description: servers to filter for the given chain. The chain-id based on EIP-155.
+                example: '0x1'
             chainRegistry:
                 type: string
                 pattern: ^0x[0-9a-fA-F]+$
                 description: main chain-registry contract
+                example: '0xe36179e2286ef405e929C90ad3E70E649B22a945'
             mainChain:
                 type: string
                 pattern: ^0x[0-9a-fA-F]+$
                 description: main chain-id, where the chain registry is running.
+                example: '0x1'
             autoUpdateList:
                 type: boolean
                 description: if true the nodelist will be automaticly updated if the lastBlock is newer
-
+                example: true
             servers:
                 type: object
                 description: the nodelist per chain
@@ -209,17 +226,21 @@ definitions:
                         initAddresses:
                             description: a list of addresses which should always be part of the nodelist when getting an update
                             type: array
+                            example: [ '0xe36179e2286ef405e929C90ad3E70E649B22a945','0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1' ]
                             items:
                                 type: string 
                         lastBlock:
                             type: integer
-                            description: the blockNumber of the last event in the registry                                
+                            description: the blockNumber of the last event in the registry
+                            example: 23498798
                         contract:
                             type: string
                             description: the address of the registry contract
+                            example: '0xe36179e2286ef405e929C90ad3E70E649B22a945'
                         contractChain:
                             type: string
                             description: the chainid for the contract
+                            example: '0x8'
                         nodeList:
                             description: the list of nodes
                             type: array
@@ -228,10 +249,11 @@ definitions:
                         nodeAuthorities:
                             description: the list of authority nodes for handling conflicts
                             type: array
+                            example: [ '0xe36179e2286ef405e929C90ad3E70E649B22a945','0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1' ]
                             items:
                                 type: string
                         weights:
-                            description: the weights of nodes depending on former performance
+                            description: the weights of nodes depending on former performance which is used internally
                             type: object
                             additionalProperties: 
                                 $ref: "#/definitions/IN3NodeWeight"
@@ -248,12 +270,15 @@ definitions:
             method: 
                 description: the method to call
                 type: string
+                example: eth_getBalance
             id: 
-                description: the id
-                type: [string, number]
+                description: the identifier of the request
+                type: [number, string]
+                example: 2
             params: 
                 description: the params
-                type: [ array, object]
+                type: array 
+                example: [ '0xe36179e2286ef405e929C90ad3E70E649B22a945', latest ]
             in3: 
                 description: the IN3-Config 
                 $ref: "#/definitions/IN3RPCRequestConfig"
@@ -270,11 +295,13 @@ definitions:
             id: 
                 description: the id matching the request
                 type: [string, number]
+                example: 2
             error: 
                 description: in case of an error this needs to be set
                 type: string
             result: 
                 description: the params
+                example: '0xa35bc'
             in3: 
                 description: the IN3-Result
                 $ref: "#/definitions/IN3ResponseConfig"
@@ -293,6 +320,7 @@ definitions:
                 block:
                     description: the serialized blockheader
                     type: string
+                    example: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
                 allReceipts:
                     description: temp. list of all receipts, which is not included in the final proof
                     type: array
@@ -328,15 +356,19 @@ definitions:
                 description: the type of the proof
                 type: string
                 enum: [ transactionProof, receiptProof, blockProof, accountProof, callProof, logProof ]
+                example: accountProof
             block:
                 type: string
                 description: the serialized blockheader as hex, required in most proofs 
+                example: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'            
             transactions:
                 type: array
                 description: the list of transactions of the block
+                example: []
             merkleProof: 
                 type: array
                 description: the serialized merle-noodes beginning with the root-node
+                exmaple: [ '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b', '0x01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1', '0xcf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbd']
                 items:
                     type: string
                     pattern: ^0x[0-9a-fA-F]+$
@@ -357,6 +389,7 @@ definitions:
             txIndex:
                 type: integer
                 description: the transactionIndex within the block
+                example: 4
             signatures: 
                 type: array
                 description: requested signatures

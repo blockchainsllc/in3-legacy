@@ -84,6 +84,7 @@ import {types} from 'in3'
 const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
   chainId: '0x1',
   includeCode: true,
+  latestBlock: 6,
   verification: 'proof',
   signatures: [
     '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
@@ -109,7 +110,10 @@ const signature:types.Signature = {
   address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
   block: 3123874,
   blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
-  msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+  msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D',
+  r: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1f',
+  s: '0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda',
+  v: 28
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -120,7 +124,7 @@ const signature:types.Signature = {
 *  **msgHash** `string<bytes32>` (required)  - hash of the message   
 *  **r** `string<hex>` (required)  - Positive non-zero Integer signature.r   
 *  **s** `string<hex>` (required)  - Positive non-zero Integer signature.s   
-*  **v** `string<hex>` (required)  - Calculated curve point, or identity element O.   
+*  **v** `integer<hex>` (required)  - Calculated curve point, or identity element O.   
 
 ### IN3ResponseConfig
 
@@ -130,44 +134,64 @@ additional data returned from a IN3 Server
 import {types} from 'in3'
 const iN3ResponseConfig:types.IN3ResponseConfig = {
   proof: {
-    type: 'transactionProof',
+    type: 'accountProof',
+    block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+    transactions: [],
     merkleProof: [
       null
     ],
     txProof: [
       null
     ],
+    txIndex: 4,
     signatures: [
       {
         address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
         block: 3123874,
         blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
-        msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+        msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D',
+        r: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1f',
+        s: '0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda',
+        v: 28
       }
     ]
-  }
+  },
+  lastNodeList: 326478
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
 *  **proof** [Proof](#proof) - the Proof-data   
-*  **lastNodeList** `number` - the blocknumber for the last block updating the nodelist   
+*  **lastNodeList** `number` - the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.   
 
 ### IN3Config
 
-the definition of the config-file.
+the iguration of the IN§-Client. This can be paritally overriden for every request.
 
 ```javascript
 import {types} from 'in3'
 const iN3Config:types.IN3Config = {
-  format: 'json'
+  nodeLimit: 150,
+  keepIn3: false,
+  format: 'json',
+  includeCode: 'truw',
+  proof: true,
+  signatureCount: 2,
+  minDeposit: 0,
+  replaceLatestBlock: 6,
+  requestCount: 3,
+  timeout: 3000,
+  chainId: '0x1',
+  chainRegistry: '0xe36179e2286ef405e929C90ad3E70E649B22a945',
+  mainChain: '0x1',
+  autoUpdateList: true
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
-*  **nodeLimit** `number` - the limit of nodes to store in the client   
-*  **keepIn3** `boolean` - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data.   
-*  **format** `string` - the format for sending the data to the client   
+*  **nodeLimit** `number` - the limit of nodes to store in the client.   
+*  **keepIn3** `boolean` - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.   
+*  **format** `string` - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding   
  Must be one of the these values : `'json`', `'cbor`'
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **proof** `boolean` - if true the nodes should send a proof of the response   
@@ -175,7 +199,7 @@ const iN3Config:types.IN3Config = {
 *  **minDeposit** `number` (required)  - min stake of the server. Only nodes owning at least this amount will be chosen.   
 *  **replaceLatestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **requestCount** `number` (required)  - the number of request send when getting a first answer   
-*  **timeout** `number` - specifies the number of milliseconds before the request times out.   
+*  **timeout** `number` - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.   
 *  **chainId** `string` (required)  - servers to filter for the given chain. The chain-id based on EIP-155.   
 *  **chainRegistry** `string` - main chain-registry contract   
 *  **mainChain** `string` - main chain-id, where the chain registry is running.   
@@ -188,7 +212,7 @@ const iN3Config:types.IN3Config = {
     *  **contractChain** `string` - the chainid for the contract   
     *  **nodeList** `IN3NodeConfig[]` - the list of nodes   
     *  **nodeAuthorities** `string[]` - the list of authority nodes for handling conflicts   
-    *  **weights** `object` - the weights of nodes depending on former performance   
+    *  **weights** `object` - the weights of nodes depending on former performance which is used internally   
         each key in this object will structure its value like: 
 
 ### RPCRequest
@@ -199,9 +223,16 @@ a JSONRPC-Request with N3-Extension
 import {types} from 'in3'
 const rPCRequest:types.RPCRequest = {
   jsonrpc: '2.0',
+  method: 'eth_getBalance',
+  id: 2,
+  params: [
+    '0xe36179e2286ef405e929C90ad3E70E649B22a945',
+    'latest'
+  ],
   in3: {
     chainId: '0x1',
     includeCode: true,
+    latestBlock: 6,
     verification: 'proof',
     signatures: [
       '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
@@ -214,8 +245,8 @@ const rPCRequest:types.RPCRequest = {
 *  **jsonrpc** `string` (required)  - the version   
  Must be one of the these values : `'2.0`'
 *  **method** `string` (required)  - the method to call   
-*  **id** `string,number` - the id   
-*  **params** `array,object` - the params   
+*  **id** `number,string` - the identifier of the request   
+*  **params** `array` - the params   
 *  **in3** [IN3RPCRequestConfig](#in3rpcrequestconfig) - the IN3-Config   
 
 ### RPCResponse
@@ -226,24 +257,33 @@ a JSONRPC-Responset with N3-Extension
 import {types} from 'in3'
 const rPCResponse:types.RPCResponse = {
   jsonrpc: '2.0',
+  id: 2,
+  result: '0xa35bc',
   in3: {
     proof: {
-      type: 'transactionProof',
+      type: 'accountProof',
+      block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+      transactions: [],
       merkleProof: [
         null
       ],
       txProof: [
         null
       ],
+      txIndex: 4,
       signatures: [
         {
           address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
           block: 3123874,
           blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
-          msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+          msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D',
+          r: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1f',
+          s: '0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda',
+          v: 28
         }
       ]
-    }
+    },
+    lastNodeList: 326478
   },
   in3Node: {
     index: 13,
@@ -263,7 +303,7 @@ const rPCResponse:types.RPCResponse = {
  Must be one of the these values : `'2.0`'
 *  **id** `string,number` (required)  - the id matching the request   
 *  **error** `string` - in case of an error this needs to be set   
-*  **result** [{"description":"the params"}](#{"description":"the params"}) - the params   
+*  **result** [{"description":"the params","example":"0xa35bc"}](#{"description":"the params","example":"0xa35bc"}) - the params   
 *  **in3** [IN3ResponseConfig](#in3responseconfig) - the IN3-Result   
 *  **in3Node** [IN3NodeConfig](#in3nodeconfig) - the node handling this response (internal only)   
 
@@ -285,19 +325,25 @@ the Proof-data as part of the in3-section
 ```javascript
 import {types} from 'in3'
 const proof:types.Proof = {
-  type: 'transactionProof',
+  type: 'accountProof',
+  block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+  transactions: [],
   merkleProof: [
     null
   ],
   txProof: [
     null
   ],
+  txIndex: 4,
   signatures: [
     {
       address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
       block: 3123874,
       blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
-      msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+      msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D',
+      r: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1f',
+      s: '0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda',
+      v: 28
     }
   ]
 }
@@ -370,19 +416,25 @@ const serverList:types.ServerList = {
     }
   ],
   proof: {
-    type: 'transactionProof',
+    type: 'accountProof',
+    block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+    transactions: [],
     merkleProof: [
       null
     ],
     txProof: [
       null
     ],
+    txIndex: 4,
     signatures: [
       {
         address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
         block: 3123874,
         blockHash: '0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679',
-        msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D'
+        msgHash: '0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D',
+        r: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1f',
+        s: '0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda',
+        v: 28
       }
     ]
   }
