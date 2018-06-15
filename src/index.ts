@@ -5,6 +5,8 @@ export default Client
 import * as _util from './util/util'
 export const util = _util
 
+export type IN3Client = Client
+
 import * as _cbor from './util/cbor'
 export const cbor = _cbor
 

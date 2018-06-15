@@ -4,6 +4,8 @@
 
 * [**BlockData**](#type-blockdata) : `interface` 
 
+* [**IN3Client**](#type-client) : `class`  - Client for N3.
+
 * [**IN3Config**](#type-in3config) : `interface`  - the definition of the config-file.
 
 * [**IN3NodeConfig**](#type-in3nodeconfig) : `interface`  - a config of a n3-node.
@@ -40,7 +42,7 @@
 
 * [**AxiosTransport**](#type-axiostransport) : `class` 
 
-* **[cbor](https://github.com/slockit/in3/blob/master/src/index.ts#L9)**
+* **[cbor](https://github.com/slockit/in3/blob/master/src/index.ts#L11)**
 
     * **[createRefs](https://github.com/slockit/in3/blob/master/src/util/cbor.ts#L64)**(val :[`T`](#type-t), cache :`string`[] =  []) :[`T`](#type-t) 
 
@@ -54,7 +56,7 @@
 
     * **[resolveRefs](https://github.com/slockit/in3/blob/master/src/util/cbor.ts#L85)**(val :[`T`](#type-t), cache :`string`[] =  []) :[`T`](#type-t) 
 
-* **[chainData](https://github.com/slockit/in3/blob/master/src/index.ts#L22)**
+* **[chainData](https://github.com/slockit/in3/blob/master/src/index.ts#L24)**
 
     * **[callContract](https://github.com/slockit/in3/blob/master/src/client/chainData.ts#L7)**(client :[`Client`](#type-client), contract :`string`, chainId :`string`, signature :`string`, args :`any`[], config :[`IN3Config`](#type-in3config)) :`Promise<any>` 
 
@@ -62,7 +64,7 @@
 
 * **[createRandomIndexes](https://github.com/slockit/in3/blob/master/src/client/serverList.ts#L13)**(len :`number`, limit :`number`, seed :[`Buffer`](#type-buffer), result :`number`[] =  []) :`number`[] 
 
-* **[serialize](https://github.com/slockit/in3/blob/master/src/index.ts#L12)**
+* **[serialize](https://github.com/slockit/in3/blob/master/src/index.ts#L14)**
 
     * [**Block**](#type-block) :`class` - encodes and decodes the blockheader
 
@@ -114,7 +116,7 @@
 
     * **[uint](https://github.com/slockit/in3/blob/master/src/util/serialize.ts#L117)**(val :`any`) :[`Buffer`](#type-buffer) - converts it to a Buffer with a variable length. 0 = length 0
 
-* **[storage](https://github.com/slockit/in3/blob/master/src/index.ts#L15)**
+* **[storage](https://github.com/slockit/in3/blob/master/src/index.ts#L17)**
 
     * **[getStorageArrayKey](https://github.com/slockit/in3/blob/master/src/util/storage.ts#L6)**(pos :`number`, arrayIndex :`number`, structSize :`number` = 1, structPos :`number` = 0) :[`Buffer`](#type-buffer) 
 
@@ -128,7 +130,7 @@
 
     * **[toBN](https://github.com/slockit/in3/blob/master/src/util/storage.ts#L35)**(val :`any`) :`any` 
 
-* **[transport](https://github.com/slockit/in3/blob/master/src/index.ts#L18)**
+* **[transport](https://github.com/slockit/in3/blob/master/src/index.ts#L20)**
 
     * [**AxiosTransport**](#type-axiostransport) :`class`
 
@@ -229,6 +231,68 @@ Source: [util/serialize.ts](https://github.com/slockit/in3/blob/master/src/util/
 * **[transactions](https://github.com/slockit/in3/blob/master/src/util/serialize.ts#L38)** :`any`[] *(optional)*  
 
 * **[transactionsRoot](https://github.com/slockit/in3/blob/master/src/util/serialize.ts#L25)** :`string` 
+
+
+## Type Client
+
+
+Client for N3.
+
+
+Source: [client/Client.ts](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L17)
+
+
+
+* **[defaultMaxListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1012)** :`number` 
+
+* `static` **[listenerCount](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1011)**(emitter :[`EventEmitter`](#type-eventemitter), event :`string`|`symbol`) :`number` 
+
+* `constructor` **[constructor](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L21)**(config :[`Partial<IN3Config>`](#type-partial), transport :[`Transport`](#type-transport)) :[`Client`](#type-client) - creates a new Client.
+
+* **[defConfig](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L19)** :[`IN3Config`](#type-in3config) - the definition of the config-file.
+
+* **[addListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1014)**(event :`string`|`symbol`, listener :) :`this` 
+
+* **[call](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L141)**(method :`string`, params :`any`, chain :`string`, config :[`Partial<IN3Config>`](#type-partial)) :`Promise<any>` - sends a simply RPC-Request
+
+* **[clearStats](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L164)**() :`void` - clears all stats and weights, like blocklisted nodes
+
+* **[emit](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1026)**(event :`string`|`symbol`, args :`any`[]) :`boolean` 
+
+* **[eventNames](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1027)**() :[`Array<>`](#type-array) 
+
+* **[getMaxListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1023)**() :`number` 
+
+* **[listenerCount](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1028)**(type :`string`|`symbol`) :`number` 
+
+* **[listeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1024)**(event :`string`|`symbol`) :[`Function`](#type-function)[] 
+
+* **[off](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1020)**(event :`string`|`symbol`, listener :) :`this` 
+
+* **[on](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1015)**(event :`string`|`symbol`, listener :) :`this` 
+
+* **[once](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1016)**(event :`string`|`symbol`, listener :) :`this` 
+
+* **[prependListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1017)**(event :`string`|`symbol`, listener :) :`this` 
+
+* **[prependOnceListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1018)**(event :`string`|`symbol`, listener :) :`this` 
+
+* **[rawListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1025)**(event :`string`|`symbol`) :[`Function`](#type-function)[] 
+
+* **[removeAllListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1021)**(event :`string`|`symbol`) :`this` 
+
+* **[removeListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1019)**(event :`string`|`symbol`, listener :) :`this` 
+
+* **[send](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L153)**(request :[`RPCRequest`](#type-rpcrequest)[]|[`RPCRequest`](#type-rpcrequest), callback :, config :[`Partial<IN3Config>`](#type-partial)) :`void`|`Promise<>` - sends one or a multiple requests.
+    if the request is a array the response will be a array as well.
+    If the callback is given it will be called with the response, if not a Promise will be returned.
+    This function supports callback so it can be used as a Provider for the web3.
+
+* **[sendRPC](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L130)**(method :`string`, params :`any`[] =  [], chain :`string`, config :[`Partial<IN3Config>`](#type-partial)) :[`Promise<RPCResponse>`](#type-rpcresponse) - sends a simply RPC-Request
+
+* **[setMaxListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1022)**(n :`number`) :`this` 
+
+* **[updateNodeList](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L65)**(chainId :`string`, conf :[`Partial<IN3Config>`](#type-partial), retryCount :`number` = 5) :`Promise<void>` - fetches the nodeList from the servers.
 
 
 ## Type IN3Config
@@ -677,68 +741,6 @@ Source: [util/transport.ts](https://github.com/slockit/in3/blob/master/src/util/
 * **[handle](https://github.com/slockit/in3/blob/master/src/util/transport.ts#L21)**(url :`string`, data :[`RPCRequest`](#type-rpcrequest)|[`RPCRequest`](#type-rpcrequest)[], timeout :`number`) :`Promise<>` 
 
 * **[random](https://github.com/slockit/in3/blob/master/src/util/transport.ts#L49)**(count :`number`) :`number`[] 
-
-
-## Type Client
-
-
-Client for N3.
-
-
-Source: [client/Client.ts](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L17)
-
-
-
-* **[defaultMaxListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1012)** :`number` 
-
-* `static` **[listenerCount](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1011)**(emitter :[`EventEmitter`](#type-eventemitter), event :`string`|`symbol`) :`number` 
-
-* `constructor` **[constructor](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L21)**(config :[`Partial<IN3Config>`](#type-partial), transport :[`Transport`](#type-transport)) :[`Client`](#type-client) - creates a new Client.
-
-* **[defConfig](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L19)** :[`IN3Config`](#type-in3config) - the definition of the config-file.
-
-* **[addListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1014)**(event :`string`|`symbol`, listener :) :`this` 
-
-* **[call](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L141)**(method :`string`, params :`any`, chain :`string`, config :[`Partial<IN3Config>`](#type-partial)) :`Promise<any>` - sends a simply RPC-Request
-
-* **[clearStats](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L164)**() :`void` - clears all stats and weights, like blocklisted nodes
-
-* **[emit](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1026)**(event :`string`|`symbol`, args :`any`[]) :`boolean` 
-
-* **[eventNames](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1027)**() :[`Array<>`](#type-array) 
-
-* **[getMaxListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1023)**() :`number` 
-
-* **[listenerCount](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1028)**(type :`string`|`symbol`) :`number` 
-
-* **[listeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1024)**(event :`string`|`symbol`) :[`Function`](#type-function)[] 
-
-* **[off](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1020)**(event :`string`|`symbol`, listener :) :`this` 
-
-* **[on](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1015)**(event :`string`|`symbol`, listener :) :`this` 
-
-* **[once](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1016)**(event :`string`|`symbol`, listener :) :`this` 
-
-* **[prependListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1017)**(event :`string`|`symbol`, listener :) :`this` 
-
-* **[prependOnceListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1018)**(event :`string`|`symbol`, listener :) :`this` 
-
-* **[rawListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1025)**(event :`string`|`symbol`) :[`Function`](#type-function)[] 
-
-* **[removeAllListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1021)**(event :`string`|`symbol`) :`this` 
-
-* **[removeListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1019)**(event :`string`|`symbol`, listener :) :`this` 
-
-* **[send](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L153)**(request :[`RPCRequest`](#type-rpcrequest)[]|[`RPCRequest`](#type-rpcrequest), callback :, config :[`Partial<IN3Config>`](#type-partial)) :`void`|`Promise<>` - sends one or a multiple requests.
-    if the request is a array the response will be a array as well.
-    If the callback is given it will be called with the response, if not a Promise will be returned.
-    This function supports callback so it can be used as a Provider for the web3.
-
-* **[sendRPC](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L130)**(method :`string`, params :`any`[] =  [], chain :`string`, config :[`Partial<IN3Config>`](#type-partial)) :[`Promise<RPCResponse>`](#type-rpcresponse) - sends a simply RPC-Request
-
-* **[setMaxListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/slock/n3/n3-ts/node_modules/@types/node/index.d.ts#L1022)**(n :`number`) :`this` 
-
-* **[updateNodeList](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L65)**(chainId :`string`, conf :[`Partial<IN3Config>`](#type-partial), retryCount :`number` = 5) :`Promise<void>` - fetches the nodeList from the servers.
 
 
 ## Type Block
