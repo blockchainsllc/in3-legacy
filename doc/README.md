@@ -1,4 +1,7 @@
-#INCUBED API
+# INCUBED API
+
+This documentation contains a list of all Datastructures and Classes used within the IN3 Client.
+
 
 * [**AccountProof**](#type-accountproof) : `interface`  - the Proof-for a single Account
 
