@@ -330,7 +330,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       r.id = r.id || idCount++
 
       // append the in3-config
-      const in3: IN3RPCRequestConfig = {}
+      const in3: IN3RPCRequestConfig = {} as any
 
       // only if the node supports chainId, we add it, because if the node is a simple remote-server it might refuse the request with additional keys
       if (conf.chainId && canMultiChain(node))

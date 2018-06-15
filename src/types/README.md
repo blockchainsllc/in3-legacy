@@ -82,7 +82,9 @@ additional config for a IN§ RPC-Request
 ```javascript
 import {types} from 'in3'
 const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
-  verification: 'never',
+  chainId: '0x1',
+  includeCode: true,
+  verification: 'proof',
   signatures: [
     null
   ]
@@ -90,12 +92,12 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
-*  **chainId** `string` - the requested chainId   
+*  **chainId** `string` (required)  - the requested chainId   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **latestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **verification** `string` - defines the kind of proof the client is asking for   
  Must be one of the these values : `'never`', `'proof`', `'proofWithSignature`'
-*  **signatures** `string[]` - a list of addresses requested to sign the blockhash   
+*  **signatures** `string<address>[]` - a list of addresses requested to sign the blockhash   
 
 ### Signature
 
@@ -187,7 +189,9 @@ import {types} from 'in3'
 const rPCRequest:types.RPCRequest = {
   jsonrpc: '2.0',
   in3: {
-    verification: 'never',
+    chainId: '0x1',
+    includeCode: true,
+    verification: 'proof',
     signatures: [
       null
     ]

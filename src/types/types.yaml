@@ -66,27 +66,33 @@ definitions:
 
     IN3RPCRequestConfig:
         description: additional config for a IN§ RPC-Request
+        required: [ chainId ]
         properties:
             chainId: 
                 description: the requested chainId
                 type: string
+                example: '0x1'
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean
+                example: true
             latestBlock:
                 description: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
                 type: integer
+                exmaple: 6
 
             verification: 
                 description: defines the kind of proof the client is asking for
                 type: string
                 enum: [ never, proof, proofWithSignature ]
+                example: 'proof'
             signatures: 
                 description: a list of addresses requested to sign the blockhash
                 type: array
+                exmaple: [ '0x6C1a01C2aB554930A937B0a2E8105fB47946c679' ]
                 items:
                     type: string
-                    pattern: ^0x[0-9a-fA-F]+$
+                    format: address
 
     Signature:
         type: object
