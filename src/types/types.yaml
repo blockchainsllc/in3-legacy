@@ -62,6 +62,10 @@ definitions:
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean
+            latestBlock:
+                description: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+                type: integer
+
             verification: 
                 description: defines the kind of proof the client is asking for
                 type: string
@@ -140,6 +144,9 @@ definitions:
             minDeposit:
                 type: number
                 description: min stake of the server. Only nodes owning at least this amount will be chosen.
+            replaceLatestBlock:
+                description: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+                type: integer
             requestCount:
                 type: number
                 min: 1
@@ -463,11 +470,42 @@ definitions:
                 description: the number of seconds of the interval for checking for new events
             privateKey:
                 type: string
-                description: the private key used to sign blockhashes
+                description: the private key used to sign blockhashes. this can be either a 0x-prefixed string with the raw private key or the path to a key-file.
+            privateKeyPassphrase:
+                type: string
+                description: the password used to decrpyt the private key
             registry:
                 type: string
                 description: the address of the server registry used in order to update the nodeList
             registryRPC:
                 type: string
                 description: the url of the client in case the registry is not on the same chain.
+            autoRegistry:
+                type: object
+                required: [ url, deposit ]
+                properties:
+                    url:
+                        type: string
+                        description: the public url to reach this node
+                    deposit:
+                        type: number
+                        description: the deposit you want ot store
+                    depositUnit:
+                        type: string
+                        description: unit of the deposit value
+                        enum: [ 'ether', 'finney', 'szabo' ,'wei']
+                    capabilities:
+                        type: object
+                        properties:
+                            proof:
+                                type: boolean
+                                description: if true, this node is able to deliver proofs
+                                flag: 1
+                            multiChain:
+                                type: boolean
+                                description: if true, this node is able to deliver multiple chains
+                                flag: 2
+                    
+                            
+
 

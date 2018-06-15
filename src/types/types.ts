@@ -81,6 +81,10 @@
          */
         minDeposit: number
         /**
+         * if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+         */
+        replaceLatestBlock?: number
+        /**
          * the number of request send when getting a first answer
          */
         requestCount: number
@@ -261,9 +265,13 @@
          */
         watchInterval?: number
         /**
-         * the private key used to sign blockhashes
+         * the private key used to sign blockhashes. this can be either a 0x-prefixed string with the raw private key or the path to a key-file.
          */
         privateKey: string
+        /**
+         * the password used to decrpyt the private key
+         */
+        privateKeyPassphrase?: string
         /**
          * the address of the server registry used in order to update the nodeList
          */
@@ -272,6 +280,30 @@
          * the url of the client in case the registry is not on the same chain.
          */
         registryRPC?: string
+        autoRegistry?: {
+            /**
+             * the public url to reach this node
+             */
+            url: string
+            /**
+             * the deposit you want ot store
+             */
+            deposit: number
+            /**
+             * unit of the deposit value
+             */
+            depositUnit?: "ether" | "finney" | "szabo" | "wei"
+            capabilities?: {
+                /**
+                 * if true, this node is able to deliver proofs
+                 */
+                proof?: boolean
+                /**
+                 * if true, this node is able to deliver multiple chains
+                 */
+                multiChain?: boolean
+            }
+        }
     }
     /**
      * additional config for a IN§ RPC-Request
@@ -285,6 +317,10 @@
          * if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
          */
         includeCode?: boolean
+        /**
+         * if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+         */
+        latestBlock?: number
         /**
          * defines the kind of proof the client is asking for
          */

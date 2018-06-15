@@ -50,6 +50,7 @@ export async function executeCall(args: {
       case 'CALL':
       case 'CALLCODE':
       case 'DELEGATECALL':
+      case 'STATICCALL':
         const callContract = toHex('0x' + ev.stack[ev.stack.length - 2].toString(16), 20)
         if (!(accounts[callContract]))
           missingDataError = new Error('The contract ' + callContract + ' is used to get the balance but is missing in the proof!')
