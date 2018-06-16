@@ -12,7 +12,7 @@ export function canMultiChain(node: IN3NodeConfig) {
 
 export function createRandomIndexes(len: number, limit: number, seed: Buffer, result: number[] = []) {
   let step = seed.readUIntBE(0, 6) // first 6 bytes
-  let pos = seed.readUIntBE(6, 6) // next 6 bytes
+  let pos = seed.readUIntBE(6, 6) % len// next 6 bytes
   while (result.length < limit) {
     if (result.indexOf(pos) >= 0) {
       seed = keccak256(seed)
