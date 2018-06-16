@@ -31,6 +31,8 @@ const block = await web.eth.getBlockByNumber('latest')
 
 
 ```
+
+
 # Documentation
 
 The following docuemntations are available:
@@ -39,3 +41,7 @@ The following docuemntations are available:
 - [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Defintion of datastructures used inside the client.
 - [Verifiaction](https://github.com/slockit/in3/blob/master/doc/verification.md). A documentaion about the varification of proofs send by a IN3-Server.
 
+# Tests
+
+- Result of the last nightly tests for [in3](http://travis.slock.it/in3/) and [in3-server](http://travis.slock.it/in3-server/)
+- [Code Coverage](http://travis.slock.it/in3-server/coverage/index.html) for client and server
