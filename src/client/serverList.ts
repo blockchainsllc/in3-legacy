@@ -1,5 +1,5 @@
 import { IN3NodeConfig } from '../types/types'
-import keccak256 from 'ethereumjs-util'
+import {  keccak256 } from 'ethereumjs-util'
 
 
 export function canProof(node: IN3NodeConfig) {
