@@ -96,11 +96,12 @@ export default class Client extends EventEmitter {
     // create a random seed which ensures the deterministic nature of even a partly list.
     const seed = '0x' + keccak256('0x' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)).toString('hex')
 
-    const nl = await this.sendRPC(
+    const nlResponse = await this.sendRPC(
       'in3_nodeList',
       [this.defConfig.nodeLimit, seed, servers.initAddresses || []],
       chain, conf)
-      .then(_ => _.result as ServerList)
+    const nl = nlResponse.result as ServerList
+
 
     if (config.proof && nl.contract.toLowerCase() !== servers.contract.toLowerCase()) {
       // the server gave us the wrong contract!
@@ -117,7 +118,7 @@ export default class Client extends EventEmitter {
     servers.nodeList = nl.nodes
     servers.lastBlock = nl.lastBlockNumber
 
-    this.emit('nodeUpdateFinished', { chainId, conf, retryCount })
+    this.emit('nodeUpdateFinished', { chainId, conf, retryCount, nodeList: nl, nlResponse })
   }
 
   /**
