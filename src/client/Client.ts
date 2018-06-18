@@ -8,6 +8,7 @@ import Filters from './filter'
 import { toHex, toNumber, toMinHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
+import Cache from './cache'
 
 
 /**
@@ -19,6 +20,7 @@ export default class Client extends EventEmitter {
   public defConfig: IN3Config
   private transport: Transport
   private filters: Filters
+  public cache: Cache
 
   /**
    * creates a new Client.
@@ -56,6 +58,7 @@ export default class Client extends EventEmitter {
         ...((config && config.servers) || {})
       }
     }
+    this.cache = new Cache(this)
   }
 
   /**
@@ -377,7 +380,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
       // maybe we can still deliver a proof, but without data
       !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
-      true)))
+      true, this)))
 
     return responses
   }

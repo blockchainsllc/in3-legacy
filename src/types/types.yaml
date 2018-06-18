@@ -66,7 +66,7 @@ definitions:
 
 
     IN3RPCRequestConfig:
-        description: additional config for a IN§ RPC-Request
+        description: additional config for a IN3 RPC-Request
         required: [ chainId ]
         properties:
             chainId: 
@@ -149,7 +149,7 @@ definitions:
                 example: 326478
 
     IN3Config:
-        description: the iguration of the IN§-Client. This can be paritally overriden for every request.
+        description: the iguration of the IN3-Client. This can be paritally overriden for every request.
         type: object
         required: [ minDeposit, requestCount, chainId]
         properties:
@@ -169,7 +169,15 @@ definitions:
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean
-                example: truw
+                example: true
+            maxCodeCache: 
+                description: number of max bytes used to cache the code in memory
+                type: integer
+                example: 100000
+            maxBlockCache: 
+                description: number of number of blocks cached  in memory
+                type: integer
+                example: 100
             proof: 
                 description: if true the nodes should send a proof of the response
                 type: boolean

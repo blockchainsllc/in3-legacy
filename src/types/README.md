@@ -77,7 +77,7 @@ const iN3NodeConfig:types.IN3NodeConfig = {
 
 ### IN3RPCRequestConfig
 
-additional config for a IN§ RPC-Request
+additional config for a IN3 RPC-Request
 
 ```javascript
 import {types} from 'in3'
@@ -166,7 +166,7 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
 
 ### IN3Config
 
-the iguration of the IN§-Client. This can be paritally overriden for every request.
+the iguration of the IN3-Client. This can be paritally overriden for every request.
 
 ```javascript
 import {types} from 'in3'
@@ -174,7 +174,9 @@ const iN3Config:types.IN3Config = {
   nodeLimit: 150,
   keepIn3: false,
   format: 'json',
-  includeCode: 'truw',
+  includeCode: true,
+  maxCodeCache: 100000,
+  maxBlockCache: 100,
   proof: true,
   signatureCount: 2,
   minDeposit: 0,
@@ -194,6 +196,8 @@ const iN3Config:types.IN3Config = {
 *  **format** `string` - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding   
  Must be one of the these values : `'json`', `'cbor`'
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
+*  **maxCodeCache** `integer` - number of max bytes used to cache the code in memory   
+*  **maxBlockCache** `integer` - number of number of blocks cached  in memory   
 *  **proof** `boolean` - if true the nodes should send a proof of the response   
 *  **signatureCount** `number` - number of signatures requested   
 *  **minDeposit** `number` (required)  - min stake of the server. Only nodes owning at least this amount will be chosen.   

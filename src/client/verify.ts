@@ -7,7 +7,8 @@ import { createRandomIndexes } from './serverList'
 import verifyMerkleProof from '../util/merkleProof'
 import { getStorageArrayKey, getStringValue } from '../util/storage'
 import * as Trie from 'merkle-patricia-tree'
-import * as ethUtil from 'ethereumjs-util';
+import * as ethUtil from 'ethereumjs-util'
+import Client from './Client'
 
 
 const allowedWithoutProof = ['eth_blockNumber']
@@ -375,7 +376,7 @@ export function getStorageValue(ap: AccountProof, storageKey: Buffer): Buffer {
 }
 
 /** verifies a TransactionProof */
-export async function verifyCallProof(request: RPCRequest, value: Buffer, proof: Proof, expectedSigners: Buffer[]) {
+export async function verifyCallProof(request: RPCRequest, value: Buffer, proof: Proof, expectedSigners: Buffer[], client: Client) {
 
   // verify the blockhash and the signatures
   const block = new Block(proof.block)
@@ -383,6 +384,17 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, proof:
   verifyBlock(block, proof.signatures, expectedSigners, null)
 
   if (!proof.accounts) throw new Error('No Accounts to verify')
+
+  // make sure, we have all codes
+  const missingCode = Object.entries(proof.accounts).filter(([, ac]) => {
+    !ac.code && ac.codeHash !== '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'
+  }).map(([a]) => a)
+
+  // in case there are some missing codes, we fetch them with one unproved request through the cache, since they will be verified later anyway.
+  if (missingCode.length && client)
+    await client.cache.getCodeFor(missingCode.map(address), toHex(block.number)).then(_ => _.forEach((c, i) =>
+      proof.accounts[missingCode[i]].code = c as any
+    ))
 
   // verify all accounts
   await Promise.all(Object.keys(proof.accounts).map(adr => verifyAccount(proof.accounts[adr], block)))
@@ -429,8 +441,29 @@ function isNotExistend(account: AccountProof) {
   return toNumber(account.balance) === 0 && account.codeHash == '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' && toNumber(account.nonce) === 0
 }
 
+function checkBlock(block: string, client: Client, blockNumber?: number): any {
+  if (!block) return block
+  if (typeof block === 'string' && !block.startsWith('0x')) {
+    const bh = client.cache.getBlockHeader(toNumber(block))
+    if (!bh) throw new Error('The server returned a not supported blockheader : ' + block)
+    return bh
+  }
+
+  const header = bytes(block)
+  return client.cache.addBlockHeader(blockNumber || toNumber(util.rlp.decode(header)[8]), header)
+}
+
+function handleBlockCache(proof: Proof, client?: Client) {
+  if (!client || !client.defConfig.maxBlockCache) return
+
+  if (proof.block) proof.block = checkBlock(proof.block, client)
+  if (proof.logProof)
+    Object.entries(proof.logProof).forEach(([bn, v]) =>
+      v.block = checkBlock(v.block, client, toNumber(bn)))
+}
+
 /** general verification-function which handles it according to its given type. */
-export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true): Promise<boolean> {
+export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true, client?: Client): Promise<boolean> {
   const proof = response && response.in3 && response.in3.proof
   if (!proof) {
     if (allowedWithoutProof.indexOf(request.method) >= 0) return true
@@ -440,6 +473,11 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     if (throwException && !allowWithoutProof) throw new Error('the response does not contain any proof!')
     return allowWithoutProof
   }
+
+  // check BlockCache and convert all blockheaders to buffer
+  handleBlockCache(proof, client)
+
+  // convert all signatures into buffer
   const signatures: Buffer[] = request.in3 && request.in3.signatures && request.in3.signatures.map(address)
   try {
     switch (proof.type) {
@@ -459,7 +497,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
         await verifyAccountProof(request, response.result as string, proof, signatures)
         break
       case 'callProof':
-        await verifyCallProof(request, bytes(response.result), proof, signatures)
+        await verifyCallProof(request, bytes(response.result), proof, signatures, client)
         break
       default:
         throw new Error('Unsupported proof-type : ' + proof.type)
