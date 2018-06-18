@@ -78,6 +78,12 @@ definitions:
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean
                 example: true
+            verifiedHashes:
+                description: if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number.
+                type: array
+                items:
+                    type: string
+                    format: bytes32
             latestBlock:
                 description: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
                 type: integer
@@ -178,6 +184,12 @@ definitions:
                 description: number of number of blocks cached  in memory
                 type: integer
                 example: 100
+            verifiedHashes:
+                description: if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
+                type: array
+                items:
+                    type: string
+                    format: bytes32
             proof: 
                 description: if true the nodes should send a proof of the response
                 type: boolean

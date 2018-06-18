@@ -346,6 +346,12 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
 
       // if we request proof and the node can handle it ...
       if (conf.proof && canProof(node)) {
+
+        // add existing blockhashes
+        if (conf.verifiedHashes)
+          in3.verifiedHashes = conf.verifiedHashes
+
+
         // .. we set the verificationtype
         in3.verification = conf.signatureCount ? 'proofWithSignature' : 'proof'
         if (conf.signatureCount)

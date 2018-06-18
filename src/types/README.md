@@ -84,6 +84,9 @@ import {types} from 'in3'
 const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
   chainId: '0x1',
   includeCode: true,
+  verifiedHashes: [
+    null
+  ],
   latestBlock: 6,
   verification: 'proof',
   signatures: [
@@ -95,6 +98,7 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 
 *  **chainId** `string<hex>` (required)  - the requested chainId   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
+*  **verifiedHashes** `string<bytes32>[]` - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number.   
 *  **latestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **verification** `string` - defines the kind of proof the client is asking for   
  Must be one of the these values : `'never`', `'proof`', `'proofWithSignature`'
@@ -177,6 +181,9 @@ const iN3Config:types.IN3Config = {
   includeCode: true,
   maxCodeCache: 100000,
   maxBlockCache: 100,
+  verifiedHashes: [
+    null
+  ],
   proof: true,
   signatureCount: 2,
   minDeposit: 0,
@@ -198,6 +205,7 @@ const iN3Config:types.IN3Config = {
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **maxCodeCache** `integer` - number of max bytes used to cache the code in memory   
 *  **maxBlockCache** `integer` - number of number of blocks cached  in memory   
+*  **verifiedHashes** `string<bytes32>[]` - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.   
 *  **proof** `boolean` - if true the nodes should send a proof of the response   
 *  **signatureCount** `number` - number of signatures requested   
 *  **minDeposit** `number` (required)  - min stake of the server. Only nodes owning at least this amount will be chosen.   
@@ -236,6 +244,9 @@ const rPCRequest:types.RPCRequest = {
   in3: {
     chainId: '0x1',
     includeCode: true,
+    verifiedHashes: [
+      null
+    ],
     latestBlock: 6,
     verification: 'proof',
     signatures: [

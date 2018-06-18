@@ -1,12 +1,14 @@
 import Client from './Client'
-import { address, bytes } from '../util/serialize'
+import { address, bytes, hash } from '../util/serialize'
+import { toHex } from '../util/util'
 import { RPCRequest, RPCResponse } from '../types/types'
+import { sha3 } from 'ethereumjs-util'
 
 export default class Cache {
   client: Client
 
   codeCache: CacheNode<Buffer>
-  blockCache: { number: number, header: Buffer }[]
+  blockCache: { number: number, header: Buffer, hash: Buffer }[]
 
   constructor(client: Client) {
     this.client = client
@@ -27,12 +29,17 @@ export default class Cache {
     return result
   }
 
-  getLastBlockWithHash() {
-    return this.blockCache.length ? this.blockCache[this.blockCache.length - 1].number : 0
+  getLastBlockHashes() {
+    return this.blockCache.map(_ => toHex(_.hash))
   }
 
   getBlockHeader(blockNumber: number): Buffer {
     const b = this.blockCache.length && this.blockCache.find(_ => _.number === blockNumber)
+    return b ? b.header : null
+  }
+
+  getBlockHeaderByHash(blockHash: Buffer): Buffer {
+    const b = this.blockCache.length && this.blockCache.find(_ => _.hash.equals(blockHash))
     return b ? b.header : null
   }
 
@@ -41,7 +48,8 @@ export default class Cache {
     while (this.blockCache.length >= this.client.defConfig.maxBlockCache && this.blockCache.length)
       this.blockCache.splice(this.blockCache.reduce((p, c, i, a) => c.number < a[i].number ? i : p, 0), 1)
 
-    this.blockCache.push({ number: blockNumber, header })
+    this.blockCache.push({ number: blockNumber, header, hash: sha3(header) })
+    this.client.defConfig.verifiedHashes = this.getLastBlockHashes()
     return header
   }
 

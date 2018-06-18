@@ -310,13 +310,13 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 
 
 
-* **[autoUpdateList](https://github.com/slockit/in3/blob/master/src/types/types.ts#L134)** :`boolean` *(optional)*  - if true the nodelist will be automaticly updated if the lastBlock is newer
+* **[autoUpdateList](https://github.com/slockit/in3/blob/master/src/types/types.ts#L138)** :`boolean` *(optional)*  - if true the nodelist will be automaticly updated if the lastBlock is newer
     example: true
 
-* **[chainId](https://github.com/slockit/in3/blob/master/src/types/types.ts#L119)** :`string` - servers to filter for the given chain. The chain-id based on EIP-155.
+* **[chainId](https://github.com/slockit/in3/blob/master/src/types/types.ts#L123)** :`string` - servers to filter for the given chain. The chain-id based on EIP-155.
     example: 0x1
 
-* **[chainRegistry](https://github.com/slockit/in3/blob/master/src/types/types.ts#L124)** :`string` *(optional)*  - main chain-registry contract
+* **[chainRegistry](https://github.com/slockit/in3/blob/master/src/types/types.ts#L128)** :`string` *(optional)*  - main chain-registry contract
     example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
 
 * **[format](https://github.com/slockit/in3/blob/master/src/types/types.ts#L70)** :`'json'`|`'cbor'` *(optional)*  - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding
@@ -327,7 +327,7 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 
 * **[keepIn3](https://github.com/slockit/in3/blob/master/src/types/types.ts#L65)** :`boolean` *(optional)*  - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.
 
-* **[mainChain](https://github.com/slockit/in3/blob/master/src/types/types.ts#L129)** :`string` *(optional)*  - main chain-id, where the chain registry is running.
+* **[mainChain](https://github.com/slockit/in3/blob/master/src/types/types.ts#L133)** :`string` *(optional)*  - main chain-id, where the chain registry is running.
     example: 0x1
 
 * **[maxBlockCache](https://github.com/slockit/in3/blob/master/src/types/types.ts#L85)** :`number` *(optional)*  - number of number of blocks cached  in memory
@@ -336,27 +336,29 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 * **[maxCodeCache](https://github.com/slockit/in3/blob/master/src/types/types.ts#L80)** :`number` *(optional)*  - number of max bytes used to cache the code in memory
     example: 100000
 
-* **[minDeposit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L99)** :`number` - min stake of the server. Only nodes owning at least this amount will be chosen.
+* **[minDeposit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L103)** :`number` - min stake of the server. Only nodes owning at least this amount will be chosen.
 
 * **[nodeLimit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L61)** :`number` *(optional)*  - the limit of nodes to store in the client.
     example: 150
 
-* **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L90)** :`boolean` *(optional)*  - if true the nodes should send a proof of the response
+* **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L94)** :`boolean` *(optional)*  - if true the nodes should send a proof of the response
     example: true
 
-* **[replaceLatestBlock](https://github.com/slockit/in3/blob/master/src/types/types.ts#L104)** :`number` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+* **[replaceLatestBlock](https://github.com/slockit/in3/blob/master/src/types/types.ts#L108)** :`number` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
     example: 6
 
-* **[requestCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L109)** :`number` - the number of request send when getting a first answer
+* **[requestCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L113)** :`number` - the number of request send when getting a first answer
     example: 3
 
-* **[servers](https://github.com/slockit/in3/blob/master/src/types/types.ts#L138)** *(optional)*  - the nodelist per chain
+* **[servers](https://github.com/slockit/in3/blob/master/src/types/types.ts#L142)** *(optional)*  - the nodelist per chain
 
-* **[signatureCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L95)** :`number` *(optional)*  - number of signatures requested
+* **[signatureCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L99)** :`number` *(optional)*  - number of signatures requested
     example: 2
 
-* **[timeout](https://github.com/slockit/in3/blob/master/src/types/types.ts#L114)** :`number` *(optional)*  - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
+* **[timeout](https://github.com/slockit/in3/blob/master/src/types/types.ts#L118)** :`number` *(optional)*  - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
     example: 3000
+
+* **[verifiedHashes](https://github.com/slockit/in3/blob/master/src/types/types.ts#L89)** :`string`[] *(optional)*  - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
 
 
 ## Type IN3NodeConfig
@@ -365,26 +367,26 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 a configuration of a in3-server.
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L181)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L185)
 
 
 
-* **[address](https://github.com/slockit/in3/blob/master/src/types/types.ts#L191)** :`string` - the address of the node, which is the public address it iis signing with.
+* **[address](https://github.com/slockit/in3/blob/master/src/types/types.ts#L195)** :`string` - the address of the node, which is the public address it iis signing with.
     example: 0x6C1a01C2aB554930A937B0a2E8105fB47946c679
 
-* **[chainIds](https://github.com/slockit/in3/blob/master/src/types/types.ts#L201)** :`string`[] - the list of supported chains
+* **[chainIds](https://github.com/slockit/in3/blob/master/src/types/types.ts#L205)** :`string`[] - the list of supported chains
     example: 0x1
 
-* **[deposit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L206)** :`number` - the deposit of the node in wei
+* **[deposit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L210)** :`number` - the deposit of the node in wei
     example: 12350000
 
-* **[index](https://github.com/slockit/in3/blob/master/src/types/types.ts#L186)** :`number` *(optional)*  - the index within the contract
+* **[index](https://github.com/slockit/in3/blob/master/src/types/types.ts#L190)** :`number` *(optional)*  - the index within the contract
     example: 13
 
-* **[props](https://github.com/slockit/in3/blob/master/src/types/types.ts#L211)** :`number` *(optional)*  - the properties of the node.
+* **[props](https://github.com/slockit/in3/blob/master/src/types/types.ts#L215)** :`number` *(optional)*  - the properties of the node.
     example: 3
 
-* **[url](https://github.com/slockit/in3/blob/master/src/types/types.ts#L196)** :`string` - the endpoint to post to
+* **[url](https://github.com/slockit/in3/blob/master/src/types/types.ts#L200)** :`string` - the endpoint to post to
     example: https://in3.slock.it
 
 
@@ -394,25 +396,25 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 a local weight of a n3-node. (This is used internally to weight the requests)
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L216)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L220)
 
 
 
-* **[avgResponseTime](https://github.com/slockit/in3/blob/master/src/types/types.ts#L231)** :`number` *(optional)*  - average time of a response in ms
+* **[avgResponseTime](https://github.com/slockit/in3/blob/master/src/types/types.ts#L235)** :`number` *(optional)*  - average time of a response in ms
     example: 240
 
-* **[blacklistedUntil](https://github.com/slockit/in3/blob/master/src/types/types.ts#L245)** :`number` *(optional)*  - blacklisted because of failed requests until the timestamp
+* **[blacklistedUntil](https://github.com/slockit/in3/blob/master/src/types/types.ts#L249)** :`number` *(optional)*  - blacklisted because of failed requests until the timestamp
     example: 1529074639623
 
-* **[lastRequest](https://github.com/slockit/in3/blob/master/src/types/types.ts#L240)** :`number` *(optional)*  - timestamp of the last request in ms
+* **[lastRequest](https://github.com/slockit/in3/blob/master/src/types/types.ts#L244)** :`number` *(optional)*  - timestamp of the last request in ms
     example: 1529074632623
 
-* **[pricePerRequest](https://github.com/slockit/in3/blob/master/src/types/types.ts#L235)** :`number` *(optional)*  - last price
+* **[pricePerRequest](https://github.com/slockit/in3/blob/master/src/types/types.ts#L239)** :`number` *(optional)*  - last price
 
-* **[responseCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L226)** :`number` *(optional)*  - number of uses.
+* **[responseCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L230)** :`number` *(optional)*  - number of uses.
     example: 147
 
-* **[weight](https://github.com/slockit/in3/blob/master/src/types/types.ts#L221)** :`number` *(optional)*  - factor the weight this noe (default 1.0)
+* **[weight](https://github.com/slockit/in3/blob/master/src/types/types.ts#L225)** :`number` *(optional)*  - factor the weight this noe (default 1.0)
     example: 0.5
 
 
@@ -422,23 +424,23 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 the configuration for the rpc-handler
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L250)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L254)
 
 
 
-* **[chains](https://github.com/slockit/in3/blob/master/src/types/types.ts#L279)** *(optional)*  - a definition of the Handler per chain
+* **[chains](https://github.com/slockit/in3/blob/master/src/types/types.ts#L283)** *(optional)*  - a definition of the Handler per chain
 
-* **[defaultChain](https://github.com/slockit/in3/blob/master/src/types/types.ts#L254)** :`string` *(optional)*  - the default chainId in case the request does not contain one.
+* **[defaultChain](https://github.com/slockit/in3/blob/master/src/types/types.ts#L258)** :`string` *(optional)*  - the default chainId in case the request does not contain one.
 
-* **[logging](https://github.com/slockit/in3/blob/master/src/types/types.ts#L262)** *(optional)*  - logger config
+* **[logging](https://github.com/slockit/in3/blob/master/src/types/types.ts#L266)** *(optional)*  - logger config
 
-    * **[colors](https://github.com/slockit/in3/blob/master/src/types/types.ts#L274)** :`boolean` *(optional)*  - if true colors will be used
+    * **[colors](https://github.com/slockit/in3/blob/master/src/types/types.ts#L278)** :`boolean` *(optional)*  - if true colors will be used
 
-    * **[file](https://github.com/slockit/in3/blob/master/src/types/types.ts#L266)** :`string` *(optional)*  - the path to the logile
+    * **[file](https://github.com/slockit/in3/blob/master/src/types/types.ts#L270)** :`string` *(optional)*  - the path to the logile
 
-    * **[level](https://github.com/slockit/in3/blob/master/src/types/types.ts#L270)** :`string` *(optional)*  - Loglevel
+    * **[level](https://github.com/slockit/in3/blob/master/src/types/types.ts#L274)** :`string` *(optional)*  - Loglevel
 
-* **[port](https://github.com/slockit/in3/blob/master/src/types/types.ts#L258)** :`number` *(optional)*  - the listeneing port for the server
+* **[port](https://github.com/slockit/in3/blob/master/src/types/types.ts#L262)** :`number` *(optional)*  - the listeneing port for the server
 
 
 ## Type IN3RPCHandlerConfig
@@ -447,41 +449,41 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 the configuration for the rpc-handler
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L286)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L290)
 
 
 
-* **[autoRegistry](https://github.com/slockit/in3/blob/master/src/types/types.ts#L323)** *(optional)* 
+* **[autoRegistry](https://github.com/slockit/in3/blob/master/src/types/types.ts#L327)** *(optional)* 
 
-    * **[capabilities](https://github.com/slockit/in3/blob/master/src/types/types.ts#L336)** *(optional)* 
+    * **[capabilities](https://github.com/slockit/in3/blob/master/src/types/types.ts#L340)** *(optional)* 
 
-        * **[multiChain](https://github.com/slockit/in3/blob/master/src/types/types.ts#L344)** :`boolean` *(optional)*  - if true, this node is able to deliver multiple chains
+        * **[multiChain](https://github.com/slockit/in3/blob/master/src/types/types.ts#L348)** :`boolean` *(optional)*  - if true, this node is able to deliver multiple chains
 
-        * **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L340)** :`boolean` *(optional)*  - if true, this node is able to deliver proofs
+        * **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L344)** :`boolean` *(optional)*  - if true, this node is able to deliver proofs
 
-    * **[deposit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L331)** :`number` - the deposit you want ot store
+    * **[deposit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L335)** :`number` - the deposit you want ot store
 
-    * **[depositUnit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L335)** :`'ether'`|`'finney'`|`'szabo'`|`'wei'` *(optional)*  - unit of the deposit value
+    * **[depositUnit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L339)** :`'ether'`|`'finney'`|`'szabo'`|`'wei'` *(optional)*  - unit of the deposit value
 
-    * **[url](https://github.com/slockit/in3/blob/master/src/types/types.ts#L327)** :`string` - the public url to reach this node
+    * **[url](https://github.com/slockit/in3/blob/master/src/types/types.ts#L331)** :`string` - the public url to reach this node
 
-* **[handler](https://github.com/slockit/in3/blob/master/src/types/types.ts#L290)** :`'eth'`|`'ipfs'`|`'btc'` *(optional)*  - the impl used to handle the calls
+* **[handler](https://github.com/slockit/in3/blob/master/src/types/types.ts#L294)** :`'eth'`|`'ipfs'`|`'btc'` *(optional)*  - the impl used to handle the calls
 
-* **[minBlockHeight](https://github.com/slockit/in3/blob/master/src/types/types.ts#L298)** :`number` *(optional)*  - the minimal blockheight in order to sign
+* **[minBlockHeight](https://github.com/slockit/in3/blob/master/src/types/types.ts#L302)** :`number` *(optional)*  - the minimal blockheight in order to sign
 
-* **[persistentFile](https://github.com/slockit/in3/blob/master/src/types/types.ts#L302)** :`string` *(optional)*  - the filename of the file keeping track of the last handled blocknumber
+* **[persistentFile](https://github.com/slockit/in3/blob/master/src/types/types.ts#L306)** :`string` *(optional)*  - the filename of the file keeping track of the last handled blocknumber
 
-* **[privateKey](https://github.com/slockit/in3/blob/master/src/types/types.ts#L310)** :`string` - the private key used to sign blockhashes. this can be either a 0x-prefixed string with the raw private key or the path to a key-file.
+* **[privateKey](https://github.com/slockit/in3/blob/master/src/types/types.ts#L314)** :`string` - the private key used to sign blockhashes. this can be either a 0x-prefixed string with the raw private key or the path to a key-file.
 
-* **[privateKeyPassphrase](https://github.com/slockit/in3/blob/master/src/types/types.ts#L314)** :`string` *(optional)*  - the password used to decrpyt the private key
+* **[privateKeyPassphrase](https://github.com/slockit/in3/blob/master/src/types/types.ts#L318)** :`string` *(optional)*  - the password used to decrpyt the private key
 
-* **[registry](https://github.com/slockit/in3/blob/master/src/types/types.ts#L318)** :`string` - the address of the server registry used in order to update the nodeList
+* **[registry](https://github.com/slockit/in3/blob/master/src/types/types.ts#L322)** :`string` - the address of the server registry used in order to update the nodeList
 
-* **[registryRPC](https://github.com/slockit/in3/blob/master/src/types/types.ts#L322)** :`string` *(optional)*  - the url of the client in case the registry is not on the same chain.
+* **[registryRPC](https://github.com/slockit/in3/blob/master/src/types/types.ts#L326)** :`string` *(optional)*  - the url of the client in case the registry is not on the same chain.
 
-* **[rpcUrl](https://github.com/slockit/in3/blob/master/src/types/types.ts#L294)** :`string` - the url of the client
+* **[rpcUrl](https://github.com/slockit/in3/blob/master/src/types/types.ts#L298)** :`string` - the url of the client
 
-* **[watchInterval](https://github.com/slockit/in3/blob/master/src/types/types.ts#L306)** :`number` *(optional)*  - the number of seconds of the interval for checking for new events
+* **[watchInterval](https://github.com/slockit/in3/blob/master/src/types/types.ts#L310)** :`number` *(optional)*  - the number of seconds of the interval for checking for new events
 
 
 ## Type IN3RPCRequestConfig
@@ -490,24 +492,26 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 additional config for a IN3 RPC-Request
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L351)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L355)
 
 
 
-* **[chainId](https://github.com/slockit/in3/blob/master/src/types/types.ts#L356)** :`string` - the requested chainId
+* **[chainId](https://github.com/slockit/in3/blob/master/src/types/types.ts#L360)** :`string` - the requested chainId
     example: 0x1
 
-* **[includeCode](https://github.com/slockit/in3/blob/master/src/types/types.ts#L361)** :`boolean` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+* **[includeCode](https://github.com/slockit/in3/blob/master/src/types/types.ts#L365)** :`boolean` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
     example: true
 
-* **[latestBlock](https://github.com/slockit/in3/blob/master/src/types/types.ts#L366)** :`number` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+* **[latestBlock](https://github.com/slockit/in3/blob/master/src/types/types.ts#L374)** :`number` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
     example: 6
 
-* **[signatures](https://github.com/slockit/in3/blob/master/src/types/types.ts#L376)** :`string`[] *(optional)*  - a list of addresses requested to sign the blockhash
+* **[signatures](https://github.com/slockit/in3/blob/master/src/types/types.ts#L384)** :`string`[] *(optional)*  - a list of addresses requested to sign the blockhash
     example: 0x6C1a01C2aB554930A937B0a2E8105fB47946c679
 
-* **[verification](https://github.com/slockit/in3/blob/master/src/types/types.ts#L371)** :`'never'`|`'proof'`|`'proofWithSignature'` *(optional)*  - defines the kind of proof the client is asking for
+* **[verification](https://github.com/slockit/in3/blob/master/src/types/types.ts#L379)** :`'never'`|`'proof'`|`'proofWithSignature'` *(optional)*  - defines the kind of proof the client is asking for
     example: proof
+
+* **[verifiedHashes](https://github.com/slockit/in3/blob/master/src/types/types.ts#L369)** :`string`[] *(optional)*  - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number.
 
 
 ## Type IN3ResponseConfig
@@ -516,14 +520,14 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 additional data returned from a IN3 Server
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L381)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L389)
 
 
 
-* **[lastNodeList](https://github.com/slockit/in3/blob/master/src/types/types.ts#L390)** :`number` *(optional)*  - the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.
+* **[lastNodeList](https://github.com/slockit/in3/blob/master/src/types/types.ts#L398)** :`number` *(optional)*  - the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.
     example: 326478
 
-* **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L385)** :[`Proof`](#type-proof) *(optional)*  - the Proof-data
+* **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L393)** :[`Proof`](#type-proof) *(optional)*  - the Proof-data
 
 
 ## Type LogData
@@ -558,7 +562,7 @@ Source: [util/serialize.ts](https://github.com/slockit/in3/blob/master/src/util/
 a Object holding proofs for event logs. The key is the blockNumber as hex
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L395)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L403)
 
 
 
@@ -569,30 +573,30 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 the Proof-data as part of the in3-section
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L430)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L438)
 
 
 
-* **[accounts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L461)** *(optional)*  - a map of addresses and their AccountProof
+* **[accounts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L469)** *(optional)*  - a map of addresses and their AccountProof
 
-* **[block](https://github.com/slockit/in3/blob/master/src/types/types.ts#L440)** :`string` *(optional)*  - the serialized blockheader as hex, required in most proofs
+* **[block](https://github.com/slockit/in3/blob/master/src/types/types.ts#L448)** :`string` *(optional)*  - the serialized blockheader as hex, required in most proofs
     example: 0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b
 
-* **[logProof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L457)** :[`LogProof`](#type-logproof) *(optional)*  - the Log Proof in case of a Log-Request
+* **[logProof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L465)** :[`LogProof`](#type-logproof) *(optional)*  - the Log Proof in case of a Log-Request
 
-* **[merkleProof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L449)** :`string`[] *(optional)*  - the serialized merle-noodes beginning with the root-node
+* **[merkleProof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L457)** :`string`[] *(optional)*  - the serialized merle-noodes beginning with the root-node
 
-* **[signatures](https://github.com/slockit/in3/blob/master/src/types/types.ts#L472)** :[`Signature`](#type-signature)[] *(optional)*  - requested signatures
+* **[signatures](https://github.com/slockit/in3/blob/master/src/types/types.ts#L480)** :[`Signature`](#type-signature)[] *(optional)*  - requested signatures
 
-* **[transactions](https://github.com/slockit/in3/blob/master/src/types/types.ts#L445)** :`any`[] *(optional)*  - the list of transactions of the block
+* **[transactions](https://github.com/slockit/in3/blob/master/src/types/types.ts#L453)** :`any`[] *(optional)*  - the list of transactions of the block
     example:
 
-* **[txIndex](https://github.com/slockit/in3/blob/master/src/types/types.ts#L468)** :`number` *(optional)*  - the transactionIndex within the block
+* **[txIndex](https://github.com/slockit/in3/blob/master/src/types/types.ts#L476)** :`number` *(optional)*  - the transactionIndex within the block
     example: 4
 
-* **[txProof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L453)** :`string`[] *(optional)*  - the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex
+* **[txProof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L461)** :`string`[] *(optional)*  - the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex
 
-* **[type](https://github.com/slockit/in3/blob/master/src/types/types.ts#L435)** :`'transactionProof'`|`'receiptProof'`|`'blockProof'`|`'accountProof'`|`'callProof'`|`'logProof'` - the type of the proof
+* **[type](https://github.com/slockit/in3/blob/master/src/types/types.ts#L443)** :`'transactionProof'`|`'receiptProof'`|`'blockProof'`|`'accountProof'`|`'callProof'`|`'logProof'` - the type of the proof
     example: accountProof
 
 
@@ -602,21 +606,21 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 a JSONRPC-Request with N3-Extension
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L477)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L485)
 
 
 
-* **[id](https://github.com/slockit/in3/blob/master/src/types/types.ts#L491)** :`number`|`string` *(optional)*  - the identifier of the request
+* **[id](https://github.com/slockit/in3/blob/master/src/types/types.ts#L499)** :`number`|`string` *(optional)*  - the identifier of the request
     example: 2
 
-* **[in3](https://github.com/slockit/in3/blob/master/src/types/types.ts#L500)** :[`IN3RPCRequestConfig`](#type-in3rpcrequestconfig) *(optional)*  - the IN3-Config
+* **[in3](https://github.com/slockit/in3/blob/master/src/types/types.ts#L508)** :[`IN3RPCRequestConfig`](#type-in3rpcrequestconfig) *(optional)*  - the IN3-Config
 
-* **[jsonrpc](https://github.com/slockit/in3/blob/master/src/types/types.ts#L481)** :`'2.0'` - the version
+* **[jsonrpc](https://github.com/slockit/in3/blob/master/src/types/types.ts#L489)** :`'2.0'` - the version
 
-* **[method](https://github.com/slockit/in3/blob/master/src/types/types.ts#L486)** :`string` - the method to call
+* **[method](https://github.com/slockit/in3/blob/master/src/types/types.ts#L494)** :`string` - the method to call
     example: eth_getBalance
 
-* **[params](https://github.com/slockit/in3/blob/master/src/types/types.ts#L496)** :`any`[] *(optional)*  - the params
+* **[params](https://github.com/slockit/in3/blob/master/src/types/types.ts#L504)** :`any`[] *(optional)*  - the params
     example: 0xe36179e2286ef405e929C90ad3E70E649B22a945,latest
 
 
@@ -626,22 +630,22 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 a JSONRPC-Responset with N3-Extension
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L505)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L513)
 
 
 
-* **[error](https://github.com/slockit/in3/blob/master/src/types/types.ts#L518)** :`string` *(optional)*  - in case of an error this needs to be set
+* **[error](https://github.com/slockit/in3/blob/master/src/types/types.ts#L526)** :`string` *(optional)*  - in case of an error this needs to be set
 
-* **[id](https://github.com/slockit/in3/blob/master/src/types/types.ts#L514)** :`string`|`number` - the id matching the request
+* **[id](https://github.com/slockit/in3/blob/master/src/types/types.ts#L522)** :`string`|`number` - the id matching the request
     example: 2
 
-* **[in3](https://github.com/slockit/in3/blob/master/src/types/types.ts#L527)** :[`IN3ResponseConfig`](#type-in3responseconfig) *(optional)*  - the IN3-Result
+* **[in3](https://github.com/slockit/in3/blob/master/src/types/types.ts#L535)** :[`IN3ResponseConfig`](#type-in3responseconfig) *(optional)*  - the IN3-Result
 
-* **[in3Node](https://github.com/slockit/in3/blob/master/src/types/types.ts#L531)** :[`IN3NodeConfig`](#type-in3nodeconfig) *(optional)*  - the node handling this response (internal only)
+* **[in3Node](https://github.com/slockit/in3/blob/master/src/types/types.ts#L539)** :[`IN3NodeConfig`](#type-in3nodeconfig) *(optional)*  - the node handling this response (internal only)
 
-* **[jsonrpc](https://github.com/slockit/in3/blob/master/src/types/types.ts#L509)** :`'2.0'` - the version
+* **[jsonrpc](https://github.com/slockit/in3/blob/master/src/types/types.ts#L517)** :`'2.0'` - the version
 
-* **[result](https://github.com/slockit/in3/blob/master/src/types/types.ts#L523)** :`any` *(optional)*  - the params
+* **[result](https://github.com/slockit/in3/blob/master/src/types/types.ts#L531)** :`any` *(optional)*  - the params
     example: 0xa35bc
 
 
@@ -675,19 +679,19 @@ Source: [util/serialize.ts](https://github.com/slockit/in3/blob/master/src/util/
 a List of nodes
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L536)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L544)
 
 
 
-* **[contract](https://github.com/slockit/in3/blob/master/src/types/types.ts#L548)** :`string` *(optional)*  - IN3 Registry
+* **[contract](https://github.com/slockit/in3/blob/master/src/types/types.ts#L556)** :`string` *(optional)*  - IN3 Registry
 
-* **[lastBlockNumber](https://github.com/slockit/in3/blob/master/src/types/types.ts#L540)** :`number` *(optional)*  - last Block number
+* **[lastBlockNumber](https://github.com/slockit/in3/blob/master/src/types/types.ts#L548)** :`number` *(optional)*  - last Block number
 
-* **[nodes](https://github.com/slockit/in3/blob/master/src/types/types.ts#L544)** :[`IN3NodeConfig`](#type-in3nodeconfig)[] - the list of nodes
+* **[nodes](https://github.com/slockit/in3/blob/master/src/types/types.ts#L552)** :[`IN3NodeConfig`](#type-in3nodeconfig)[] - the list of nodes
 
-* **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L553)** :[`Proof`](#type-proof) *(optional)*  - the Proof-data as part of the in3-section
+* **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L561)** :[`Proof`](#type-proof) *(optional)*  - the Proof-data as part of the in3-section
 
-* **[totalServers](https://github.com/slockit/in3/blob/master/src/types/types.ts#L552)** :`number` *(optional)*  - number of servers
+* **[totalServers](https://github.com/slockit/in3/blob/master/src/types/types.ts#L560)** :`number` *(optional)*  - number of servers
 
 
 ## Type Signature
@@ -696,29 +700,29 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 Verified ECDSA Signature. Signatures are a pair (r, s). Where r is computed as the X coordinate of a point R, modulo the curve order n.
 
 
-Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L558)
+Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L566)
 
 
 
-* **[address](https://github.com/slockit/in3/blob/master/src/types/types.ts#L563)** :`string` *(optional)*  - the address of the signing node
+* **[address](https://github.com/slockit/in3/blob/master/src/types/types.ts#L571)** :`string` *(optional)*  - the address of the signing node
     example: 0x6C1a01C2aB554930A937B0a2E8105fB47946c679
 
-* **[block](https://github.com/slockit/in3/blob/master/src/types/types.ts#L568)** :`number` - the blocknumber
+* **[block](https://github.com/slockit/in3/blob/master/src/types/types.ts#L576)** :`number` - the blocknumber
     example: 3123874
 
-* **[blockHash](https://github.com/slockit/in3/blob/master/src/types/types.ts#L573)** :`string` - the hash of the block
+* **[blockHash](https://github.com/slockit/in3/blob/master/src/types/types.ts#L581)** :`string` - the hash of the block
     example: 0x6C1a01C2aB554930A937B0a212346037E8105fB47946c679
 
-* **[msgHash](https://github.com/slockit/in3/blob/master/src/types/types.ts#L578)** :`string` - hash of the message
+* **[msgHash](https://github.com/slockit/in3/blob/master/src/types/types.ts#L586)** :`string` - hash of the message
     example: 0x9C1a01C2aB554930A937B0a212346037E8105fB47946AB5D
 
-* **[r](https://github.com/slockit/in3/blob/master/src/types/types.ts#L583)** :`string` - Positive non-zero Integer signature.r
+* **[r](https://github.com/slockit/in3/blob/master/src/types/types.ts#L591)** :`string` - Positive non-zero Integer signature.r
     example: 0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1f
 
-* **[s](https://github.com/slockit/in3/blob/master/src/types/types.ts#L588)** :`string` - Positive non-zero Integer signature.s
+* **[s](https://github.com/slockit/in3/blob/master/src/types/types.ts#L596)** :`string` - Positive non-zero Integer signature.s
     example: 0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda
 
-* **[v](https://github.com/slockit/in3/blob/master/src/types/types.ts#L593)** :`number` - Calculated curve point, or identity element O.
+* **[v](https://github.com/slockit/in3/blob/master/src/types/types.ts#L601)** :`number` - Calculated curve point, or identity element O.
     example: 28
 
 
@@ -911,25 +915,27 @@ Source: [util/serialize.ts](https://github.com/slockit/in3/blob/master/src/util/
 ## Type Cache
 
 
-Source: [client/cache.ts](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L5)
+Source: [client/cache.ts](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L7)
 
 
 
-* `constructor` **[constructor](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L9)**(client :[`Client`](#type-client)) :[`Cache`](#type-cache) 
+* `constructor` **[constructor](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L11)**(client :[`Client`](#type-client)) :[`Cache`](#type-cache) 
 
-* **[blockCache](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L9)** :[] 
+* **[blockCache](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L11)** :[] 
 
-* **[client](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L6)** :[`Client`](#type-client) - Client for N3.
+* **[client](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L8)** :[`Client`](#type-client) - Client for N3.
 
-* **[codeCache](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L8)** :[`CacheNode<Buffer>`](#type-cachenode) 
+* **[codeCache](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L10)** :[`CacheNode<Buffer>`](#type-cachenode) 
 
-* **[addBlockHeader](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L39)**(blockNumber :`number`, header :[`Buffer`](#type-buffer)) :[`Buffer`](#type-buffer) 
+* **[addBlockHeader](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L46)**(blockNumber :`number`, header :[`Buffer`](#type-buffer)) :[`Buffer`](#type-buffer) 
 
-* **[getBlockHeader](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L34)**(blockNumber :`number`) :[`Buffer`](#type-buffer) 
+* **[getBlockHeader](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L36)**(blockNumber :`number`) :[`Buffer`](#type-buffer) 
 
-* **[getCodeFor](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L17)**(addresses :[`Buffer`](#type-buffer)[], block :`string` = "latest") :`Promise<>` 
+* **[getBlockHeaderByHash](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L41)**(blockHash :[`Buffer`](#type-buffer)) :[`Buffer`](#type-buffer) 
 
-* **[getLastBlockWithHash](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L30)**() :`number` 
+* **[getCodeFor](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L19)**(addresses :[`Buffer`](#type-buffer)[], block :`string` = "latest") :`Promise<>` 
+
+* **[getLastBlockHashes](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L32)**() :`string`[] 
 
 
 ## Type BlockHeader
@@ -948,21 +954,21 @@ Source: [util/serialize.ts](https://github.com/slockit/in3/blob/master/src/util/
 ## Type CacheNode
 
 
-Source: [client/cache.ts](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L57)
+Source: [client/cache.ts](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L65)
 
 
 
-* `constructor` **[constructor](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L62)**(limit :`number`) :[`CacheNode`](#type-cachenode) 
+* `constructor` **[constructor](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L70)**(limit :`number`) :[`CacheNode`](#type-cachenode) 
 
-* **[data](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L61)** :[`Map<Buffer,CacheEntry>`](#type-map) 
+* **[data](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L69)** :[`Map<Buffer,CacheEntry>`](#type-map) 
 
-* **[dataLength](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L62)** :`number` 
+* **[dataLength](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L70)** :`number` 
 
-* **[limit](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L59)** :`number` 
+* **[limit](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L67)** :`number` 
 
-* **[get](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L69)**(key :[`Buffer`](#type-buffer)) :[`T`](#type-t) 
+* **[get](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L77)**(key :[`Buffer`](#type-buffer)) :[`T`](#type-t) 
 
-* **[getByteLength](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L98)**(entry :[`T`](#type-t)) :`number` 
+* **[getByteLength](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L106)**(entry :[`T`](#type-t)) :`number` 
 
-* **[put](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L74)**(key :[`Buffer`](#type-buffer), val :[`T`](#type-t)) :`void` 
+* **[put](https://github.com/slockit/in3/blob/master/src/client/cache.ts#L82)**(key :[`Buffer`](#type-buffer), val :[`T`](#type-t)) :`void` 
 

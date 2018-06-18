@@ -1,7 +1,7 @@
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature } from '../types/types'
 import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction } from '../util/serialize';
-import { toHex, toNumber, promisify, toMinHex, toBN } from '../util/util'
+import { toHex, toNumber, promisify, toMinHex, toBN } from '../util/util';
 import { executeCall } from './call'
 import { createRandomIndexes } from './serverList'
 import verifyMerkleProof from '../util/merkleProof'
@@ -9,6 +9,7 @@ import { getStorageArrayKey, getStringValue } from '../util/storage'
 import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util'
 import Client from './Client'
+import Cache from './cache'
 
 
 const allowedWithoutProof = ['eth_blockNumber']
@@ -22,8 +23,7 @@ export class BlackListError extends Error {
 }
 
 /** verify the signatures of a blockhash */
-export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: Buffer[], expectedBlockHash: Buffer) {
-
+export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: Buffer[], expectedBlockHash: Buffer, cache: Cache) {
 
   // calculate the blockHash
   const blockHash = b.hash()
@@ -33,14 +33,19 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
   // if we don't expect signatures, we don't need to verify them.
   if (!expectedSigners || expectedSigners.length === 0) return
 
-
   // TODO in the future we are not allowing block verification without signature
-  if (!signatures || signatures.length === 0) throw new Error('No signatures found ')
+  if (!signatures) throw new Error('No signatures found ')
+
+  const existing = cache && cache.getBlockHeaderByHash(blockHash)
 
   // filter valid signatures for the current block
   const signaturesForBlock = signatures.filter(_ => _ && toNumber(_.block) === toNumber(b.number))
-  if (signaturesForBlock.length === 0)
+  if (signaturesForBlock.length === 0) {
+    // if the blockhash is already verified, we don't need a signature
+    if (existing) return
+
     throw new BlackListError('No signatures found for block ', expectedSigners.map(_ => ethUtil.toChecksumAddress(toHex(_))))
+  }
 
 
   // verify the signatures for only the blocks matching the given
@@ -57,6 +62,10 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
     if (!signer.equals(expectedSigners[i]))
       throw new Error('The signature was not signed by ' + expectedSigners[i])
 
+    // we have at least one valid signature, so we can try to cache it.
+    if (cache && cache.client.defConfig.maxBlockCache)
+      cache.addBlockHeader(toNumber(b.number), b.serializeHeader())
+
     // looks good ;-)
     return true
   }, true))
@@ -66,7 +75,7 @@ export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: 
 
 
 /** verifies a TransactionProof */
-export async function verifyTransactionProof(txHash: Buffer, proof: Proof, expectedSigners: Buffer[], txData: TransactionData) {
+export async function verifyTransactionProof(txHash: Buffer, proof: Proof, expectedSigners: Buffer[], txData: TransactionData, cache: Cache) {
 
   if (!txData) throw new Error('No TransactionData!')
 
@@ -74,7 +83,7 @@ export async function verifyTransactionProof(txHash: Buffer, proof: Proof, expec
   const block = blockFromHex(proof.block)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, bytes32(txData.blockHash))
+  verifyBlock(block, proof.signatures, expectedSigners, bytes32(txData.blockHash), cache)
 
   // TODO the from-address is not directly part of the hash, so manipulating this property would not be detected! 
   // we would have to take the from-address from the signature
@@ -97,7 +106,7 @@ export async function verifyTransactionProof(txHash: Buffer, proof: Proof, expec
 }
 
 /** verifies a TransactionProof */
-export async function verifyTransactionReceiptProof(txHash: Buffer, proof: Proof, expectedSigners: Buffer[], receipt: ReceiptData) {
+export async function verifyTransactionReceiptProof(txHash: Buffer, proof: Proof, expectedSigners: Buffer[], receipt: ReceiptData, cache: Cache) {
 
   if (!receipt) throw new Error('No ReceiptData!')
 
@@ -105,7 +114,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, proof: Proof
   const block = blockFromHex(proof.block)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, bytes32(receipt.blockHash))
+  verifyBlock(block, proof.signatures, expectedSigners, bytes32(receipt.blockHash), cache)
 
   // TODO how can we be sure, that the receipt matches the transactionHash? 
   // I guess we would need to also deliver the transaction and verify the txIndex and block
@@ -137,7 +146,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, proof: Proof
 
 
 /** verifies a TransactionProof */
-export async function verifyLogProof(proof: Proof, expectedSigners: Buffer[], logs: LogData[]) {
+export async function verifyLogProof(proof: Proof, expectedSigners: Buffer[], logs: LogData[], cache: Cache) {
 
   if (!logs) throw new Error('No Logs!')
   if (!logs.length) return
@@ -156,7 +165,7 @@ export async function verifyLogProof(proof: Proof, expectedSigners: Buffer[], lo
     blockHashes[bn] = block.hash()
 
     // verify the blockhash and the signatures
-    verifyBlock(block, proof.signatures, expectedSigners, null)
+    verifyBlock(block, proof.signatures, expectedSigners, null, cache)
 
     // verifiy all merkle-Trees of the receipts
     await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
@@ -206,7 +215,7 @@ export async function verifyLogProof(proof: Proof, expectedSigners: Buffer[], lo
 
 
 /** verifies a TransactionProof */
-export async function verifyBlockProof(request: RPCRequest, data: string | BlockData, proof: Proof, expectedSigners: Buffer[]) {
+export async function verifyBlockProof(request: RPCRequest, data: string | BlockData, proof: Proof, expectedSigners: Buffer[], cache: Cache) {
   // decode the blockheader
   const block = new Block(proof.block || data)
   if (proof.transactions) block.transactions = proof.transactions.map(createTx)
@@ -221,7 +230,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
     requiredHash = bytes32((data as BlockData).hash)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, requiredHash)
+  verifyBlock(block, proof.signatures, expectedSigners, requiredHash, cache)
 
   // verify the transactions
   if (block.transactions) {
@@ -241,7 +250,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 
 
 /** verifies a TransactionProof */
-export async function verifyAccountProof(request: RPCRequest, value: string | ServerList, proof: Proof, expectedSigners: Buffer[]) {
+export async function verifyAccountProof(request: RPCRequest, value: string | ServerList, proof: Proof, expectedSigners: Buffer[], cache: Cache) {
   if (!value) throw new Error('No Accountdata!')
 
   // get the account this proof is based on
@@ -250,7 +259,7 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
   // verify the blockhash and the signatures
   const block = new Block(proof.block)
   // TODO if we expect a specific block in the request, we should also check if the block is the one requested
-  verifyBlock(block, proof.signatures, expectedSigners, null)
+  verifyBlock(block, proof.signatures, expectedSigners, null, cache)
 
   // get the account-proof
   const accountProof = proof.accounts[Object.keys(proof.accounts)[0]]
@@ -376,12 +385,12 @@ export function getStorageValue(ap: AccountProof, storageKey: Buffer): Buffer {
 }
 
 /** verifies a TransactionProof */
-export async function verifyCallProof(request: RPCRequest, value: Buffer, proof: Proof, expectedSigners: Buffer[], client: Client) {
+export async function verifyCallProof(request: RPCRequest, value: Buffer, proof: Proof, expectedSigners: Buffer[], cache: Cache) {
 
   // verify the blockhash and the signatures
   const block = new Block(proof.block)
   // TODO if we expect a specific block in the request, we should also check if the block is the one requested
-  verifyBlock(block, proof.signatures, expectedSigners, null)
+  verifyBlock(block, proof.signatures, expectedSigners, null, cache)
 
   if (!proof.accounts) throw new Error('No Accounts to verify')
 
@@ -391,8 +400,8 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, proof:
   }).map(([a]) => a)
 
   // in case there are some missing codes, we fetch them with one unproved request through the cache, since they will be verified later anyway.
-  if (missingCode.length && client)
-    await client.cache.getCodeFor(missingCode.map(address), toHex(block.number)).then(_ => _.forEach((c, i) =>
+  if (missingCode.length && cache)
+    await cache.getCodeFor(missingCode.map(address), toHex(block.number)).then(_ => _.forEach((c, i) =>
       proof.accounts[missingCode[i]].code = c as any
     ))
 
@@ -441,29 +450,27 @@ function isNotExistend(account: AccountProof) {
   return toNumber(account.balance) === 0 && account.codeHash == '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' && toNumber(account.nonce) === 0
 }
 
-function checkBlock(block: string, client: Client, blockNumber?: number): any {
+function checkBlock(block: string, cache: Cache, blockNumber?: number): any {
   if (!block) return block
   if (typeof block === 'string' && !block.startsWith('0x')) {
-    const bh = client.cache.getBlockHeader(toNumber(block))
+    const bh = cache.getBlockHeader(toNumber(block))
     if (!bh) throw new Error('The server returned a not supported blockheader : ' + block)
     return bh
   }
-
-  const header = bytes(block)
-  return client.cache.addBlockHeader(blockNumber || toNumber(util.rlp.decode(header)[8]), header)
+  return block
 }
 
-function handleBlockCache(proof: Proof, client?: Client) {
-  if (!client || !client.defConfig.maxBlockCache) return
+function handleBlockCache(proof: Proof, cache: Cache) {
+  if (!cache || !cache.client.defConfig.maxBlockCache) return
 
-  if (proof.block) proof.block = checkBlock(proof.block, client)
+  if (proof.block) proof.block = checkBlock(proof.block, cache)
   if (proof.logProof)
     Object.entries(proof.logProof).forEach(([bn, v]) =>
-      v.block = checkBlock(v.block, client, toNumber(bn)))
+      v.block = checkBlock(v.block, cache, toNumber(bn)))
 }
 
 /** general verification-function which handles it according to its given type. */
-export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true, client?: Client): Promise<boolean> {
+export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true, cache?: Cache): Promise<boolean> {
   const proof = response && response.in3 && response.in3.proof
   if (!proof) {
     if (allowedWithoutProof.indexOf(request.method) >= 0) return true
@@ -475,29 +482,29 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
   }
 
   // check BlockCache and convert all blockheaders to buffer
-  handleBlockCache(proof, client)
+  handleBlockCache(proof, cache)
 
   // convert all signatures into buffer
   const signatures: Buffer[] = request.in3 && request.in3.signatures && request.in3.signatures.map(address)
   try {
     switch (proof.type) {
       case 'transactionProof':
-        await verifyTransactionProof(bytes32(request.params[0]), proof, signatures, response.result)
+        await verifyTransactionProof(bytes32(request.params[0]), proof, signatures, response.result, cache)
         break
       case 'logProof':
-        await verifyLogProof(proof, signatures, response.result && response.result as LogData[])
+        await verifyLogProof(proof, signatures, response.result && response.result as LogData[], cache)
         break
       case 'receiptProof':
-        await verifyTransactionReceiptProof(bytes32(request.params[0]), proof, signatures, response.result && response.result as any)
+        await verifyTransactionReceiptProof(bytes32(request.params[0]), proof, signatures, response.result && response.result as any, cache)
         break
       case 'blockProof':
-        await verifyBlockProof(request, response.result, proof, signatures)
+        await verifyBlockProof(request, response.result, proof, signatures, cache)
         break
       case 'accountProof':
-        await verifyAccountProof(request, response.result as string, proof, signatures)
+        await verifyAccountProof(request, response.result as string, proof, signatures, cache)
         break
       case 'callProof':
-        await verifyCallProof(request, bytes(response.result), proof, signatures, client)
+        await verifyCallProof(request, bytes(response.result), proof, signatures, cache)
         break
       default:
         throw new Error('Unsupported proof-type : ' + proof.type)
