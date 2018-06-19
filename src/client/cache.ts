@@ -18,7 +18,7 @@ export default class Cache {
 
   async getCodeFor(addresses: Buffer[], block = 'latest'): Promise<Buffer[]> {
     const result = addresses.map(a => this.codeCache.get(a))
-    const missing: RPCRequest[] = result.map((_, i) => _ ? null : { method: 'eth_getCode', params: [addresses[i], block], id: i + 1, jsonrpc: '2.0' as any }).filter(_ => _)
+    const missing: RPCRequest[] = result.map((_, i) => _ ? null : { method: 'eth_getCode', params: [toHex(addresses[i], 20), block], id: i + 1, jsonrpc: '2.0' as any }).filter(_ => _)
     if (missing.length)
       for (const r of await this.client.send(missing, undefined, { proof: false, signatureCount: 0 }) as RPCResponse[]) {
         const i = r.id as number - 1
