@@ -222,11 +222,11 @@ export default class Client extends EventEmitter {
     const excludes = [...(prevExcludes || []), ...nodes.map(_ => _.address)].filter((e, i, a) => a.indexOf(e) === i)
 
     // get the verified responses from the nodes
-    const responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, excludes)))
+    const responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.cache, excludes)))
 
     // merge the result 
     const result: RPCResponse[] = await Promise.all(
-      externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport))
+      externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport, this.cache))
     )
 
     checkForAutoUpdates(conf, result, this)
@@ -267,7 +267,7 @@ function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: 
 /**
  * merges the results of all responses to one valid one.
  */
-async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: IN3Config, transport: Transport) {
+async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: IN3Config, transport: Transport, cache: Cache) {
 
   // if only one left, this is the response
   if (responses.length === 1) return responses[0]
@@ -304,7 +304,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
       const anodes = getNodes(aconf, 1, transport)
       if (anodes.length)
         // we simply ask the authrority node
-        return await handleRequest([request], anodes[0], aconf, transport).then(_ => _[0])
+        return await handleRequest([request], anodes[0], aconf, transport, cache).then(_ => _[0])
     }
 
     // hmmm. what else can we do now?
@@ -319,7 +319,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 /**
  * executes a one single request for one node and updates the stats
  */
-async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, excludes?: string[]): Promise<RPCResponse[]> {
+async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, cache: Cache, excludes?: string[]): Promise<RPCResponse[]> {
   // keep the timestamp in order to calc the avgResponseTime
   const start = Date.now()
   // get the existing weights
@@ -386,7 +386,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
       // maybe we can still deliver a proof, but without data
       !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
-      true, this)))
+      true, cache)))
 
     return responses
   }
@@ -422,7 +422,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     if (!otherNodes.length)
       throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
-    return handleRequest(request, otherNodes[0], conf, transport, [...excludes, otherNodes[0].address])
+    return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, otherNodes[0].address])
   }
 }
 
