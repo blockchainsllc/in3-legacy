@@ -41,7 +41,7 @@ The following docuemntations are available:
 
 - [API](https://github.com/slockit/in3/blob/master/doc/README.md) - Definition of Classes and available functions.
 - [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Defintion of datastructures used inside the client.
-- [Verifiaction](https://github.com/slockit/in3/blob/master/doc/verification.md). A documentaion about the varification of proofs send by a IN3-Server.
+- [Verification](https://github.com/slockit/in3/blob/master/doc/verification.md). A documentaion about the varification of proofs send by a IN3-Server.
 
 # Tests
 
