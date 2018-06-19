@@ -72,6 +72,7 @@ export class CacheNode<T> {
   constructor(limit: number) {
     this.limit = limit
     this.dataLength = 0
+    this.data = new Map()
   }
 
   get(key: Buffer): T {
