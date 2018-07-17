@@ -101,7 +101,7 @@ export default class Client extends EventEmitter {
 
     const nlResponse = await this.sendRPC(
       'in3_nodeList',
-      [this.defConfig.nodeLimit, seed, servers.initAddresses || []],
+      [this.defConfig.nodeLimit || 0, seed, servers.initAddresses || []],
       chain, conf)
     const nl = nlResponse.result as ServerList
 

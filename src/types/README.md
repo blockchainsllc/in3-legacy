@@ -482,6 +482,7 @@ const iN3RPCConfig:types.IN3RPCConfig = {
     *  **file** `string` - the path to the logile   
     *  **level** `string` - Loglevel   
     *  **colors** `boolean` - if true colors will be used   
+    *  **custom** [{"description":"custom logger"}](#{"description":"custom logger"}) - custom logger   
 *  **chains** `object` - a definition of the Handler per chain   
     each key in this object will structure its value like: 
 

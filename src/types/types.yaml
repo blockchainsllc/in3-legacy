@@ -510,6 +510,7 @@ definitions:
             logging:
                 type: object
                 description: logger config
+                required: []
                 properties:
                     file: 
                         type: string
@@ -520,6 +521,19 @@ definitions:
                     colors:
                         type: boolean
                         description: if true colors will be used
+                    name:
+                        type: string
+                        description: the name of the provider
+                    type:
+                        type: string
+                        description: the module of the provider
+                    port:
+                        type: integer
+                        description: the port for custom logging
+                    host:
+                        type: string
+                        description: the host for custom logging
+                            
 
             chains:
                 type: object

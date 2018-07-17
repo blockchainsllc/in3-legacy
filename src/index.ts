@@ -1,4 +1,5 @@
 import Client from './client/Client'
+import * as validateOb from './util/validate'
 export default Client
 
 
@@ -50,3 +51,5 @@ export type IN3RPCConfig = types.IN3RPCConfig
 export type IN3RPCHandlerConfig = types.IN3RPCHandlerConfig
 
 export const AxiosTransport = transport.AxiosTransport
+export const typeDefs = types.validationDef
+export const validate = validateOb.validate

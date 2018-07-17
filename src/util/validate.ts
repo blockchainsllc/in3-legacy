@@ -55,3 +55,8 @@ export function validateAndThrow(fn: Ajv.ValidateFunction, ob) {
     throw new Error('ERRKEY: invalid_data : ' + (fn).errors.map(_ =>
       _.dataPath + '(' + JSON.stringify(_.data || _.params) + '):' + _.message).join(', ') + ':' + JSON.stringify(ob, null, 2))
 }
+
+export function validate(ob: any, def: any) {
+  validateAndThrow(ajv.compile(def), ob)
+}
+
