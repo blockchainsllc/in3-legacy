@@ -1,9 +1,11 @@
-# n3-ts
-Typescript-version of the incubed client
+# INCUBED
+
+INCUBED = A trustless INcentivized remote Node Network = IN3
+This is the Typescript-version of the incubed client.
 
 [![Build Status](https://travis-ci.com/slockit/in3.svg?token=2HePjq6vsCVWSbiYxgEy&branch=master)](https://travis-ci.com/slockit/in3)
 
-# getting started
+# Getting started
 
 ```
 npm install --save in3
@@ -39,7 +41,9 @@ The following docuemntations are available:
 
 - [API](https://github.com/slockit/in3/blob/master/doc/README.md) - Definition of Classes and available functions.
 - [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Defintion of datastructures used inside the client.
-- [Verifiaction](https://github.com/slockit/in3/blob/master/doc/verification.md). A documentaion about the varification of proofs send by a IN3-Server.
+- [Verification](https://github.com/slockit/in3/wiki/Ethereum-Verification-and-MerkleProof). A documentaion about the varification of proofs send by a IN3-Server.
+- [Wiki](https://github.com/slockit/in3/wiki). A wiki with examples and explanations of the protocol.
+
 
 # Tests
 
