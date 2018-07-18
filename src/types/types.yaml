@@ -500,6 +500,9 @@ definitions:
         type: object
         description: the configuration for the rpc-handler
         properties:
+            id:
+                type: string
+                description: a identifier used in logfiles as also for reading the config from the database
             defaultChain:
                 type: string
                 description: the default chainId in case the request does not contain one.
@@ -507,6 +510,24 @@ definitions:
                 type: integer
                 default: 8500
                 description: the listeneing port for the server
+            db:
+                type: object
+                properties:
+                    user:
+                        type: string
+                        description: username for the db
+                    password:
+                        type: string
+                        description: password for db-access
+                    host:
+                        type: string
+                        description: db-host (default = localhost)
+                    port:
+                        type: integer
+                        description: the database port
+                    database:
+                        type: string
+                        description: name of the database
             logging:
                 type: object
                 description: logger config

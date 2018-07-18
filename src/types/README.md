@@ -470,19 +470,31 @@ the configuration for the rpc-handler
 ```javascript
 import {types} from 'in3'
 const iN3RPCConfig:types.IN3RPCConfig = {
+  db: {},
   logging: {}
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
+*  **id** `string` - a identifier used in logfiles as also for reading the config from the database   
 *  **defaultChain** `string` - the default chainId in case the request does not contain one.   
 *  **port** `integer` - the listeneing port for the server   
+*  **db** `object`   
+    properties: 
+    *  **user** `string` - username for the db   
+    *  **password** `string` - password for db-access   
+    *  **host** `string` - db-host (default = localhost)   
+    *  **port** `integer` - the database port   
+    *  **database** `string` - name of the database   
 *  **logging** `object` - logger config   
     properties: 
     *  **file** `string` - the path to the logile   
     *  **level** `string` - Loglevel   
     *  **colors** `boolean` - if true colors will be used   
-    *  **custom** [{"description":"custom logger"}](#{"description":"custom logger"}) - custom logger   
+    *  **name** `string` - the name of the provider   
+    *  **type** `string` - the module of the provider   
+    *  **port** `integer` - the port for custom logging   
+    *  **host** `string` - the host for custom logging   
 *  **chains** `object` - a definition of the Handler per chain   
     each key in this object will structure its value like: 
 
