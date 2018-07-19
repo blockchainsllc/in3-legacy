@@ -37,18 +37,18 @@ export default class Client extends EventEmitter {
       minDeposit: 0,
       autoUpdateList: true,
       requestCount: 3,
-      chainId: '0x000000000000000000000000000000000000000000000000000000000000002a',
-      mainChain: '0x000000000000000000000000000000000000000000000000000000000000002a',
+      chainId: '0x2a',
+      mainChain: '0x2a',
       chainRegistry: '0x53d02daE1253CDf7C9b93a6ED0462d97697C85F9',
       ...config,
       servers: {
-        '0x000000000000000000000000000000000000000000000000000000000000002a': {
-          contractChain: '0x000000000000000000000000000000000000000000000000000000000000002a',
+        '0x2a': {
+          contractChain: '0x2a',
           contract: '0x27a37a1210df14f7e058393d026e2fb53b7cf8c1',
           nodeList: [
             {
               deposit: 0,
-              chainIds: ['0x000000000000000000000000000000000000000000000000000000000000002a'],
+              chainIds: ['0x2a'],
               address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
               url: 'https://in3.slock.it/kovan/nd-3',
               props: 65535
