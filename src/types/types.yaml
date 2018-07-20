@@ -257,6 +257,9 @@ definitions:
                             type: string
                             description: the address of the registry contract
                             example: '0xe36179e2286ef405e929C90ad3E70E649B22a945'
+                        needsUpdate:
+                            type: boolean
+                            description: if true the nodelist should be updated.
                         contractChain:
                             type: string
                             description: the chainid for the contract

@@ -221,6 +221,7 @@ const iN3Config:types.IN3Config = {
     *  **initAddresses** `string[]` - a list of addresses which should always be part of the nodelist when getting an update   
     *  **lastBlock** `integer` - the blockNumber of the last event in the registry   
     *  **contract** `string` - the address of the registry contract   
+    *  **needsUpdate** `boolean` - if true the nodelist should be updated.   
     *  **contractChain** `string` - the chainid for the contract   
     *  **nodeList** `IN3NodeConfig[]` - the list of nodes   
     *  **nodeAuthorities** `string[]` - the list of authority nodes for handling conflicts   

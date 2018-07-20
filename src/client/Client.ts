@@ -43,6 +43,7 @@ export default class Client extends EventEmitter {
       ...config,
       servers: {
         '0x2a': {
+          needsUpdate: true,
           contractChain: '0x2a',
           contract: '0x27a37a1210df14f7e058393d026e2fb53b7cf8c1',
           nodeList: [
@@ -180,7 +181,7 @@ export default class Client extends EventEmitter {
       throw new Error('no chainId')
     const server = c.servers[c.chainId]
 
-    if (!server)
+    if (!server || server.needsUpdate)
       await this.updateNodeList(c.chainId)
     const list = c.servers[c.chainId].nodeList
     if (!list || list.length == 0)
