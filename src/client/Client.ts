@@ -181,8 +181,10 @@ export default class Client extends EventEmitter {
       throw new Error('no chainId')
     const server = c.servers[c.chainId]
 
-    if (!server || server.needsUpdate)
+    if (!server || server.needsUpdate) {
+      server.needsUpdate = false
       await this.updateNodeList(c.chainId)
+    }
     const list = c.servers[c.chainId].nodeList
     if (!list || list.length == 0)
       throw new Error('No NodeList found for chain ' + c.chainId)
