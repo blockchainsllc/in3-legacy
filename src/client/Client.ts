@@ -359,7 +359,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         in3.verification = conf.signatureCount ? 'proofWithSignature' : 'proof'
         if (conf.signatureCount)
           // if signatures are requested, we choose some random nodes and create a list of their addresses
-          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => _.address)
+          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => toChecksumAddress(_.address))
 
         // ask the server to include the code
         if (conf.includeCode)
