@@ -472,6 +472,7 @@ the configuration for the rpc-handler
 import {types} from 'in3'
 const iN3RPCConfig:types.IN3RPCConfig = {
   db: {},
+  profile: {},
   logging: {}
 }
 ```
@@ -487,6 +488,13 @@ const iN3RPCConfig:types.IN3RPCConfig = {
     *  **host** `string` - db-host (default = localhost)   
     *  **port** `integer` - the database port   
     *  **database** `string` - name of the database   
+*  **profile** `object`   
+    properties: 
+    *  **icon** `string` - url to a icon or logo of company offering this node   
+    *  **url** `string` - url of the website of the company   
+    *  **name** `string` - name of the node or company   
+    *  **comment** `string` - comments for the node   
+    *  **noStats** `boolean` - if active the stats will not be shown (default:false)   
 *  **logging** `object` - logger config   
     properties: 
     *  **file** `string` - the path to the logile   

@@ -531,6 +531,24 @@ definitions:
                     database:
                         type: string
                         description: name of the database
+            profile:
+                type: object
+                properties:
+                    icon:
+                        type: string
+                        description: url to a icon or logo of company offering this node
+                    url:
+                        type: string
+                        description: url of the website of the company
+                    name:
+                        type: string
+                        description: name of the node or company
+                    comment:
+                        type: string
+                        description: comments for the node
+                    noStats:
+                        type: boolean
+                        description: if active the stats will not be shown (default:false)
             logging:
                 type: object
                 description: logger config
