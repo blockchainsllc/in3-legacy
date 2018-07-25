@@ -424,7 +424,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       otherNodes = getNodes(conf, 1, transport, excludes)
     } catch (x) {
       // if we can't get nodes, it's because there none left to ask
-      throw new Error('Can not recover (' + x.message + ') from wrong response of node ' + node.url + ' did not respond correctly : ' + err)
+      throw new Error('tried ' + request.map(_ => _.method).join() + ' but failed and can not recover (' + x.message + ') from wrong response of node ' + node.url + ' did not respond correctly : ' + err)
     }
 
     if (!otherNodes.length)
