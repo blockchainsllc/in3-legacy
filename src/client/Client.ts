@@ -174,10 +174,6 @@ export default class Client extends EventEmitter {
     Object.keys(this.defConfig.servers).forEach(s => delete this.defConfig.servers[s].weights)
   }
 
-
-
-
-
   /** returns the current nodeList for the chainId specified in the config. If needed it will fetch the nodelist from the server first. */
   private async getNodeList(conf: IN3Config) {
     const c = { ...this.defConfig, ...conf }
@@ -190,13 +186,12 @@ export default class Client extends EventEmitter {
       await this.updateNodeList(c.chainId)
     }
     const list = c.servers[c.chainId].nodeList
-    if (!list || list.length == 0)
+    if (!list || list.length === 0)
       throw new Error('No NodeList found for chain ' + c.chainId)
 
     return list
 
   }
-
 
   /**
    * executes the requests
@@ -247,12 +242,7 @@ export default class Client extends EventEmitter {
       return conf.keepIn3 ? result : result.map(cleanResult)
   }
 
-
-
 }
-
-
-
 
 let idCount = 1
 
@@ -287,7 +277,6 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   // TODO check error and maybe even blocknumbers in the future
   if (request.method === 'eth_blockNumber')
     return { ...responses[0], result: '0x' + Math.max(...responses.map(_ => parseInt(_.result))).toString(16) }
-
 
   // how many different results do we have?
   const groups = responses.reduce((g, r) => {
@@ -326,7 +315,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 /**
  * executes a one single request for one node and updates the stats
  */
-async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, cache: Cache, excludes?: string[]): Promise<RPCResponse[]> {
+async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, cache: Cache, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
   // keep the timestamp in order to calc the avgResponseTime
   const start = Date.now()
   // get the existing weights
@@ -357,7 +346,6 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         // add existing blockhashes
         if (conf.verifiedHashes)
           in3.verifiedHashes = conf.verifiedHashes
-
 
         // .. we set the verificationtype
         in3.verification = conf.signatureCount ? 'proofWithSignature' : 'proof'
@@ -409,8 +397,22 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         conf.servers[conf.chainId].weights[adr].blacklistedUntil = Date.now() + 3600000 * 2
       })
     }
-    else
+    else if (err.message.indexOf('cannot sign') >= 0 && err.message.indexOf('blockHeight') > 0) {
+      // retry without signature
+      let tryAgainWithoutSignature = false
+      request.forEach(r => {
+        if (r.in3 && r.in3.verification === 'proofWithSignature') {
+          r.in3.verification = 'proof'
+          delete r.in3.signatures
+          tryAgainWithoutSignature = true
+        }
+      })
 
+      if (tryAgainWithoutSignature && retryCount > 0)
+        return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, cache, excludes, retryCount - 1)
+
+    }
+    else
 
       // locally blacklist this node for one hour if it did not respond within the timeout or could not be verified
       stats.blacklistedUntil = Date.now() + 3600000
@@ -425,15 +427,12 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       throw new Error('Can not recover (' + x.message + ') from wrong response of node ' + node.url + ' did not respond correctly : ' + err)
     }
 
-
     if (!otherNodes.length)
       throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
     return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, otherNodes[0].address])
   }
 }
-
-
 
 /**
  * calculates the weight of a node 
@@ -481,7 +480,7 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
 
   for (let i = 0; i < count; i++) {
     // pick a random value based on the total weight
-    let r = random[i] * total
+    const r = random[i] * total
     // find the index of the pick in the weight-array
     const index = weights.findIndex(_ => _.s > r) - 1
     const node = index < 0 ? nodes[nodes.length - 1] : nodes[index]
