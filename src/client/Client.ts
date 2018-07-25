@@ -158,7 +158,11 @@ export default class Client extends EventEmitter {
   public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): void | Promise<RPCResponse | RPCResponse[]> {
     const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...config } : this.defConfig)
     if (callback)
-      p.then(_ => callback(null, Array.isArray(request) ? _ : _[0]), callback as any)
+      p.then(_ => {
+        callback(null, Array.isArray(request) ? _ : _[0])
+      }, err => {
+        callback(err, null)
+      })
     else
       return p.then(_ => Array.isArray(request) ? _ : _[0])
   }
