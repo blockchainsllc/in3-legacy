@@ -12,7 +12,9 @@ import Client from './Client'
 import Cache from './cache'
 
 
-const allowedWithoutProof = ['eth_blockNumber']
+const allowedWithoutProof = ['eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
+
+
 
 export class BlackListError extends Error {
   addresses: string[]
