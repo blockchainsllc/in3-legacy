@@ -341,7 +341,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         in3.latestBlock = conf.replaceLatestBlock
 
       // if we request proof and the node can handle it ...
-      if (conf.proof && canProof(node)) {
+      if (conf.proof && canProof(node) && r.params.indexOf('pending') < 0) {
 
         // add existing blockhashes
         if (conf.verifiedHashes)
