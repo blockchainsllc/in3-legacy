@@ -1,7 +1,8 @@
 # INCUBED
 
-INCUBED = A trustless INcentivized remote Node Network = IN3
-This is the Typescript-version of the incubed client.
+A trustless INcentivized remote Node Network or IN3.
+
+This reposirotyr contains the Typescript version of the incubed client.
 
 [![Build Status](https://travis-ci.com/slockit/in3.svg?token=2HePjq6vsCVWSbiYxgEy&branch=master)](https://travis-ci.com/slockit/in3)
 
@@ -34,15 +35,20 @@ const block = await web.eth.getBlockByNumber('latest')
 
 ```
 
+# What is Incubed?
+
+Targeting the mass scale applications of Smart Cities and the Sharing Economy, Incubed is a light client alternative for embedded computers and low energy devices. It is designed to enable electronics such as padlocks, door locks, suitcases, watches, and mobiles, to grant and check access rights, send and verify payments, and execute smart contracts. All with the same security level offered by other options but with significantly reduced footprint.
+
+Incubed leverages an incentivized network running on top of full blockchain nodes that receive micropayments for yielding the blockchain transactions on behalf of the devices. After confirming these transactions, the nodes return proofs to the querying devices. These devices compute the validity of such proofs and will punish nodes providing wrong or outdated data. Thus the network behavior is analogous to insurance market models.
+
+Read more on our [webpage](https://slock.it/incubed.html) or in the documentation section below.
 
 # Documentation
 
-The following docuemntations are available:
-
-- [API](https://github.com/slockit/in3/blob/master/doc/README.md) - Definition of Classes and available functions.
-- [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Defintion of datastructures used inside the client.
-- [Verification](https://github.com/slockit/in3/wiki/Ethereum-Verification-and-MerkleProof). A documentaion about the varification of proofs send by a IN3-Server.
-- [Wiki](https://github.com/slockit/in3/wiki). A wiki with examples and explanations of the protocol.
+- [API](https://github.com/slockit/in3/blob/master/doc/README.md) - Client API classes and functions.
+- [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Defintion of data structures used by the client.
+- [Verification](https://github.com/slockit/in3/wiki/Ethereum-Verification-and-MerkleProof) - About the process of proof verification. Proofs are sent by the [in3-server](https://github.com/slockit/in3-server) to after the in3 client requests chain data or sends a transaction.
+- [Wiki](https://github.com/slockit/in3/wiki). A wiki with examples and explanation of the protocol.
 
 
 # Tests
