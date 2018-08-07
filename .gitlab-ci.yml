@@ -2,6 +2,7 @@ image: node:8-alpine
 
 stages:
   - build
+  - test
 
 build-in3:
   stage: build
@@ -11,6 +12,15 @@ build-in3:
     - npm set registry https://npm.slock.it
     - npm install
     - npm run build
+  artifacts:
+    paths:
+      - node_modules/
+      - js/
+
+test-in3:
+  stage: test
+  script:
+    - npm test
   artifacts:
     name: "test-reports-$CI_JOB_NAME"
     paths:
