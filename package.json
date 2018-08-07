@@ -58,12 +58,12 @@
     "dtsgenerator": "^0.9.9",
     "mocha": "^5.1.1",
     "nyc": "^11.8.0",
-    "slockit-generator": "git+ssh://git@github.com/slockit/generator.git#master",
     "source-map-support": "^0.5.6",
     "ts-node": "^6.0.3",
     "typedoc": "^0.11.1",
     "typescript": "^2.7.2",
-    "uglify-es": "^3.2.0"
+    "uglify-es": "^3.2.0",
+    "slockit-generator": "^1.0.1"
   },
   "dependencies": {
     "ajv": "^6.5.1",
