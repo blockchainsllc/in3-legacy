@@ -1,0 +1,15 @@
+image: node:8-alpine
+
+stages:
+  - build
+
+build-in3:
+  stage: build
+  script:
+    - npm install
+    - npm run build
+
+  artifacts:
+    name: "test-reports-$CI_JOB_NAME"
+    paths:
+      - test/report
