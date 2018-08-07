@@ -7,8 +7,8 @@ build-in3:
   stage: build
   script:
     - apk add --no-cache python make gcc g++ git openssh
-    - npm set registry https://npm.slock.it
     - echo "//npm.slock.it/:_authToken=\"ufUzrNWjrIdX7nn+WZQzV7ZLyJwrMBX2ynTbm+5R8TE=\"" > ~/.npmrc
+    - npm set registry https://npm.slock.it
     - npm install
     - npm run build
   artifacts:
