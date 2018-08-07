@@ -34,7 +34,7 @@ export default class Client extends EventEmitter {
     this.addListener('beforeRequest', adjustConfig)
     this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
-      proof: false,
+      proof: 'none',
       signatureCount: 0,
       minDeposit: 0,
       autoUpdateList: true,
@@ -109,7 +109,7 @@ export default class Client extends EventEmitter {
     const nl = nlResponse.result as ServerList
 
 
-    if (config.proof && nl.contract.toLowerCase() !== servers.contract.toLowerCase()) {
+    if (config.proof && config.proof != 'none' && nl.contract.toLowerCase() !== servers.contract.toLowerCase()) {
       // the server gave us the wrong contract!
       // should we retry?
       if (retryCount)
@@ -351,7 +351,14 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         in3.latestBlock = conf.replaceLatestBlock
 
       // if we request proof and the node can handle it ...
-      if (conf.proof && canProof(node) && r.params.indexOf('pending') < 0) {
+      if (conf.proof && conf.proof != 'none' && canProof(node) && r.params.indexOf('pending') < 0) {
+
+        // activate Refs
+        if (conf.format === 'jsonRef')
+          in3.useRef = true
+
+        if (conf.proof === 'full')
+          in3.useFullProof = true
 
         // add existing blockhashes
         if (conf.verifiedHashes)

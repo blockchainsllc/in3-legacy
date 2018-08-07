@@ -100,6 +100,8 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **verifiedHashes** `string<bytes32>[]` - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number.   
 *  **latestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
+*  **useRef** `boolean` - if true binary-data (starting with a 0x) will be refered if occuring again.   
+*  **useFullProof** `boolean` - if true all data in the response will be proven, which leads to a higher payload.   
 *  **verification** `string` - defines the kind of proof the client is asking for   
  Must be one of the these values : `'never`', `'proof`', `'proofWithSignature`'
 *  **signatures** `string<address>[]` - a list of addresses requested to sign the blockhash   
@@ -201,12 +203,13 @@ const iN3Config:types.IN3Config = {
 *  **nodeLimit** `number` - the limit of nodes to store in the client.   
 *  **keepIn3** `boolean` - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.   
 *  **format** `string` - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding   
- Must be one of the these values : `'json`', `'cbor`'
+ Must be one of the these values : `'json`', `'jsonRef`', `'cbor`'
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **maxCodeCache** `integer` - number of max bytes used to cache the code in memory   
 *  **maxBlockCache** `integer` - number of number of blocks cached  in memory   
 *  **verifiedHashes** `string<bytes32>[]` - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.   
-*  **proof** `boolean` - if true the nodes should send a proof of the response   
+*  **proof** `string` - if true the nodes should send a proof of the response   
+ Must be one of the these values : `'none`', `'standard`', `'full`'
 *  **signatureCount** `number` - number of signatures requested   
 *  **minDeposit** `number` (required)  - min stake of the server. Only nodes owning at least this amount will be chosen.   
 *  **replaceLatestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   

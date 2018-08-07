@@ -9,7 +9,7 @@ export function adjustConfig(ev: { requests: RPCRequest[], conf: IN3Config }) {
   for (const r of ev.requests) {
     switch (r.method) {
       case 'eth_blockNumber':
-        ev.conf.proof = false
+        ev.conf.proof = 'none'
         ev.conf.signatureCount = 0
         ev.conf.requestCount = 2
         break

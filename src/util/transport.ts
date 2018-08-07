@@ -12,9 +12,9 @@ export interface Transport {
 
 export class AxiosTransport implements Transport {
 
-  format: ('json' | 'cbor')
+  format: ('json' | 'cbor'  | 'jsonRef')
 
-  constructor(format: ('json' | 'cbor') = 'json') {
+  constructor(format: ('json' | 'cbor' | 'jsonRef') = 'json') {
     this.format = format
   }
 

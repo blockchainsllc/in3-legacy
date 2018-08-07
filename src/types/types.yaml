@@ -88,7 +88,12 @@ definitions:
                 description: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
                 type: integer
                 example: 6
-
+            useRef:
+                description: if true binary-data (starting with a 0x) will be refered if occuring again.
+                type: boolean
+            useFullProof:
+                description: if true all data in the response will be proven, which leads to a higher payload.
+                type: boolean
             verification: 
                 description: defines the kind of proof the client is asking for
                 type: string
@@ -170,7 +175,7 @@ definitions:
             format:
                 description: the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding
                 type: string
-                enum: ["json","cbor"]
+                enum: ["json","jsonRef","cbor"]
                 example: json
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
@@ -192,7 +197,8 @@ definitions:
                     format: bytes32
             proof: 
                 description: if true the nodes should send a proof of the response
-                type: boolean
+                type: string
+                enum: ["none","standard","full"]
                 example: true
             signatureCount: 
                 description: number of signatures requested
