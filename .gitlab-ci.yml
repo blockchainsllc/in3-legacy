@@ -30,7 +30,8 @@ test-in3:
 
 deploy-to-slockit-npm:
   stage: deploy
-  only: tags
+  only: 
+    - tags
   dependencies:
     - build-in3
   script:
