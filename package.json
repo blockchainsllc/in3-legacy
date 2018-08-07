@@ -1,6 +1,6 @@
 {
   "name": "in3",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
   "scripts": {
@@ -9,8 +9,7 @@
     "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
     "updateTypes": "slockit-types ",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
-    "disc": "cd js; discify in3.js > in3.html; cd ..",
-    "postinstall": "tsc -p ."
+    "disc": "cd js; discify in3.js > in3.html; cd .."
   },
   "nyc": {
     "include": [
