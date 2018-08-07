@@ -31,7 +31,8 @@ export default class Client extends EventEmitter {
   public constructor(config?: Partial<IN3Config>, transport?: Transport) {
     super()
     this.filters = new Filters()
-    this.addListener('beforeRequest', adjustConfig)
+    if (config && config.autoConfig)
+      this.addListener('beforeRequest', adjustConfig)
     this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
       proof: 'none',

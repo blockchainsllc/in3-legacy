@@ -180,6 +180,7 @@ const iN3Config:types.IN3Config = {
   nodeLimit: 150,
   keepIn3: false,
   format: 'json',
+  autoConfig: false,
   includeCode: true,
   maxCodeCache: 100000,
   maxBlockCache: 100,
@@ -204,6 +205,7 @@ const iN3Config:types.IN3Config = {
 *  **keepIn3** `boolean` - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.   
 *  **format** `string` - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding   
  Must be one of the these values : `'json`', `'jsonRef`', `'cbor`'
+*  **autoConfig** `boolean` - if true the config will be adjusted depending on the request   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **maxCodeCache** `integer` - number of max bytes used to cache the code in memory   
 *  **maxBlockCache** `integer` - number of number of blocks cached  in memory   
