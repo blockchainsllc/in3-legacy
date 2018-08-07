@@ -3,6 +3,7 @@ image: node:8-alpine
 stages:
   - build
   - test
+  - deploy
 
 build-in3:
   stage: build
@@ -16,6 +17,7 @@ build-in3:
     paths:
       - node_modules/
       - js/
+      - ~/.npmrc
 
 test-in3:
   stage: test
@@ -25,3 +27,12 @@ test-in3:
     name: "test-reports-$CI_JOB_NAME"
     paths:
       - test/report
+
+deploy-to-slockit-npm:
+  stage: deploy
+  only: tags
+  dependencies:
+    - build-in3
+  script:
+    - npm version $CI_COMMIT_TAG
+    - npm publish
