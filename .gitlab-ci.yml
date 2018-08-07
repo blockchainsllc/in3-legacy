@@ -17,7 +17,6 @@ build-in3:
     paths:
       - node_modules/
       - js/
-      - ~/.npmrc
 
 test-in3:
   stage: test
@@ -35,5 +34,7 @@ deploy-to-slockit-npm:
   dependencies:
     - build-in3
   script:
+    - echo "//npm.slock.it/:_authToken=\"ufUzrNWjrIdX7nn+WZQzV7ZLyJwrMBX2ynTbm+5R8TE=\"" > ~/.npmrc
+    - npm set registry https://npm.slock.it
     - npm version $CI_COMMIT_TAG
     - npm publish
