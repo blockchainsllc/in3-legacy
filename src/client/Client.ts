@@ -9,6 +9,7 @@ import { toHex, toNumber, toMinHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
 import Cache from './cache'
+import { adjustConfig } from './configHandler'
 
 
 /**
@@ -30,6 +31,7 @@ export default class Client extends EventEmitter {
   public constructor(config?: Partial<IN3Config>, transport?: Transport) {
     super()
     this.filters = new Filters()
+    this.addListener('beforeRequest', adjustConfig)
     this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
       proof: false,
@@ -159,12 +161,17 @@ export default class Client extends EventEmitter {
     const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...config } : this.defConfig)
     if (callback)
       p.then(_ => {
+        this.emit('afterRequest', { request, result: Array.isArray(request) ? _ : _[0] })
         callback(null, Array.isArray(request) ? _ : _[0])
       }, err => {
+        this.emit('error', { request, err })
         callback(err, null)
       })
     else
-      return p.then(_ => Array.isArray(request) ? _ : _[0])
+      return p.then(_ => Array.isArray(request) ? _ : _[0]).then(result => {
+        this.emit('afterRequest', { request, result })
+        return result
+      })
   }
 
   /**
@@ -200,6 +207,9 @@ export default class Client extends EventEmitter {
    * @param prevExcludes list of nodes to exclude 
    */
   private async sendIntern(requests: RPCRequest[], conf: IN3Config, prevExcludes?: string[]): Promise<RPCResponse[]> {
+
+    // we trigger an event, so event-handlers can adjust the config
+    this.emit('beforeRequest', { requests, conf })
 
     // filter requests are handled internally and externally
     const internResponses: Promise<RPCResponse>[] = []
