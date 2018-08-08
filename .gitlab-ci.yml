@@ -1,20 +1,22 @@
-image: node:8-alpine
+image: docker.slock.it/build-images/node:8-alpine
 
 stages:
   - build
   - test
 
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+  - node_modules/
+
 build-in3:
   stage: build
   script:
-    - apk add --no-cache python make gcc g++ git openssh
-    - echo "//npm.slock.it/:_authToken=\"$NPM_REGISTRY_TOKEN\"" > ~/.npmrc
-    - npm set registry https://npm.slock.it
+    - sh /prepare.sh
     - npm install
     - npm run build
   artifacts:
     paths:
-      - node_modules/
       - js/
 
 test-in3:
