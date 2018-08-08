@@ -12,7 +12,7 @@ This is the Typescript-version of the incubed client.
 npm install --save in3
 ```
 
-In you code:
+In your code:
 
 ```js
 
