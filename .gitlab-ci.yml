@@ -29,6 +29,18 @@ test-in3:
     paths:
       - test/report
 
+
+pages:
+  stage: deploy
+  environment:
+    name: test-results
+    urL: http://in3.git-pages.slock.it/in3/${CI_JOB_ID}
+  dependencies:
+    - test-in3
+  script:
+    - mkdir -p public/${CI_JOB_ID}
+    - cp -r test/report/* public/${CI_JOB_ID}
+
 deploy-to-slockit-npm:
   stage: deploy
   only: # deploy only on  semantic versions tags
