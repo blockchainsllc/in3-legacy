@@ -35,6 +35,8 @@ deploy-to-slockit-npm:
     - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
   except:
     - branches
+  dependencies:
+    - build-in3
   script:
     - npm version $CI_COMMIT_REF
     - npm publish
