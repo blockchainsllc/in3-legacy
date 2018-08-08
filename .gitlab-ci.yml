@@ -40,6 +40,9 @@ pages:
   script:
     - mkdir -p public/${CI_JOB_ID}
     - cp -r test/report/* public/${CI_JOB_ID}
+  artifacts:
+    paths:
+      - public
 
 deploy-to-slockit-npm:
   stage: deploy
