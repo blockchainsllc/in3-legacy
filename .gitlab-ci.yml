@@ -34,7 +34,7 @@ pages:
   stage: deploy
   environment:
     name: test-results
-    urL: http://in3.git-pages.slock.it/in3/${CI_JOB_ID}
+    url: http://in3.git-pages.slock.it/in3/${CI_JOB_ID}
   dependencies:
     - test-in3
   script:
