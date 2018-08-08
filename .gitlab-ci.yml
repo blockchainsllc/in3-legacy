@@ -34,12 +34,12 @@ pages:
   stage: deploy
   environment:
     name: test-results
-    url: http://in3.git-pages.slock.it/in3/${CI_JOB_ID}
+    url: http://in3.git-pages.slock.it/in3
   dependencies:
     - test-in3
   script:
-    - mkdir -p public/${CI_JOB_ID}
-    - cp -r test/report/* public/${CI_JOB_ID}
+    - mkdir -p public/
+    - cp -r test/report/* public/
   artifacts:
     paths:
       - public
