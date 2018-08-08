@@ -3,6 +3,7 @@ image: docker.slock.it/build-images/node:8-alpine
 stages:
   - build
   - test
+  - deploy
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -27,3 +28,13 @@ test-in3:
     name: "test-reports-$CI_JOB_NAME"
     paths:
       - test/report
+
+deploy-to-slockit-npm:
+  stage: deploy
+  only: # deploy only on  semantic versions tags
+    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
+  except:
+    - branches
+  script:
+    - npm version $CI_COMMIT_REF
+    - npm publish
