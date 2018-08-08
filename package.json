@@ -1,6 +1,6 @@
 {
   "name": "in3",
-  "version": "1.0.2",
+  "version": "1.4.5",
   "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
   "scripts": {
