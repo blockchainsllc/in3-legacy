@@ -12,6 +12,8 @@ cache:
 
 build-in3:
   stage: build
+  tags:
+    - short-jobs
   script:
     - sh /prepare.sh
     - npm install
@@ -22,6 +24,8 @@ build-in3:
 
 test-in3:
   stage: test
+  tags:
+    - short-jobs
   script:
     - npm test
   artifacts:
@@ -31,6 +35,8 @@ test-in3:
 
 pages:
   stage: deploy
+  tags:
+    - short-jobs
   environment:
     name: test-results
     url: http://in3.git-pages.slock.it/in3
@@ -45,6 +51,8 @@ pages:
 
 deploy-to-slockit-npm:
   stage: deploy
+  tags:
+    - short-jobs
   only: # deploy only on  semantic versions tags
     - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
   except:
