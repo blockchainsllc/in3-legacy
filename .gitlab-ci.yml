@@ -29,7 +29,6 @@ test-in3:
     paths:
       - test/report
 
-
 pages:
   stage: deploy
   environment:
@@ -53,5 +52,6 @@ deploy-to-slockit-npm:
   dependencies:
     - build-in3
   script:
-    - npm version $CI_COMMIT_REF
+    - sh /prepare.sh
+    - npm --no-git-tag-version -f version $CI_COMMIT_TAG
     - npm publish
