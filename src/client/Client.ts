@@ -76,6 +76,7 @@ export default class Client extends EventEmitter {
         ...((config && config.servers) || {})
       }
     }
+    verifyConfig(this.defConfig)
     this.cache = new Cache(this)
   }
 
@@ -85,7 +86,7 @@ export default class Client extends EventEmitter {
    */
   public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>, retryCount = 5): Promise<void> {
     this.emit('nodeUpdateStarted', { chainId, conf, retryCount })
-    const config = { ...this.defConfig, ...conf }
+    const config = { ...this.defConfig, ...verifyConfig(conf) }
     const chain = toMinHex(chainId || this.defConfig.chainId || '0x1')
     if (!chain) throw new Error('No ChainId found to update')
 
@@ -173,7 +174,7 @@ export default class Client extends EventEmitter {
    * This function supports callback so it can be used as a Provider for the web3.
    */
   public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): void | Promise<RPCResponse | RPCResponse[]> {
-    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...config } : this.defConfig)
+    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : this.defConfig)
     if (callback)
       p.then(_ => {
         this.emit('afterRequest', { request, result: Array.isArray(request) ? _ : _[0] })
@@ -533,4 +534,19 @@ function cleanResult(r: RPCResponse): RPCResponse {
   return r.error
     ? { jsonrpc: r.jsonrpc, id: r.id, error: r.error }
     : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
+}
+
+const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1' }
+
+function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
+  if (!conf) return {}
+  if (!conf.chainId) return conf
+  if (conf.chainId.startsWith('0x')) {
+    if (conf.chainId[2] === '0')
+      conf.chainId = toMinHex(conf.chainId)
+  }
+  else if (aliases[conf.chainId])
+    conf.chainId = aliases[conf.chainId]
+  else throw new Error('the chain ' + conf.chainId + ' can not be resolved')
+  return conf
 }
