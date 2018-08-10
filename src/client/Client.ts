@@ -45,6 +45,20 @@ export default class Client extends EventEmitter {
       chainRegistry: '0x53d02daE1253CDf7C9b93a6ED0462d97697C85F9',
       ...config,
       servers: {
+        '0x44d': {
+          needsUpdate: true,
+          contractChain: '0x44d',
+          contract: '0x27a37a1210df14f7e058393d026e2fb53b7cf8c1',
+          nodeList: [
+            {
+              deposit: 0,
+              chainIds: ['0x44d'],
+              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
+              url: 'https://in3.slock.it/tobalaba/nd-3',
+              props: 65535
+            }
+          ]
+        },
         '0x2a': {
           needsUpdate: true,
           contractChain: '0x2a',
