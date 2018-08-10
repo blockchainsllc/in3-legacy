@@ -61,5 +61,7 @@ deploy-to-slockit-npm:
     - build-in3
   script:
     - sh /prepare.sh
-    - npm --no-git-tag-version -f version $CI_COMMIT_TAG
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish
+
+
