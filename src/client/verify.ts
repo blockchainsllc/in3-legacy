@@ -350,7 +350,11 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
   // verify the values of the proof
   for (const n of nl.nodes) {
     checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 1), bytes32(n.address), 'wrong owner ')
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
+    // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals 
+    const deposit = getStorageValue(accountProof, getStorageArrayKey(0, n.index, 6, 2))
+    if (parseInt(toBN(deposit).toString()) != parseInt(n.deposit as any))
+      throw new Error('wrong deposit ')
+    //    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
     checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 3), bytes32(n.props), 'wrong props ')
     const urlKey = getStorageArrayKey(0, n.index, 6, 0)
     const urlVal = getStringValue(getStorageValue(accountProof, urlKey), urlKey)
