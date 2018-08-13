@@ -611,6 +611,9 @@ definitions:
             persistentFile:
                 type: string
                 description: the filename of the file keeping track of the last handled blocknumber
+            startBlock:
+                type: number
+                description: blocknumber to start watching the registry
             watchInterval:
                 type: integer
                 description: the number of seconds of the interval for checking for new events

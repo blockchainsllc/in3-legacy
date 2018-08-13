@@ -533,6 +533,7 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 *  **rpcUrl** `string` (required)  - the url of the client   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   
+*  **startBlock** `number` - blocknumber to start watching the registry   
 *  **watchInterval** `integer` - the number of seconds of the interval for checking for new events   
 *  **privateKey** `string` (required)  - the private key used to sign blockhashes. this can be either a 0x-prefixed string with the raw private key or the path to a key-file.   
 *  **privateKeyPassphrase** `string` - the password used to decrpyt the private key   
