@@ -48,7 +48,7 @@ export default class Client extends EventEmitter {
         '0x44d': {
           needsUpdate: true,
           contractChain: '0x44d',
-          contract: '0x27a37a1210df14f7e058393d026e2fb53b7cf8c1',
+          contract: '0x845E484b505443814B992Bf0319A5e8F5e407879',
           nodeList: [
             {
               deposit: 0,
