@@ -10,9 +10,10 @@ import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util'
 import Client from './Client'
 import Cache from './cache'
+import { verifyIPFSHash } from './ipfs';
 
 
-const allowedWithoutProof = ['eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
+const allowedWithoutProof = ['ipfs_get', 'ipfs_put', 'eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
 
 
 
@@ -477,6 +478,18 @@ function handleBlockCache(proof: Proof, cache: Cache) {
 
 /** general verification-function which handles it according to its given type. */
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true, cache?: Cache): Promise<boolean> {
+
+  // handle verification with implicit proof (like ipfs)
+  try {
+    if (request.method === 'ipfs_get' && response.result)
+      return verifyIPFSHash(response.result, request.params[1] || 'base64', request.params[0])
+  }
+  catch (ex) {
+    if (throwException) throw ex
+    return false
+  }
+
+
   const proof = response && response.in3 && response.in3.proof
   if (!proof) {
     if (allowedWithoutProof.indexOf(request.method) >= 0) return true
@@ -522,4 +535,5 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     return false
   }
 }
+
 

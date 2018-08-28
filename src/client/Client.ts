@@ -73,6 +73,20 @@ export default class Client extends EventEmitter {
             }
           ]
         },
+        '0x7d0': {
+          needsUpdate: true,
+          contractChain: '0x7d0',
+          contract: '0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9',
+          nodeList: [
+            {
+              deposit: 0,
+              chainIds: ['0x7d0'],
+              address: '0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a',
+              url: 'https://in3.slock.it/ipfs/nd-1',
+              props: 65535
+            }
+          ]
+        },
         ...((config && config.servers) || {})
       }
     }
@@ -536,7 +550,7 @@ function cleanResult(r: RPCResponse): RPCResponse {
     : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
 }
 
-const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1' }
+const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0' }
 
 function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
   if (!conf) return {}
