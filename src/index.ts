@@ -1,4 +1,4 @@
-import Client from './client/Client'
+import Client, { aliases } from './client/Client'
 import * as validateOb from './util/validate'
 export default Client
 
@@ -29,6 +29,7 @@ export const createRandomIndexes = _nodeList.createRandomIndexes
 
 
 import * as types from './types/types'
+import { aliases } from './client/Client';
 
 export type RPCRequest = types.RPCRequest
 export type AccountProof = types.AccountProof
@@ -53,3 +54,4 @@ export type IN3RPCHandlerConfig = types.IN3RPCHandlerConfig
 export const AxiosTransport = transport.AxiosTransport
 export const typeDefs = types.validationDef
 export const validate = validateOb.validate
+export const chainAliases = aliases
