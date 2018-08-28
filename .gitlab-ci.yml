@@ -27,6 +27,8 @@ test-in3:
   tags:
     - short-jobs
   script:
+    - sh /prepare.sh
+    - npm install
     - npm test
   artifacts:
     name: "test-reports-$CI_JOB_NAME"
