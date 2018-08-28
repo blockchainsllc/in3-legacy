@@ -602,6 +602,12 @@ definitions:
                 type: string
                 description: the impl used to handle the calls
                 enum: [ eth, ipfs, btc ]
+            ipfsUrl:
+                type: string
+                description: the url of the ipfs-client
+            timeout:
+                type: integer
+                description: number of milliseconds to wait before a request gets a timeout
             rpcUrl: 
                 type: string
                 description: the url of the client

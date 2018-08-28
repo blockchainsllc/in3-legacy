@@ -530,6 +530,8 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 
 *  **handler** `string` - the impl used to handle the calls   
  Must be one of the these values : `'eth`', `'ipfs`', `'btc`'
+*  **ipfsUrl** `string` - the url of the ipfs-client   
+*  **timeout** `integer` - number of milliseconds to wait before a request gets a timeout   
 *  **rpcUrl** `string` (required)  - the url of the client   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   
