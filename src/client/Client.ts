@@ -45,7 +45,7 @@ export default class Client extends EventEmitter {
       chainRegistry: '0x53d02daE1253CDf7C9b93a6ED0462d97697C85F9',
       ...config,
       servers: {
-        '0x44d': {
+        '0x44d': {  // tobalaba
           needsUpdate: true,
           contractChain: '0x44d',
           contract: '0x845E484b505443814B992Bf0319A5e8F5e407879',
@@ -59,7 +59,7 @@ export default class Client extends EventEmitter {
             }
           ]
         },
-        '0x2a': {
+        '0x2a': {  // kovan
           needsUpdate: true,
           contractChain: '0x2a',
           contract: '0x27a37a1210df14f7e058393d026e2fb53b7cf8c1',
@@ -73,7 +73,7 @@ export default class Client extends EventEmitter {
             }
           ]
         },
-        '0x7d0': {
+        '0x7d0': { // ipfs
           needsUpdate: true,
           contractChain: '0x7d0',
           contract: '0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9',
@@ -550,7 +550,7 @@ function cleanResult(r: RPCResponse): RPCResponse {
     : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
 }
 
-const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0' }
+export const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0' }
 
 function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
   if (!conf) return {}
