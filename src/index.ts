@@ -29,7 +29,6 @@ export const createRandomIndexes = _nodeList.createRandomIndexes
 
 
 import * as types from './types/types'
-import { aliases } from './client/Client';
 
 export type RPCRequest = types.RPCRequest
 export type AccountProof = types.AccountProof
