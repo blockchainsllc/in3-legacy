@@ -175,7 +175,7 @@ export const toReceipt = (r: ReceiptData) => [
     l.topics.map(bytes32),
     bytes(l.data)
   ])
-] as Receipt
+].slice(r.status === null && r.root === null ? 1 : 0) as Receipt
 
 
 
