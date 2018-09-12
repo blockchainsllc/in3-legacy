@@ -306,8 +306,8 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
   checkStorage(accountProof, getStorageArrayKey(0), bytes32(nl.totalServers), 'wrong number of servers ')
 
   // check blocknumber
-  if (toNumber(block.number) !== nl.lastBlockNumber)
-    throw new Error('The signature is based on a different blockhash!')
+  if (toNumber(block.number) < nl.lastBlockNumber)
+    throw new Error('The signature is based on older block!')
 
   // if we requested a limit, we need to find out if the correct nodes where send.
   const limit = request.params[0] as number

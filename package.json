@@ -68,6 +68,7 @@
   "dependencies": {
     "ajv": "^6.5.1",
     "axios": "^0.18.0",
+    "buffer": "^5.2.1",
     "cbor": "^4.0.0",
     "ethereumjs-abi": "0.6.5",
     "ethereumjs-account": "2.0.5",

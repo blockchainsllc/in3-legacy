@@ -1,3 +1,8 @@
+try {
+  Buffer = require('buffer').Buffer;
+} catch (e) {
+}
+
 import * as ethUtil from 'ethereumjs-util'
 import { RPCResponse } from '../types/types'
 
