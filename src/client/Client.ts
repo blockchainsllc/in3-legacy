@@ -59,6 +59,20 @@ export default class Client extends EventEmitter {
             }
           ]
         },
+        '0x4b1': {  // evan
+          needsUpdate: true,
+          contractChain: '0x4b1',
+          contract: '0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e',
+          nodeList: [
+            {
+              deposit: 0,
+              chainIds: ['0x4b1'],
+              address: '0xeaC4B82273e828878fD765D993800891bA2E3475',
+              url: 'http://52.47.61.24:8500',
+              props: 65535
+            }
+          ]
+        },
         '0x2a': {  // kovan
           needsUpdate: true,
           contractChain: '0x2a',
