@@ -1,4 +1,4 @@
-const Buffer: any = require('buffer/').Buffer
+const Buffer: any = require('buffer').Buffer
 
 import * as ethUtil from 'ethereumjs-util'
 import { RPCResponse } from '../types/types'
