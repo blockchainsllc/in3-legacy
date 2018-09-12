@@ -1,7 +1,4 @@
-try {
-  Buffer = require('buffer').Buffer;
-} catch (e) {
-}
+import { Buffer } from 'buffer/'
 
 import * as ethUtil from 'ethereumjs-util'
 import { RPCResponse } from '../types/types'
@@ -66,7 +63,7 @@ export function toNumber(val: any): number {
       if (Buffer.isBuffer(val))
         return val.length == 0 ? 0 : val.readUIntBE(0, val.length)
       else if (BN.isBN(val))
-        return val.bitLength() > 53 ? toNumber(val.toBuffer()) : val.toNumber()
+        return val.bitLength() > 53 ? toNumber(val.toArrayLike(Buffer)) : val.toNumber()
       else if (val === undefined || val === null)
         return 0
       throw new Error('can not convert a ' + (typeof val) + ' to number')
@@ -79,11 +76,11 @@ export function toNumber(val: any): number {
  */
 export function toBuffer(val, len = -1) {
   if (typeof val == 'string')
-    val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toBuffer()
+    val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toArrayLike(Buffer)
   else if (typeof val == 'number')
     val = val === 0 && len === 0 ? Buffer.allocUnsafe(0) : Buffer.from(fixLength(val.toString(16)), 'hex')
   else if (BN.isBN(val))
-    val = val.toBuffer()
+    val = val.toArrayLike(Buffer)
 
   if (!val) val = Buffer.allocUnsafe(0)
 
