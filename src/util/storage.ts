@@ -18,7 +18,7 @@ export function getStringValue(data: Buffer, storageKey: Buffer): string | { len
   if (data[31] % 2 === 0)
     return data.slice(0, data[31] / 2).toString('utf8')
 
-  const len = toNumber(data) / 2
+  const len = (toNumber(data) - 1) / 2
   const slot = toBN(keccak256(storageKey))
   const storageKeys: Buffer[] = []
 
