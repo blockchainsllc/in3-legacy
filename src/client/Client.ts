@@ -233,7 +233,7 @@ export default class Client extends EventEmitter {
     const server = c.servers[c.chainId]
 
     if (!server || server.needsUpdate) {
-      server.needsUpdate = false
+      server && (server.needsUpdate = false)
       await this.updateNodeList(c.chainId)
     }
     const list = c.servers[c.chainId].nodeList
