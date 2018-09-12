@@ -416,7 +416,7 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, proof:
   await Promise.all(Object.keys(proof.accounts).map(adr => verifyAccount(proof.accounts[adr], block)))
 
   // now create a vm and run the transaction
-  const result = await executeCall(request.params[0], proof.accounts, block.serializeHeader())
+  const result = await executeCall(request.params[0], proof.accounts, new Block({ parentHash: block.parentHash, sha3Uncles: block.uncleHash, miner: block.coinbase, stateRoot: block.stateRoot, transactionsRoot: block.transactionsTrie, receiptRoot: block.receiptTrie, logsBloom: block.bloom, difficulty: block.difficulty, number: block.number, gasLimit: block.gasLimit, gasUsed: block.gasUsed, timestamp: block.timestamp, extraData: block.extra } as any).serializeHeader())
 
   if (!result.equals(value))
     throw new Error('The result does not match the execution !')
