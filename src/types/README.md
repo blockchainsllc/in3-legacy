@@ -221,6 +221,7 @@ const iN3Config:types.IN3Config = {
 *  **chainRegistry** `string` - main chain-registry contract   
 *  **mainChain** `string` - main chain-id, where the chain registry is running.   
 *  **autoUpdateList** `boolean` - if true the nodelist will be automaticly updated if the lastBlock is newer   
+*  **loggerUrl** `string` - a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }   
 *  **servers** `object` - the nodelist per chain   
     each key in this object will structure its value like: 
     *  **initAddresses** `string[]` - a list of addresses which should always be part of the nodelist when getting an update   

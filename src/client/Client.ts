@@ -10,6 +10,7 @@ import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
 import Cache from './cache'
 import { adjustConfig } from './configHandler'
+import axios from 'axios';
 
 
 /**
@@ -451,6 +452,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
   }
   catch (err) {
 
+    if (conf.loggerUrl)
+      axios.post(conf.loggerUrl, { level: 'error', message: 'error handling request for ' + node.url + ' : ' + err.message, meta: request })
+        .then(_ => _, console.log('Error logging (' + err.message + ') : ', node.url, request) as any)
+
     if (err instanceof BlackListError) {
 
       const n = excludes.indexOf(node.address)
@@ -492,7 +497,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
 
     try {
       // so the node did not answer, let's find a different one
-      otherNodes = getNodes(conf, 1, transport, excludes)
+      otherNodes = getNodes(conf, 1, transport, [...excludes, node.address])
     } catch (x) {
       // if we can't get nodes, it's because there none left to ask
       throw new Error('tried ' + request.map(_ => _.method).join() + ' but failed and can not recover (' + x.message + ') from wrong response of node ' + node.url + ' did not respond correctly : ' + err)
@@ -501,7 +506,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     if (!otherNodes.length)
       throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
-    return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, otherNodes[0].address])
+    return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, node.address, otherNodes[0].address])
   }
 }
 

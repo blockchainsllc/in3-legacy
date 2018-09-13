@@ -247,6 +247,9 @@ definitions:
                 type: boolean
                 description: if true the nodelist will be automaticly updated if the lastBlock is newer
                 example: true
+            loggerUrl:
+                type: string
+                description: a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }
             servers:
                 type: object
                 description: the nodelist per chain
