@@ -301,7 +301,10 @@ export default class Client extends EventEmitter {
 let idCount = 1
 
 function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: Client) {
-  if (conf.autoUpdateList && !responses.find(_ => _.result.contract && _.result.totalServers && _.result.nodes)) {
+  // do we have a lastNodelist? (and it's not a nodeList itself)
+  if (conf.autoUpdateList && responses.find(_ =>
+    _.result && !(_.result.contract && _.result.totalServers && _.result.nodes) && _.in3 && _.in3.lastNodeList > 0)) {
+
     const blockNumber = responses.reduce((p, c) => Math.max(toNumber(c.in3 && c.in3.lastNodeList), p), 0)
     const lastUpdate = conf.servers[conf.chainId].lastBlock
     if (blockNumber > lastUpdate) {
@@ -473,10 +476,17 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, cache, excludes, retryCount - 1)
 
     }
-    else
+    else {
+      // let us check first, if we are the problem.
+
+      // are we online?
+      if (! await transport.isOnline())
+        throw new Error('Currently there is no online-connection!')
 
       // locally blacklist this node for one hour if it did not respond within the timeout or could not be verified
       stats.blacklistedUntil = Date.now() + 3600000
+
+    }
 
     let otherNodes: IN3NodeConfig[] = null
 
@@ -514,15 +524,26 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
   // get the current chain-configuration, which was previously updated
   const chain = config.servers[config.chainId]
 
-  // prefilter for minDeposit && excludes && blacklisted
-  const nodes = chain.nodeList.filter(n =>
+  // filter-function for the nodeList
+  const filter = (n: IN3NodeConfig) =>
     n.deposit >= config.minDeposit &&  // check deposit
     (!excludes || excludes.indexOf(n.address) === -1) && // check excluded addresses (because of recursive calls)
-    (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now) // check blacklist
-  )
+    (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now)
 
-  if (nodes.length === 0)
-    throw new Error('No nodes found that fullfill the filter criteria ')
+  // prefilter for minDeposit && excludes && blacklisted
+  let nodes = chain.nodeList.filter(filter) // check blacklist
+
+  if (nodes.length === 0) {
+    const blackListed = Object.keys(chain.weights).filter(_ => (!excludes || excludes.indexOf(_) === -1) && chain.weights[_].blacklistedUntil > now)
+
+    // if more than 50% of the available nodes are currently blacklisted, we might want to clean up our blacklist
+    if (blackListed.length > chain.nodeList.length / 2) {
+      blackListed.forEach(_ => chain.weights[_].blacklistedUntil = 0)
+      nodes = chain.nodeList.filter(filter)
+    }
+    else
+      throw new Error('No nodes found that fullfill the filter criteria ')
+  }
 
   // in case we don't have enough nodes to randomize, we just need to accept the list as is
   if (nodes.length <= count)

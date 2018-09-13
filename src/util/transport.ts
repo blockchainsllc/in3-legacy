@@ -4,7 +4,7 @@ import * as cbor from '../util/cbor'
 
 export interface Transport {
   handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]>
-
+  isOnline(): Promise<boolean>
   random(count: number): number[]
 
 }
@@ -12,10 +12,14 @@ export interface Transport {
 
 export class AxiosTransport implements Transport {
 
-  format: ('json' | 'cbor'  | 'jsonRef')
+  format: ('json' | 'cbor' | 'jsonRef')
 
   constructor(format: ('json' | 'cbor' | 'jsonRef') = 'json') {
     this.format = format
+  }
+
+  isOnline(): Promise<boolean> {
+    return axios.head('https://www.google.com').then(_ => true, _ => false)
   }
 
   async handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]> {
