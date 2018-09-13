@@ -14,7 +14,7 @@ export default class Cache {
 
   constructor(client: Client) {
     this.client = client
-    this.codeCache = new CacheNode(client.defConfig.maxCodeCache || 50000)
+    this.codeCache = new CacheNode(client.defConfig.maxCodeCache || 100000)
     this.blockCache = []
     // if we are running in the browser we use to localStorage as cache
     if (client.defConfig.cacheStorage === undefined && window && window.localStorage)
@@ -111,7 +111,7 @@ export class CacheNode {
 
   limit: number
 
-  data: Map<Buffer, CacheEntry>
+  data: Map<string, CacheEntry>
   dataLength: number
 
   constructor(limit: number) {
@@ -121,7 +121,7 @@ export class CacheNode {
   }
 
   get(key: Buffer): Buffer {
-    const entry = this.data.get(key)
+    const entry = this.data.get(key.toString('hex'))
     return entry ? entry.data : null
   }
 
@@ -129,7 +129,7 @@ export class CacheNode {
     const old = this.get(key)
     if (old) {
       this.dataLength -= this.getByteLength(old)
-      this.data.delete(key)
+      this.data.delete(key.toString('hex'))
     }
     const size = this.getByteLength(val)
     while (this.limit && !old && this.dataLength + size >= this.limit) {
@@ -145,7 +145,7 @@ export class CacheNode {
       this.data.delete(oldestKey)
       this.dataLength -= this.getByteLength(oldestVal.data)
     }
-    this.data.set(key, { added: Date.now(), data: val })
+    this.data.set(key.toString('hex'), { added: Date.now(), data: val })
     this.dataLength += this.getByteLength(val)
   }
 
@@ -158,7 +158,7 @@ export class CacheNode {
   toStorage() {
     const entries = []
     this.data.forEach((val, key) => {
-      entries.push(key)
+      entries.push(Buffer.from(key, 'hex'))
       entries.push(val.data)
     })
     return rlp.encode(entries).toString('base64')
@@ -166,9 +166,8 @@ export class CacheNode {
 
   fromStorage(data: string) {
     const entries: Buffer[] = rlp.decode(Buffer.from(data, 'base64'))
-    for (let i = 0; i < entries.length; i += 2) {
-      this.put(entries[i], entries[i + 1] as any)
-    }
+    for (let i = 0; i < entries.length; i += 2)
+      this.put(entries[i], entries[i + 1])
   }
 
 }
