@@ -247,6 +247,8 @@ definitions:
                 type: boolean
                 description: if true the nodelist will be automaticly updated if the lastBlock is newer
                 example: true
+            cacheStorage:
+                description: a cache handler offering 2 functions ( setItem(string,string), getItem(string) )
             loggerUrl:
                 type: string
                 description: a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }

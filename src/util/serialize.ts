@@ -2,7 +2,7 @@ import * as ethUtil from 'ethereumjs-util'
 import * as Tx from 'ethereumjs-tx'
 import { toBuffer, toHex } from './util'
 
-const rlp = ethUtil.rlp
+export const rlp = ethUtil.rlp
 /** Buffer[] of the header */
 export type BlockHeader = Buffer[]
 
