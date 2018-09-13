@@ -7,6 +7,7 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
   const key = stringToNibbles(path)
   // start with the root-Hash
   let wantHash = rootHash
+  let lastNode: Node = null
 
   for (let i = 0; i < proof.length; i++) {
     const p = proof[i]
@@ -15,7 +16,7 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
       throw new Error('Bad proof node ' + i + ': hash mismatch')
 
     // create the node
-    const node = new Node(rlp.decode(p))
+    const node = lastNode = new Node(rlp.decode(p))
 
     switch (node.type) {
       case 'empty':
@@ -101,8 +102,8 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
 
   }
 
-  // if we expected this to be null and there is not further node since wantedHash is empty, than it is ok not to find leafs
-  if (expectedValue === null /*&& wantHash.length === 0*/)
+  // if we expected this to be null and there is not further node since wantedHash is empty or we had a extension as last element, than it is ok not to find leafs
+  if (expectedValue === null && (lastNode === null || lastNode.type === 'extension' || wantHash.length === 0))
     return null
 
   // we reached the end of the proof, but not of the path
