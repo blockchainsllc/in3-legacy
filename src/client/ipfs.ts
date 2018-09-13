@@ -20,10 +20,8 @@ export async function verifyIPFSHash(content: string | Buffer, encoding: string,
     reponseHash = await createIPFSHash(Buffer.isBuffer(content) ? content : Buffer.from(content, encoding))
   }
   catch (er) {
-    if (er.message && er.message.contains('DAGNode') >= 0)
-      return true
-    else
-      throw er
+    // TODO onlx in the react-native package he is not able to calculate the hash and throws, for now we ignore it, but we should find a solution to make it work there as well.
+    return true
   }
   if (reponseHash !== requestedHash)
     throw new Error('The content verification failed, because the IPFS-Hash is wrong')
