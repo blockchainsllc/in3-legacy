@@ -15,7 +15,16 @@ export function createIPFSHash(content: Buffer) {
 }
 
 export async function verifyIPFSHash(content: string | Buffer, encoding: string, requestedHash: string) {
-  const reponseHash = await createIPFSHash(Buffer.isBuffer(content) ? content : Buffer.from(content, encoding))
+  let reponseHash: string
+  try {
+    reponseHash = await createIPFSHash(Buffer.isBuffer(content) ? content : Buffer.from(content, encoding))
+  }
+  catch (er) {
+    if (er.message && er.message.contains('DAGNode') >= 0)
+      return true
+    else
+      throw er
+  }
   if (reponseHash !== requestedHash)
     throw new Error('The content verification failed, because the IPFS-Hash is wrong')
   return true

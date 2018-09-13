@@ -102,7 +102,7 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
   }
 
   // if we expected this to be null and there is not further node since wantedHash is empty, than it is ok not to find leafs
-  if (expectedValue === null && wantHash.length === 0)
+  if (expectedValue === null /*&& wantHash.length === 0*/)
     return null
 
   // we reached the end of the proof, but not of the path
