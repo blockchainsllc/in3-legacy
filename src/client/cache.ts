@@ -16,9 +16,12 @@ export default class Cache {
     this.client = client
     this.codeCache = new CacheNode(client.defConfig.maxCodeCache || 100000)
     this.blockCache = []
-    // if we are running in the browser we use to localStorage as cache
-    if (client.defConfig.cacheStorage === undefined && window && window.localStorage)
-      client.defConfig.cacheStorage = window.localStorage
+    try {
+      // if we are running in the browser we use to localStorage as cache
+      if (client.defConfig.cacheStorage === undefined && window && window.localStorage)
+        client.defConfig.cacheStorage = window.localStorage
+    }
+    catch (x) { }
     this.initCache()
     client.addListener('nodeUpdateFinished', () => this.updateCache())
   }
