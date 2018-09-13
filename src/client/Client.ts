@@ -454,7 +454,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
   catch (err) {
 
     if (conf.loggerUrl)
-      axios.post(conf.loggerUrl, { level: 'error', message: 'error handling request for ' + node.url + ' : ' + err.message, meta: request })
+      axios.post(conf.loggerUrl, { level: 'error', message: 'error handling request for ' + node.url + ' : ' + err.message + ' (' + err.stack + ') ', meta: request })
         .then(_ => _, console.log('Error logging (' + err.message + ') : ', node.url, request) as any)
 
     if (err instanceof BlackListError) {
