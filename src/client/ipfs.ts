@@ -1,9 +1,6 @@
-import * as Unixfs from 'ipfs-unixfs'
-import * as dn from 'ipld-dag-pb'
-
 import * as protons from 'protons'
 import * as multihashing from 'multihashing-async'
-import * as mh from 'multihashes'
+import * as bs58 from 'bs58'
 
 const proto = protons(`
 message Data {
@@ -58,7 +55,7 @@ export function createIPFSHash(content: Buffer, hashAlg = 'sha2-256') {
 
     multihashing(serialized, hashAlg, (err, multihash) => {
       if (err) return reject(err)
-      resolve(mh.toB58String(multihash))
+      resolve(bs58.encode(multihash))
     })
 
   })
