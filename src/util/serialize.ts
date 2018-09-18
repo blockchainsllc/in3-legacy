@@ -146,7 +146,7 @@ export const toTransaction = (tx: TransactionData) => [
   uint(tx.nonce),
   uint(tx.gasPrice),
   uint(tx.gas || tx.gasLimit),
-  address(tx.to),
+  tx.to ? address(tx.to) : Buffer.alloc(0),
   uint(tx.value),
   bytes(tx.input || tx.data),
   uint(tx.v),
