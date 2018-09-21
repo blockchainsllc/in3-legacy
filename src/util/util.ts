@@ -47,7 +47,7 @@ export function toHex(val: any, bytes?: number): string {
   else
     hex = ethUtil.bufferToHex(val).substr(2)
   if (bytes)
-    hex = (hex as any).padStart(bytes * 2, '0') as string  // workarounf for ts-error in older js
+    hex = padStart(hex, bytes * 2, '0') as string  // workarounf for ts-error in older js
   if (hex.length % 2)
     hex = '0' + hex
   return '0x' + hex.toLowerCase()
@@ -131,4 +131,17 @@ export function toMinHex(key: string | Buffer | number) {
     }
   }
   return '0x0'
+}
+
+
+export function padStart(val: string, minLength: number, fill = ' ') {
+  while (val.length < minLength)
+    val = fill + val
+  return val
+}
+
+export function padEnd(val: string, minLength: number, fill = ' ') {
+  while (val.length < minLength)
+    val = val + fill
+  return val
 }
