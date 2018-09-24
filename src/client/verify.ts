@@ -402,10 +402,9 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, proof:
   if (!proof.accounts) throw new Error('No Accounts to verify')
 
   // make sure, we have all codes
-  const missingCode = Object.entries(proof.accounts)
-    .filter(([, ac]) => !ac.code && ac.codeHash !== '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470')
-    .map(([a]) => a)
-
+  const missingCode = Object.keys(proof.accounts)
+  .filter(ac=> !proof.accounts[ac].code && proof.accounts[ac].codeHash !== '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' )
+  
   // in case there are some missing codes, we fetch them with one unproved request through the cache, since they will be verified later anyway.
   if (missingCode.length && cache)
     await cache.getCodeFor(missingCode.map(address), toHex(block.number)).then(_ => _.forEach((c, i) =>
@@ -472,8 +471,10 @@ function handleBlockCache(proof: Proof, cache: Cache) {
 
   if (proof.block) proof.block = checkBlock(proof.block, cache)
   if (proof.logProof)
-    Object.entries(proof.logProof).forEach(([bn, v]) =>
-      v.block = checkBlock(v.block, cache, toNumber(bn)))
+    Object.keys(proof.logProof).forEach(bn=>{
+      const v = proof.logProof[bn]
+      v.block = checkBlock(v.block, cache, toNumber(bn))
+    })
 }
 
 /** general verification-function which handles it according to its given type. */
