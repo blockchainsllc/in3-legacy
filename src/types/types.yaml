@@ -181,6 +181,10 @@ definitions:
                 description: if true the config will be adjusted depending on the request
                 type: boolean
                 example: false
+            retryWithoutProof:
+                description: if true the the request may be handled without proof in case of an error. (use with care!)
+                type: boolean
+                example: false
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean

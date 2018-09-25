@@ -280,7 +280,17 @@ export default class Client extends EventEmitter {
     const excludes = [...(prevExcludes || []), ...nodes.map(_ => _.address)].filter((e, i, a) => a.indexOf(e) === i)
 
     // get the verified responses from the nodes
-    const responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.cache, excludes)))
+    let responses:RPCResponse[][] = null
+    try {
+       responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.cache, [...excludes])))
+    }
+    catch (ex) {
+      // we may retry without proof in order to handle this error
+      if (conf.proof && conf.proof!='none' && conf.retryWithoutProof) 
+         responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, {...conf,proof:'none'}, this.transport, this.cache, [...excludes])))
+      else 
+         throw ex
+    }
 
     // merge the result 
     const result: RPCResponse[] = await Promise.all(
