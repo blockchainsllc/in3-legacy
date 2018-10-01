@@ -142,10 +142,7 @@ class Node {
 
 }
 
+const hexToInt = {'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,a:10,b:11,c:12,d:13,e:14,f:15}
 export function stringToNibbles(bkey: Buffer): number[] {
-  return bkey.reduce((p, c, i) => {
-    p[i * 2] = c >> 4
-    p[i * 2 + 1] = c % 16
-    return p
-  }, new Array(bkey.length * 2))
+  return bkey.toString('hex').split('').map(_=>hexToInt[_])
 }
