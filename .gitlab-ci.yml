@@ -1,4 +1,7 @@
 image: docker.slock.it/build-images/node:8-alpine
+variables:
+  COMMIT_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
 
 stages:
   - build
@@ -67,3 +70,16 @@ deploy-to-slockit-npm:
     - npm publish
 
 
+deploy-docker:
+    stage: deploy
+    tags:
+    - short-jobs
+    services:
+        - docker:dind
+    image: jonaskello/docker-and-compose:latest
+    script:
+        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+        - docker build --build-arg NPM_REGISTRY_TOKEN=${NPM_REGISTRY_TOKEN} -t $COMMIT_IMAGE_TAG .
+        - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
+        - docker push $RELEASE_IMAGE_TAG
+        - docker push $COMMIT_IMAGE_TAG
