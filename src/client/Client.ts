@@ -29,7 +29,7 @@ export default class Client extends EventEmitter {
    * @param config the configuration
    * @param transport a optional transport-object. default: AxiosTransport
    */
-  public constructor(config?: Partial<IN3Config>, transport?: Transport) {
+  public constructor(config: Partial<IN3Config>={}, transport?: Transport) {
     super()
     this.filters = new Filters()
     if (config && config.autoConfig)
@@ -109,6 +109,15 @@ export default class Client extends EventEmitter {
     verifyConfig(this.defConfig)
     this.cache = new Cache(this)
   }
+
+  get config() {
+    return this.defConfig
+  } 
+
+  set config(val) {
+    this.defConfig = val
+    verifyConfig(this.defConfig)
+  } 
 
   /**
    * fetches the nodeList from the servers.

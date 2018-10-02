@@ -1,7 +1,7 @@
 import Client from '../src/client/Client'
 import * as Koa from 'koa'
 import * as bodyParser from 'koa-bodyparser'
-import args from 'args'
+import {IN3ConfigDefinition} from '../src/types/types'
 
 const app = new Koa()
 
@@ -10,7 +10,10 @@ const config = {
   verbose : 2,
   rpccorsdomain:'*'
 }
-const client = new Client({})
+
+const client = new Client()
+handleArgs(process.argv,client.config)
+client.config = client.config
 
 app.use(bodyParser())
 app.use(async (ctx, next) => {
@@ -53,3 +56,49 @@ app.listen(config.port || 8545, () => console.log(`in3-client started on ${confi
 client.sendRPC('in3_nodeList').then(_=>console.log(  'NodeList updated for '+_.result.nodes.length+' nodes '  ),err=>console.error('Error updateing the nodelist'))
 
 client.on('error',err=>console.error('Error : ',err))
+
+function handleArgs(params?: string[],clientConf: any={}) {
+
+  if ((params || process.argv).indexOf('help')>=0) {
+    const pad = a => {
+      while (a.length < 20 ) a+=' '
+      return a
+    }
+    const show = (o,pre) => {
+      const req = o.required || [] as string[]
+      if (!o.properties) return
+
+      for (const p of Object.keys(o.properties)) {
+        const d = o.properties[p]
+        if (d.type==='object')
+           show(d,pre+p+'.')
+        else
+           console.log( '  '+ pad('--'+pre+p ) + ' : '+ (d.description || ''))
+      }
+
+    }
+    show(IN3ConfigDefinition,'')
+
+    process.exit(0)
+  }
+
+  (params || process.argv)
+    .filter(_ => _.startsWith('--') && _.indexOf('=') > 0)
+    .forEach(arg => {
+      const [key, val] = arg.substr(2).split('=')
+      if (key === 'v')
+         config.verbose = parseInt(val)
+      else if (key === 'cors') 
+        config.rpccorsdomain = val
+      else
+        key.split('.').reduce(
+          (p, n, i, a) => a.length === i + 1
+            ? (Array.isArray(p[n])
+              ? p[n] = val.split(',')
+              : (p[n] = typeof p[n] === 'number'
+                ? parseInt(val)
+                : typeof p[n] === 'boolean' ? val === 'true' : val))
+            : (p[n] || (p[n] = {})),
+            clientConf)
+    })
+}
