@@ -12,6 +12,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "proxy/*.ts",
     "test/**/*.ts"
   ],
   "exclude": [
