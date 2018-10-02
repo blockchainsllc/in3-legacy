@@ -15,9 +15,7 @@ RUN echo "//npm.slock.it/:_authToken=\"$NPM_REGISTRY_TOKEN\"" > ~/.npmrc \
     && apk add --no-cache make gcc g++ python \
     && npm install \
     && npm run build \
-    && rm -rf node_modules \
-    && npm install --production \
-    && npm install koa koa-bodyparser \
+    && npm prune --production \
     && rm -rf src tsconfig.json ~/.npmrc proxy \
     && apk del binutils gmp isl libgomp libatomic pkgconf mpfr3 mpc1 gcc musl-dev libc-dev g++ make libbz2 expat libffi gdbm  ncurses-terminfo-base ncurses-terminfo  ncurses-libs readline sqlite-libs python2
 
