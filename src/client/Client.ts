@@ -47,6 +47,27 @@ export default class Client extends EventEmitter {
       chainRegistry: '0x53d02daE1253CDf7C9b93a6ED0462d97697C85F9',
       ...config,
       servers: {
+        '0x1': {  // mainnet
+          needsUpdate: true,
+          contractChain: '0x1',
+          contract: '0xFdb0eA8AB08212A1fFfDB35aFacf37C3857083ca',
+          nodeList: [
+            {
+              deposit: 0,
+              chainIds: ['0x1'],
+              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
+              url: 'https://in3.slock.it/mainnet/nd-3',
+              props: 65535
+            },
+            {
+              deposit: 0,
+              chainIds: ['0x1'],
+              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
+              url: 'https://in3.slock.it/mainnet/nd-5',
+              props: 65535
+            }
+          ]
+        },
         '0x44d': {  // tobalaba
           needsUpdate: true,
           contractChain: '0x44d',
@@ -58,8 +79,14 @@ export default class Client extends EventEmitter {
               address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
               url: 'https://in3.slock.it/tobalaba/nd-3',
               props: 65535
-            }
-          ]
+            },
+            {
+              deposit: 0,
+              chainIds: ['0x44d'],
+              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
+              url: 'https://in3.slock.it/tobalaba/nd-5',
+              props: 65535
+            }          ]
         },
         '0x4b1': {  // evan
           needsUpdate: true,
@@ -72,7 +99,14 @@ export default class Client extends EventEmitter {
               address: '0xeaC4B82273e828878fD765D993800891bA2E3475',
               url: 'http://52.47.61.24:8500',
               props: 65535
-            }
+            },
+            {
+              deposit: 0,
+              chainIds: ['0x4b1'],
+              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33A',
+              url: 'https://in3.slock.it/evan/nd-5',
+              props: 65535
+            }          
           ]
         },
         '0x2a': {  // kovan
@@ -85,6 +119,13 @@ export default class Client extends EventEmitter {
               chainIds: ['0x2a'],
               address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
               url: 'https://in3.slock.it/kovan/nd-3',
+              props: 65535
+            },
+            {
+              deposit: 0,
+              chainIds: ['0x2a'],
+              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
+              url: 'https://in3.slock.it/kovan/nd-5',
               props: 65535
             }
           ]
@@ -610,7 +651,7 @@ function cleanResult(r: RPCResponse): RPCResponse {
     : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
 }
 
-export const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0' }
+export const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet:'0x1' }
 
 function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
   if (!conf) return {}
