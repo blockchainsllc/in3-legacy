@@ -1,7 +1,27 @@
+/***********************************************************
+* This file is part of the Slock.it IoT Layer.             *
+* The Slock.it IoT Layer contains:                         *
+*   - USN (Universal Sharing Network)                      *
+*   - INCUBED (Trustless INcentivized remote Node Network) *
+************************************************************
+* Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+* All Rights Reserved.                                     *
+************************************************************
+* You may use, distribute and modify this code under the   *
+* terms of the license contract you have concluded with    *
+* Slock.it GmbH.                                           *
+* For information about liability, maintenance etc. also   *
+* refer to the contract concluded with Slock.it GmbH.      *
+************************************************************
+* For more information, please refer to https://slock.it    *
+* For questions, please contact info@slock.it              *
+***********************************************************/
+
 import * as ethUtil from 'ethereumjs-util'
 import * as Tx from 'ethereumjs-tx'
 import { toBuffer, toHex } from './util'
 
+/** RLP-functions */
 export const rlp = ethUtil.rlp
 /** Buffer[] of the header */
 export type BlockHeader = Buffer[]
@@ -15,6 +35,7 @@ export type Account = Buffer[]
 /** Buffer[] of the Receipt */
 export type Receipt = [Buffer, Buffer, Buffer, [Buffer, Buffer[], Buffer][]]
 
+/** Block as returned by eth_getBlockByNumber */
 export interface BlockData {
   hash: string
   parentHash: string
@@ -37,6 +58,8 @@ export interface BlockData {
   nonce?: string | number
   transactions?: any[]
 }
+
+/** Transaction as returned by eth_getTransactionByHash */
 export interface TransactionData {
   hash: string
   blockHash?: string
@@ -62,6 +85,7 @@ export interface TransactionData {
   value: number | string
 }
 
+/** Account-Object */
 export interface AccountData {
   nonce: string
   balance: string
@@ -70,6 +94,7 @@ export interface AccountData {
   code?: string
 }
 
+/** LogData as part of the TransactionReceipt */
 export interface LogData {
   removed: boolean // true when the log was removed, due to a chain reorganization. false if its a valid log.
   logIndex: string //  integer of the log index position in the block. null when its pending log.
@@ -82,6 +107,7 @@ export interface LogData {
   topics: string[] //Array of DATA - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.)
 }
 
+/** TransactionReceipt as returned by eth_getTransactionReceipt */
 export interface ReceiptData {
   transactionIndex?: number
   blockNumber?: string | number

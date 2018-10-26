@@ -35,7 +35,7 @@
     "url": "git+https://github.com/slockit/in3.git"
   },
   "author": "Simon Jentzsch",
-  "license": "ISC",
+  "license": "in3",
   "bugs": {
     "url": "https://github.com/slockit/in3/issues"
   },

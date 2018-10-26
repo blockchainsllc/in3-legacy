@@ -1,15 +1,51 @@
+/***********************************************************
+* This file is part of the Slock.it IoT Layer.             *
+* The Slock.it IoT Layer contains:                         *
+*   - USN (Universal Sharing Network)                      *
+*   - INCUBED (Trustless INcentivized remote Node Network) *
+************************************************************
+* Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+* All Rights Reserved.                                     *
+************************************************************
+* You may use, distribute and modify this code under the   *
+* terms of the license contract you have concluded with    *
+* Slock.it GmbH.                                           *
+* For information about liability, maintenance etc. also   *
+* refer to the contract concluded with Slock.it GmbH.      *
+************************************************************
+* For more information, please refer to https://slock.it    *
+* For questions, please contact info@slock.it              *
+***********************************************************/
+
 import { RPCRequest, RPCResponse } from '../types/types';
 import axios from 'axios'
 import * as cbor from '../util/cbor'
 
+/**
+ * A Transport-object responsible to transport the message to the handler.
+ */
 export interface Transport {
+  /**
+   * handles a request by passing the data to the handler
+   */
   handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]>
+
+  /**
+   * check whether the handler is onlne.
+   */
   isOnline(): Promise<boolean>
+
+  /**
+   * generates random numbers (between 0-1)
+   */
   random(count: number): number[]
 
 }
 
 
+/**
+ * Default Transport impl sending http-requests.
+ */
 export class AxiosTransport implements Transport {
 
   format: ('json' | 'cbor' | 'jsonRef')
