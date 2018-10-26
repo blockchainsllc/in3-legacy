@@ -1,3 +1,23 @@
+/***********************************************************
+* This file is part of the Slock.it IoT Layer.             *
+* The Slock.it IoT Layer contains:                         *
+*   - USN (Universal Sharing Network)                      *
+*   - INCUBED (Trustless INcentivized remote Node Network) *
+************************************************************
+* Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+* All Rights Reserved.                                     *
+************************************************************
+* You may use, distribute and modify this code under the   *
+* terms of the license contract you have concluded with    *
+* Slock.it GmbH.                                           *
+* For information about liability, maintenance etc. also   *
+* refer to the contract concluded with Slock.it GmbH.      *
+************************************************************
+* For more information, please refer to https://slock.it   *
+* For questions, please contact info@slock.it              *
+***********************************************************/
+
+
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature } from '../types/types'
 import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction } from '../util/serialize';
@@ -10,12 +30,12 @@ import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util'
 import Client from './Client'
 import Cache from './cache'
+import { verifyIPFSHash } from './ipfs';
 
+// these method are accepted without proof
+const allowedWithoutProof = ['ipfs_get', 'ipfs_put', 'eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
 
-const allowedWithoutProof = ['eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
-
-
-
+/** special Error for making sure the correct node is blacklisted */
 export class BlackListError extends Error {
   addresses: string[]
   constructor(msg: string, addresses: string[]) {
@@ -305,8 +325,8 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
   checkStorage(accountProof, getStorageArrayKey(0), bytes32(nl.totalServers), 'wrong number of servers ')
 
   // check blocknumber
-  if (toNumber(block.number) !== nl.lastBlockNumber)
-    throw new Error('The signature is based on a different blockhash!')
+  if (toNumber(block.number) < nl.lastBlockNumber)
+    throw new Error('The signature is based on older block!')
 
   // if we requested a limit, we need to find out if the correct nodes where send.
   const limit = request.params[0] as number
@@ -401,10 +421,9 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, proof:
   if (!proof.accounts) throw new Error('No Accounts to verify')
 
   // make sure, we have all codes
-  const missingCode = Object.entries(proof.accounts)
-    .filter(([, ac]) => !ac.code && ac.codeHash !== '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470')
-    .map(([a]) => a)
-
+  const missingCode = Object.keys(proof.accounts)
+  .filter(ac=> !proof.accounts[ac].code && proof.accounts[ac].codeHash !== '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' )
+  
   // in case there are some missing codes, we fetch them with one unproved request through the cache, since they will be verified later anyway.
   if (missingCode.length && cache)
     await cache.getCodeFor(missingCode.map(address), toHex(block.number)).then(_ => _.forEach((c, i) =>
@@ -415,14 +434,14 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, proof:
   await Promise.all(Object.keys(proof.accounts).map(adr => verifyAccount(proof.accounts[adr], block)))
 
   // now create a vm and run the transaction
-  const result = await executeCall(request.params[0], proof.accounts, block.serializeHeader())
+  const result = await executeCall(request.params[0], proof.accounts, new Block({ parentHash: block.parentHash, sha3Uncles: block.uncleHash, miner: block.coinbase, stateRoot: block.stateRoot, transactionsRoot: block.transactionsTrie, receiptRoot: block.receiptTrie, logsBloom: block.bloom, difficulty: block.difficulty, number: block.number, gasLimit: block.gasLimit, gasUsed: block.gasUsed, timestamp: block.timestamp, extraData: block.extra } as any).serializeHeader())
 
   if (!result.equals(value))
     throw new Error('The result does not match the execution !')
 
 }
 
-
+/** verify a an account */
 async function verifyAccount(accountProof: AccountProof, block: Block) {
 
   // if we received the code, make sure the codeHash is correct!
@@ -452,7 +471,7 @@ async function verifyAccount(accountProof: AccountProof, block: Block) {
 }
 
 function isNotExistend(account: AccountProof) {
-  // TODO how do I determine the default nonce? It is in the genesis-bock!
+  // TODO how do I determine the default nonce? It is in the chain-config
   return toNumber(account.balance) === 0 && account.codeHash == '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' && toNumber(account.nonce) === 0
 }
 
@@ -471,12 +490,27 @@ function handleBlockCache(proof: Proof, cache: Cache) {
 
   if (proof.block) proof.block = checkBlock(proof.block, cache)
   if (proof.logProof)
-    Object.entries(proof.logProof).forEach(([bn, v]) =>
-      v.block = checkBlock(v.block, cache, toNumber(bn)))
+    Object.keys(proof.logProof).forEach(bn=>{
+      const v = proof.logProof[bn]
+      v.block = checkBlock(v.block, cache, toNumber(bn))
+    })
 }
 
 /** general verification-function which handles it according to its given type. */
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true, cache?: Cache): Promise<boolean> {
+
+  // handle verification with implicit proof (like ipfs)
+  try {
+    if (request.method === 'ipfs_get' && response.result)
+      return verifyIPFSHash(response.result, request.params[1] || 'base64', request.params[0])
+  }
+  catch (ex) {
+    if (throwException) throw ex
+    return false
+  }
+
+
+  // make sure we only throw an exception for missing proof, if the proof is possible
   const proof = response && response.in3 && response.in3.proof
   if (!proof) {
     if (allowedWithoutProof.indexOf(request.method) >= 0) return true
@@ -522,4 +556,5 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     return false
   }
 }
+
 

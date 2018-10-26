@@ -1,21 +1,57 @@
+/***********************************************************
+* This file is part of the Slock.it IoT Layer.             *
+* The Slock.it IoT Layer contains:                         *
+*   - USN (Universal Sharing Network)                      *
+*   - INCUBED (Trustless INcentivized remote Node Network) *
+************************************************************
+* Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+* All Rights Reserved.                                     *
+************************************************************
+* You may use, distribute and modify this code under the   *
+* terms of the license contract you have concluded with    *
+* Slock.it GmbH.                                           *
+* For information about liability, maintenance etc. also   *
+* refer to the contract concluded with Slock.it GmbH.      *
+************************************************************
+* For more information, please refer to https://slock.it    *
+* For questions, please contact info@slock.it              *
+***********************************************************/
+
 import { sha3, rlp } from 'ethereumjs-util'
 
-
+/**
+ * Verifies a Merkle Proof.
+ * @param rootHash the rootHash of the Trie
+ * @param path the path to proof
+ * @param proof the serialized nodes
+ * @param expectedValue expected value, if null, this function verifies for non existing node.
+ * @param errorMsg the error message that should be used in case of not verifiable.
+ * 
+ * The function will return the value of the last node if it was successfull or throw otherwise.
+ */
 export default async function verify(rootHash: Buffer, path: Buffer, proof: Buffer[], expectedValue: Buffer, errorMsg?: string) {
+
+  // prepare Error-Message
   const errorPrefix = errorMsg ? errorMsg + ' : ' : ''
+
   // create the nibbles to iterate over the path
   const key = stringToNibbles(path)
-  // start with the root-Hash
-  let wantHash = rootHash
 
+  // start with the root-Hash
+  let wantedHash = rootHash
+  let lastNode: Node = null
+
+  // iterate through the nodes starting at root
   for (let i = 0; i < proof.length; i++) {
     const p = proof[i]
     const hash = sha3(p) as Buffer
-    if (Buffer.compare(hash, wantHash))
+
+    // verify the hash of the node
+    if (Buffer.compare(hash, wantedHash))
       throw new Error('Bad proof node ' + i + ': hash mismatch')
 
     // create the node
-    const node = new Node(rlp.decode(p))
+    const node = lastNode = new Node(rlp.decode(p))
 
     switch (node.type) {
       case 'empty':
@@ -55,7 +91,7 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
           return embeddedNode.value
         }
         else
-          wantHash = childHash
+          wantedHash = childHash
         break
 
 
@@ -91,7 +127,7 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
           return val
         } else
           // we continue with the hash 
-          wantHash = val
+          wantedHash = val
         break
 
       default:
@@ -101,8 +137,8 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
 
   }
 
-  // if we expected this to be null and there is not further node since wantedHash is empty, than it is ok not to find leafs
-  if (expectedValue === null && wantHash.length === 0)
+  // if we expected this to be null and there is not further node since wantedHash is empty or we had a extension as last element, than it is ok not to find leafs
+  if (expectedValue === null && (lastNode === null || lastNode.type === 'extension' || wantedHash.length === 0))
     return null
 
   // we reached the end of the proof, but not of the path
@@ -117,9 +153,9 @@ function matchingNibbleLength(a: number[], b: number[]) {
 
 
 class Node {
-  raw: Buffer[]
-  key: number[]
-  value: Buffer
+  raw: Buffer[]  // raw input node data
+  key: number[]  // keys
+  value: Buffer  // value
   type: 'branch' | 'leaf' | 'extension' | 'empty'
 
   constructor(data: Buffer[]) {
@@ -135,16 +171,11 @@ class Node {
     }
     else if (data.length === 0)
       this.type = 'empty'
-
   }
-
-
 }
 
+// create the nibbles of a path
+const hexToInt = {'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,a:10,b:11,c:12,d:13,e:14,f:15}
 export function stringToNibbles(bkey: Buffer): number[] {
-  return bkey.reduce((p, c, i) => {
-    p[i * 2] = c >> 4
-    p[i * 2 + 1] = c % 16
-    return p
-  }, new Array(bkey.length * 2))
+  return bkey.toString('hex').split('').map(_=>hexToInt[_])
 }

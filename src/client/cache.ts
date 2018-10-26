@@ -1,30 +1,63 @@
+/***********************************************************
+* This file is part of the Slock.it IoT Layer.             *
+* The Slock.it IoT Layer contains:                         *
+*   - USN (Universal Sharing Network)                      *
+*   - INCUBED (Trustless INcentivized remote Node Network) *
+************************************************************
+* Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+* All Rights Reserved.                                     *
+************************************************************
+* You may use, distribute and modify this code under the   *
+* terms of the license contract you have concluded with    *
+* Slock.it GmbH.                                           *
+* For information about liability, maintenance etc. also   *
+* refer to the contract concluded with Slock.it GmbH.      *
+************************************************************
+* For more information, please refer to https://slock.it   *
+* For questions, please contact info@slock.it              *
+***********************************************************/
+
 import Client from './Client'
-import { address, bytes, hash } from '../util/serialize'
+import { address, bytes, hash, rlp, serialize } from '../util/serialize';
 import { toHex } from '../util/util'
 import { RPCRequest, RPCResponse } from '../types/types'
 import { sha3 } from 'ethereumjs-util'
+const Buffer: any = require('buffer').Buffer
+
 
 export default class Cache {
   client: Client
 
-  codeCache: CacheNode<Buffer>
+  codeCache: CacheNode
   blockCache: { number: number, header: Buffer, hash: Buffer }[]
 
   constructor(client: Client) {
     this.client = client
-    this.codeCache = new CacheNode<Buffer>(client.defConfig.maxCodeCache || 50000)
+    this.codeCache = new CacheNode(client.defConfig.maxCodeCache || 100000)
     this.blockCache = []
+    try {
+      // if we are running in the browser we use to localStorage as cache
+      if (client.defConfig.cacheStorage === undefined && window && window.localStorage)
+        client.defConfig.cacheStorage = window.localStorage
+    }
+    catch (x) { }
+    this.initCache()
+    client.addListener('nodeUpdateFinished', () => this.updateCache())
   }
 
   async getCodeFor(addresses: Buffer[], block = 'latest'): Promise<Buffer[]> {
     const result = addresses.map(a => this.codeCache.get(a))
     const missing: RPCRequest[] = result.map((_, i) => _ ? null : { method: 'eth_getCode', params: [toHex(addresses[i], 20), block], id: i + 1, jsonrpc: '2.0' as any }).filter(_ => _)
-    if (missing.length)
+    if (missing.length) {
       for (const r of await this.client.send(missing, undefined, { proof: 'none', signatureCount: 0 }) as RPCResponse[]) {
         const i = r.id as number - 1
         if (r.error) throw new Error(' could not get the code for address ' + addresses[i] + ' : ' + r.error)
         this.codeCache.put(addresses[i], bytes(result[i] = r.result))
       }
+      if (this.client.defConfig.cacheStorage && this.client.defConfig.chainId)
+        this.client.defConfig.cacheStorage.setItem('in3.code.' + this.client.defConfig.chainId, this.codeCache.toStorage())
+
+    }
 
     return result
   }
@@ -54,19 +87,53 @@ export default class Cache {
   }
 
 
+  initCache() {
+    const chainId = this.client.defConfig.chainId;
+    if (this.client.defConfig.cacheStorage && chainId) {
+
+      // read nodeList
+      const nl = this.client.defConfig.cacheStorage.getItem('in3.nodeList.' + chainId)
+      try {
+        if (nl)
+          this.client.defConfig.servers[chainId] = JSON.parse(nl)
+      }
+      catch (ex) {
+        this.client.defConfig.cacheStorage.setItem('in3.nodeList.' + chainId, '')
+      }
+
+      // read codeCache
+      const codeCache = this.client.defConfig.cacheStorage.getItem('in3.code.' + chainId)
+      try {
+        if (codeCache)
+          this.codeCache.fromStorage(codeCache)
+      }
+      catch (ex) {
+        this.client.defConfig.cacheStorage.setItem('in3.code.' + chainId, '')
+      }
+
+
+    }
+  }
+
+  updateCache() {
+    if (this.client.defConfig.cacheStorage && this.client.defConfig.chainId && this.client.defConfig.servers[this.client.defConfig.chainId]) {
+      this.client.defConfig.cacheStorage.setItem('in3.nodeList.' + this.client.defConfig.chainId, JSON.stringify(this.client.defConfig.servers[this.client.defConfig.chainId]))
+    }
+  }
+
 
 }
 
-export interface CacheEntry<T> {
+export interface CacheEntry {
   added: number
-  data: T
+  data: Buffer
 }
 
-export class CacheNode<T> {
+export class CacheNode {
 
   limit: number
 
-  data: Map<Buffer, CacheEntry<T>>
+  data: Map<string, CacheEntry>
   dataLength: number
 
   constructor(limit: number) {
@@ -75,16 +142,16 @@ export class CacheNode<T> {
     this.data = new Map()
   }
 
-  get(key: Buffer): T {
-    const entry = this.data.get(key)
+  get(key: Buffer): Buffer {
+    const entry = this.data.get(key.toString('hex'))
     return entry ? entry.data : null
   }
 
-  put(key: Buffer, val: T) {
+  put(key: Buffer, val: Buffer) {
     const old = this.get(key)
     if (old) {
       this.dataLength -= this.getByteLength(old)
-      this.data.delete(key)
+      this.data.delete(key.toString('hex'))
     }
     const size = this.getByteLength(val)
     while (this.limit && !old && this.dataLength + size >= this.limit) {
@@ -100,14 +167,31 @@ export class CacheNode<T> {
       this.data.delete(oldestKey)
       this.dataLength -= this.getByteLength(oldestVal.data)
     }
-    this.data.set(key, { added: Date.now(), data: val })
+    this.data.set(key.toString('hex'), { added: Date.now(), data: val })
     this.dataLength += this.getByteLength(val)
   }
 
-  getByteLength(entry: T) {
+  getByteLength(entry: Buffer | string) {
     if (Buffer.isBuffer(entry)) return entry.length
     if (typeof entry === 'string') return entry.length * 2
     return 4
   }
 
+  toStorage() {
+    const entries = []
+    this.data.forEach((val, key) => {
+      entries.push(Buffer.from(key, 'hex'))
+      entries.push(val.data)
+    })
+    return rlp.encode(entries).toString('base64')
+  }
+
+  fromStorage(data: string) {
+    const entries: Buffer[] = rlp.decode(Buffer.from(data, 'base64'))
+    for (let i = 0; i < entries.length; i += 2)
+      this.put(entries[i], entries[i + 1])
+  }
+
 }
+
+

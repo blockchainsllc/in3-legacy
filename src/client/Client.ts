@@ -1,3 +1,22 @@
+/***********************************************************
+* This file is part of the Slock.it IoT Layer.             *
+* The Slock.it IoT Layer contains:                         *
+*   - USN (Universal Sharing Network)                      *
+*   - INCUBED (Trustless INcentivized remote Node Network) *
+************************************************************
+* Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+* All Rights Reserved.                                     *
+************************************************************
+* You may use, distribute and modify this code under the   *
+* terms of the license contract you have concluded with    *
+* Slock.it GmbH.                                           *
+* For information about liability, maintenance etc. also   *
+* refer to the contract concluded with Slock.it GmbH.      *
+************************************************************
+* For more information, please refer to https://slock.it   *
+* For questions, please contact info@slock.it              *
+***********************************************************/
+
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig, ServerList } from '../types/types'
 import { verifyProof, BlackListError } from './verify'
 import { canMultiChain, canProof } from './serverList'
@@ -10,6 +29,7 @@ import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
 import Cache from './cache'
 import { adjustConfig } from './configHandler'
+import axios from 'axios'
 
 
 /**
@@ -28,7 +48,7 @@ export default class Client extends EventEmitter {
    * @param config the configuration
    * @param transport a optional transport-object. default: AxiosTransport
    */
-  public constructor(config?: Partial<IN3Config>, transport?: Transport) {
+  public constructor(config: Partial<IN3Config>={}, transport?: Transport) {
     super()
     this.filters = new Filters()
     if (config && config.autoConfig)
@@ -40,12 +60,34 @@ export default class Client extends EventEmitter {
       minDeposit: 0,
       autoUpdateList: true,
       requestCount: 3,
+      loggerUrl: 'https://search-test-usn.slock.it/logIn3',
       chainId: '0x2a',
       mainChain: '0x2a',
       chainRegistry: '0x53d02daE1253CDf7C9b93a6ED0462d97697C85F9',
       ...config,
       servers: {
-        '0x44d': {
+        '0x1': {  // mainnet
+          needsUpdate: true,
+          contractChain: '0x1',
+          contract: '0xFdb0eA8AB08212A1fFfDB35aFacf37C3857083ca',
+          nodeList: [
+            {
+              deposit: 0,
+              chainIds: ['0x1'],
+              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
+              url: 'https://in3.slock.it/mainnet/nd-3',
+              props: 65535
+            },
+            {
+              deposit: 0,
+              chainIds: ['0x1'],
+              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
+              url: 'https://in3.slock.it/mainnet/nd-5',
+              props: 65535
+            }
+          ]
+        },
+        '0x44d': {  // tobalaba
           needsUpdate: true,
           contractChain: '0x44d',
           contract: '0x845E484b505443814B992Bf0319A5e8F5e407879',
@@ -56,10 +98,37 @@ export default class Client extends EventEmitter {
               address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
               url: 'https://in3.slock.it/tobalaba/nd-3',
               props: 65535
-            }
+            },
+            {
+              deposit: 0,
+              chainIds: ['0x44d'],
+              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
+              url: 'https://in3.slock.it/tobalaba/nd-5',
+              props: 65535
+            }          ]
+        },
+        '0x4b1': {  // evan
+          needsUpdate: true,
+          contractChain: '0x4b1',
+          contract: '0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e',
+          nodeList: [
+            {
+              deposit: 0,
+              chainIds: ['0x4b1'],
+              address: '0xeaC4B82273e828878fD765D993800891bA2E3475',
+              url: 'http://52.47.61.24:8500',
+              props: 65535
+            },
+            {
+              deposit: 0,
+              chainIds: ['0x4b1'],
+              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33A',
+              url: 'https://in3.slock.it/evan/nd-5',
+              props: 65535
+            }          
           ]
         },
-        '0x2a': {
+        '0x2a': {  // kovan
           needsUpdate: true,
           contractChain: '0x2a',
           contract: '0x27a37a1210df14f7e058393d026e2fb53b7cf8c1',
@@ -70,6 +139,27 @@ export default class Client extends EventEmitter {
               address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
               url: 'https://in3.slock.it/kovan/nd-3',
               props: 65535
+            },
+            {
+              deposit: 0,
+              chainIds: ['0x2a'],
+              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
+              url: 'https://in3.slock.it/kovan/nd-5',
+              props: 65535
+            }
+          ]
+        },
+        '0x7d0': { // ipfs
+          needsUpdate: true,
+          contractChain: '0x7d0',
+          contract: '0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9',
+          nodeList: [
+            {
+              deposit: 0,
+              chainIds: ['0x7d0'],
+              address: '0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a',
+              url: 'https://in3.slock.it/ipfs/nd-1',
+              props: 65535
             }
           ]
         },
@@ -79,6 +169,15 @@ export default class Client extends EventEmitter {
     verifyConfig(this.defConfig)
     this.cache = new Cache(this)
   }
+
+  get config() {
+    return this.defConfig
+  } 
+
+  set config(val) {
+    this.defConfig = val
+    verifyConfig(this.defConfig)
+  } 
 
   /**
    * fetches the nodeList from the servers.
@@ -205,7 +304,7 @@ export default class Client extends EventEmitter {
     const server = c.servers[c.chainId]
 
     if (!server || server.needsUpdate) {
-      server.needsUpdate = false
+      server && (server.needsUpdate = false)
       await this.updateNodeList(c.chainId)
     }
     const list = c.servers[c.chainId].nodeList
@@ -250,7 +349,17 @@ export default class Client extends EventEmitter {
     const excludes = [...(prevExcludes || []), ...nodes.map(_ => _.address)].filter((e, i, a) => a.indexOf(e) === i)
 
     // get the verified responses from the nodes
-    const responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.cache, excludes)))
+    let responses:RPCResponse[][] = null
+    try {
+       responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.cache, [...excludes])))
+    }
+    catch (ex) {
+      // we may retry without proof in order to handle this error
+      if (conf.proof && conf.proof!='none' && conf.retryWithoutProof) 
+         responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, {...conf,proof:'none'}, this.transport, this.cache, [...excludes])))
+      else 
+         throw ex
+    }
 
     // merge the result 
     const result: RPCResponse[] = await Promise.all(
@@ -273,7 +382,10 @@ export default class Client extends EventEmitter {
 let idCount = 1
 
 function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: Client) {
-  if (conf.autoUpdateList && !responses.find(_ => _.result.contract && _.result.totalServers && _.result.nodes)) {
+  // do we have a lastNodelist? (and it's not a nodeList itself)
+  if (conf.autoUpdateList && responses.find(_ =>
+    _.result && !(_.result.contract && _.result.totalServers && _.result.nodes) && _.in3 && _.in3.lastNodeList > 0)) {
+
     const blockNumber = responses.reduce((p, c) => Math.max(toNumber(c.in3 && c.in3.lastNodeList), p), 0)
     const lastUpdate = conf.servers[conf.chainId].lastBlock
     if (blockNumber > lastUpdate) {
@@ -420,6 +532,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
   }
   catch (err) {
 
+    if (conf.loggerUrl)
+      axios.post(conf.loggerUrl, { level: 'error', message: 'error handling request for ' + node.url + ' : ' + err.message + ' (' + err.stack + ') ', meta: request })
+        .then(_ => _, console.log('Error logging (' + err.message + ') : ', node.url, request) as any)
+
     if (err instanceof BlackListError) {
 
       const n = excludes.indexOf(node.address)
@@ -445,16 +561,23 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, cache, excludes, retryCount - 1)
 
     }
-    else
+    else {
+      // let us check first, if we are the problem.
+
+      // are we online?
+      if (! await transport.isOnline())
+        throw new Error('Currently there is no online-connection!')
 
       // locally blacklist this node for one hour if it did not respond within the timeout or could not be verified
       stats.blacklistedUntil = Date.now() + 3600000
+
+    }
 
     let otherNodes: IN3NodeConfig[] = null
 
     try {
       // so the node did not answer, let's find a different one
-      otherNodes = getNodes(conf, 1, transport, excludes)
+      otherNodes = getNodes(conf, 1, transport, [...excludes, node.address])
     } catch (x) {
       // if we can't get nodes, it's because there none left to ask
       throw new Error('tried ' + request.map(_ => _.method).join() + ' but failed and can not recover (' + x.message + ') from wrong response of node ' + node.url + ' did not respond correctly : ' + err)
@@ -463,7 +586,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     if (!otherNodes.length)
       throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
-    return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, otherNodes[0].address])
+    return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, node.address, otherNodes[0].address])
   }
 }
 
@@ -486,15 +609,26 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
   // get the current chain-configuration, which was previously updated
   const chain = config.servers[config.chainId]
 
-  // prefilter for minDeposit && excludes && blacklisted
-  const nodes = chain.nodeList.filter(n =>
+  // filter-function for the nodeList
+  const filter = (n: IN3NodeConfig) =>
     n.deposit >= config.minDeposit &&  // check deposit
     (!excludes || excludes.indexOf(n.address) === -1) && // check excluded addresses (because of recursive calls)
-    (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now) // check blacklist
-  )
+    (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now)
 
-  if (nodes.length === 0)
-    throw new Error('No nodes found that fullfill the filter criteria ')
+  // prefilter for minDeposit && excludes && blacklisted
+  let nodes = chain.nodeList.filter(filter) // check blacklist
+
+  if (nodes.length === 0) {
+    const blackListed = Object.keys(chain.weights).filter(_ => (!excludes || excludes.indexOf(_) === -1) && chain.weights[_].blacklistedUntil > now)
+
+    // if more than 50% of the available nodes are currently blacklisted, we might want to clean up our blacklist
+    if (blackListed.length > chain.nodeList.length / 2) {
+      blackListed.forEach(_ => chain.weights[_].blacklistedUntil = 0)
+      nodes = chain.nodeList.filter(filter)
+    }
+    else
+      throw new Error('No nodes found that fullfill the filter criteria ')
+  }
 
   // in case we don't have enough nodes to randomize, we just need to accept the list as is
   if (nodes.length <= count)
@@ -536,7 +670,7 @@ function cleanResult(r: RPCResponse): RPCResponse {
     : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
 }
 
-const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1' }
+export const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet:'0x1' }
 
 function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
   if (!conf) return {}

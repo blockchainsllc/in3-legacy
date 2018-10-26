@@ -16,10 +16,6 @@
 * For more information, please refer to http://slock.it    *
 * For questions, please contact info@slock.it              *
 ***********************************************************/
-// @author Simon Jentzsch 
-// @version 0.9
-// @copyright 2017 by Slock.it GmbH
-//
 
 import * as Ajv from 'ajv'
 import * as util from './util'

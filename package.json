@@ -35,7 +35,7 @@
     "url": "git+https://github.com/slockit/in3.git"
   },
   "author": "Simon Jentzsch",
-  "license": "ISC",
+  "license": "in3",
   "bugs": {
     "url": "https://github.com/slockit/in3/issues"
   },
@@ -51,6 +51,7 @@
     "@types/koa-router": "^7.0.27",
     "@types/mocha": "^5.2.0",
     "@types/winston": "^2.3.8",
+    "args": "^5.0.0",
     "babelify": "^9.0.0",
     "browserify": "^16.2.2",
     "chai": "^4.1.2",
@@ -58,16 +59,18 @@
     "dtsgenerator": "^0.9.9",
     "mocha": "^5.1.1",
     "nyc": "^11.8.0",
+    "slockit-generator": "^1.0.1",
     "source-map-support": "^0.5.6",
     "ts-node": "^6.0.3",
     "typedoc": "^0.11.1",
     "typescript": "^2.7.2",
-    "uglify-es": "^3.2.0",
-    "slockit-generator": "^1.0.1"
+    "uglify-es": "^3.2.0"
   },
   "dependencies": {
     "ajv": "^6.5.1",
     "axios": "^0.18.0",
+    "bs58": "^4.0.1",
+    "buffer": "^5.2.1",
     "cbor": "^4.0.0",
     "ethereumjs-abi": "0.6.5",
     "ethereumjs-account": "2.0.5",
@@ -75,6 +78,12 @@
     "ethereumjs-util": "5.2.0",
     "ethereumjs-vm": "2.3.5",
     "ethjs-util": "0.1.4",
-    "merkle-patricia-tree": "^2.3.1"
+    "merkle-patricia-tree": "^2.3.1",
+    "multihashing-async": "^0.5.1",
+    "protons": "^1.0.1"
+  },
+  "optionalDependencies": {
+    "koa": "^2.5.3",
+    "koa-bodyparser": "^4.2.1"
   }
 }

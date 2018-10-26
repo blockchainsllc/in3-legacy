@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2017",
+    "target": "es2015",
     "outDir": "js",
     "noImplicitAny": false,
     "declaration": true,
@@ -12,6 +12,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "proxy/*.ts",
     "test/**/*.ts"
   ],
   "exclude": [

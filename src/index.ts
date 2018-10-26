@@ -1,4 +1,23 @@
-import Client from './client/Client'
+/***********************************************************
+* This file is part of the Slock.it IoT Layer.             *
+* The Slock.it IoT Layer contains:                         *
+*   - USN (Universal Sharing Network)                      *
+*   - INCUBED (Trustless INcentivized remote Node Network) *
+************************************************************
+* Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+* All Rights Reserved.                                     *
+************************************************************
+* You may use, distribute and modify this code under the   *
+* terms of the license contract you have concluded with    *
+* Slock.it GmbH.                                           *
+* For information about liability, maintenance etc. also   *
+* refer to the contract concluded with Slock.it GmbH.      *
+************************************************************
+* For more information, please refer to https://slock.it    *
+* For questions, please contact info@slock.it              *
+***********************************************************/
+
+import Client, { aliases } from './client/Client'
 import * as validateOb from './util/validate'
 export default Client
 
@@ -53,3 +72,4 @@ export type IN3RPCHandlerConfig = types.IN3RPCHandlerConfig
 export const AxiosTransport = transport.AxiosTransport
 export const typeDefs = types.validationDef
 export const validate = validateOb.validate
+export const chainAliases = aliases

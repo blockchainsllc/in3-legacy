@@ -181,6 +181,7 @@ const iN3Config:types.IN3Config = {
   keepIn3: false,
   format: 'json',
   autoConfig: false,
+  retryWithoutProof: false,
   includeCode: true,
   maxCodeCache: 100000,
   maxBlockCache: 100,
@@ -206,6 +207,7 @@ const iN3Config:types.IN3Config = {
 *  **format** `string` - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding   
  Must be one of the these values : `'json`', `'jsonRef`', `'cbor`'
 *  **autoConfig** `boolean` - if true the config will be adjusted depending on the request   
+*  **retryWithoutProof** `boolean` - if true the the request may be handled without proof in case of an error. (use with care!)   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **maxCodeCache** `integer` - number of max bytes used to cache the code in memory   
 *  **maxBlockCache** `integer` - number of number of blocks cached  in memory   
@@ -221,6 +223,8 @@ const iN3Config:types.IN3Config = {
 *  **chainRegistry** `string` - main chain-registry contract   
 *  **mainChain** `string` - main chain-id, where the chain registry is running.   
 *  **autoUpdateList** `boolean` - if true the nodelist will be automaticly updated if the lastBlock is newer   
+*  **cacheStorage** [{"description":"a cache handler offering 2 functions ( setItem(string,string), getItem(string) )"}](#{"description":"a cache handler offering 2 functions ( setitem(string,string), getitem(string) )"}) - a cache handler offering 2 functions ( setItem(string,string), getItem(string) )   
+*  **loggerUrl** `string` - a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }   
 *  **servers** `object` - the nodelist per chain   
     each key in this object will structure its value like: 
     *  **initAddresses** `string[]` - a list of addresses which should always be part of the nodelist when getting an update   
@@ -530,6 +534,8 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 
 *  **handler** `string` - the impl used to handle the calls   
  Must be one of the these values : `'eth`', `'ipfs`', `'btc`'
+*  **ipfsUrl** `string` - the url of the ipfs-client   
+*  **timeout** `integer` - number of milliseconds to wait before a request gets a timeout   
 *  **rpcUrl** `string` (required)  - the url of the client   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   

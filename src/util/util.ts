@@ -1,3 +1,25 @@
+/***********************************************************
+* This file is part of the Slock.it IoT Layer.             *
+* The Slock.it IoT Layer contains:                         *
+*   - USN (Universal Sharing Network)                      *
+*   - INCUBED (Trustless INcentivized remote Node Network) *
+************************************************************
+* Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+* All Rights Reserved.                                     *
+************************************************************
+* You may use, distribute and modify this code under the   *
+* terms of the license contract you have concluded with    *
+* Slock.it GmbH.                                           *
+* For information about liability, maintenance etc. also   *
+* refer to the contract concluded with Slock.it GmbH.      *
+************************************************************
+* For more information, please refer to https://slock.it    *
+* For questions, please contact info@slock.it              *
+***********************************************************/
+
+// this is eded in order to run in browsers
+const Buffer: any = require('buffer').Buffer
+
 import * as ethUtil from 'ethereumjs-util'
 import { RPCResponse } from '../types/types'
 
@@ -7,6 +29,10 @@ const BN = ethUtil.BN
 
 const fixLength = (hex: string) => hex.length % 2 ? '0' + hex : hex
 
+/**
+ * 
+ * simple promisy-function
+ */
 export function promisify(self, fn, ...args: any[]): Promise<any> {
   return new Promise((resolve, reject) => {
     fn.apply(self, [...args, (err, res) => {
@@ -19,12 +45,18 @@ export function promisify(self, fn, ...args: any[]): Promise<any> {
 }
 
 
+/**
+ * check a RPC-Response for errors and rejects the promise if found
+ */
 export function checkForError<T extends RPCResponse | RPCResponse[]>(res: T): T {
   if (Array.isArray(res))
     return res.find(_ => !!_.error) ? Promise.reject(new Error(res.find(_ => !!_.error).error)) as any : res as T
   return (res as RPCResponse).error ? Promise.reject(new Error((res as RPCResponse).error)) as any : res as T
 }
 
+/**
+ * convert to BigNumber
+ */
 export function toBN(val: any) {
   if (BN.isBN(val)) return val
   if (typeof val === 'number') return new BN(val)
@@ -32,7 +64,9 @@ export function toBN(val: any) {
   return new BN(toHex(val).substr(2), 16)
 }
 
-/** converts any value as hex-string */
+/** 
+ * converts any value as hex-string 
+ */
 export function toHex(val: any, bytes?: number): string {
   if (val === undefined) return undefined
   let hex: string
@@ -45,12 +79,15 @@ export function toHex(val: any, bytes?: number): string {
   else
     hex = ethUtil.bufferToHex(val).substr(2)
   if (bytes)
-    hex = (hex as any).padStart(bytes * 2, '0') as string  // workarounf for ts-error in older js
+    hex = padStart(hex, bytes * 2, '0') as string  // workarounf for ts-error in older js
   if (hex.length % 2)
     hex = '0' + hex
   return '0x' + hex.toLowerCase()
 }
 
+/**
+ * converts to a js-number
+ */
 export function toNumber(val: any): number {
   switch (typeof val) {
     case 'number':
@@ -61,7 +98,7 @@ export function toNumber(val: any): number {
       if (Buffer.isBuffer(val))
         return val.length == 0 ? 0 : val.readUIntBE(0, val.length)
       else if (BN.isBN(val))
-        return val.bitLength() > 53 ? toNumber(val.toBuffer()) : val.toNumber()
+        return val.bitLength() > 53 ? toNumber(val.toArrayLike(Buffer)) : val.toNumber()
       else if (val === undefined || val === null)
         return 0
       throw new Error('can not convert a ' + (typeof val) + ' to number')
@@ -74,11 +111,11 @@ export function toNumber(val: any): number {
  */
 export function toBuffer(val, len = -1) {
   if (typeof val == 'string')
-    val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toBuffer()
+    val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toArrayLike(Buffer)
   else if (typeof val == 'number')
     val = val === 0 && len === 0 ? Buffer.allocUnsafe(0) : Buffer.from(fixLength(val.toString(16)), 'hex')
   else if (BN.isBN(val))
-    val = val.toBuffer()
+    val = val.toArrayLike(Buffer)
 
   if (!val) val = Buffer.allocUnsafe(0)
 
@@ -96,7 +133,10 @@ export function toBuffer(val, len = -1) {
   return val as Buffer
 
 }
-// TODO do we need this anymore?
+
+/**
+ * removes all leading 0 in a hex-string
+ */
 export function toSimpleHex(val: string) {
   let hex = val.replace('0x', '')
   while (hex.startsWith('00') && hex.length > 2)
@@ -105,7 +145,9 @@ export function toSimpleHex(val: string) {
 
 }
 
-/** returns a address from a private key */
+/**
+ * returns a address from a private key 
+ */
 export function getAddress(pk: string) {
   const key = toBuffer(pk)
   return ethUtil.toChecksumAddress(ethUtil.privateToAddress(key).toString('hex'))
@@ -129,4 +171,18 @@ export function toMinHex(key: string | Buffer | number) {
     }
   }
   return '0x0'
+}
+
+/** padStart for legacy */
+export function padStart(val: string, minLength: number, fill = ' ') {
+  while (val.length < minLength)
+    val = fill + val
+  return val
+}
+
+/** padEnd for legacy */
+export function padEnd(val: string, minLength: number, fill = ' ') {
+  while (val.length < minLength)
+    val = val + fill
+  return val
 }

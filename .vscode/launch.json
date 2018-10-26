@@ -8,15 +8,13 @@
       "type": "node",
       "request": "launch",
       "name": "Mocha Tests",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha3",
       "args": [
-        "-u",
+        " -u",
         "tdd",
         "--timeout",
-        "999999",
+        "999998",
         "--colors",
-        "--grep",
-        "eth_call",
         "${workspaceFolder}/js/test/*/*.js"
       ],
       "outFiles": [

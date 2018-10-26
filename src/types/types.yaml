@@ -1,3 +1,21 @@
+#***********************************************************
+# This file is part of the Slock.it IoT Layer.             *
+# The Slock.it IoT Layer contains:                         *
+#   - USN (Universal Sharing Network)                      *
+#   - INCUBED (Trustless INcentivized remote Node Network) *
+#***********************************************************
+# Copyright (C) 2016 - 2018 Slock.it GmbH                  *
+# All Rights Reserved.                                     *
+#***********************************************************
+# You may use, distribute and modify this code under the   *
+# terms of the license contract you have concluded with    *
+# Slock.it GmbH.                                           *
+# For information about liability, maintenance etc. also   *
+# refer to the contract concluded with Slock.it GmbH.      *
+#***********************************************************
+# For more information, please refer to https://slock.it    *
+# For questions, please contact info@slock.it              *
+#**********************************************************/
 $schema: http://json-schema.org/schema#
 description: configuration-data for the Incubed-client / server
 definitions: 
@@ -181,6 +199,10 @@ definitions:
                 description: if true the config will be adjusted depending on the request
                 type: boolean
                 example: false
+            retryWithoutProof:
+                description: if true the the request may be handled without proof in case of an error. (use with care!)
+                type: boolean
+                example: false
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean
@@ -247,6 +269,11 @@ definitions:
                 type: boolean
                 description: if true the nodelist will be automaticly updated if the lastBlock is newer
                 example: true
+            cacheStorage:
+                description: a cache handler offering 2 functions ( setItem(string,string), getItem(string) )
+            loggerUrl:
+                type: string
+                description: a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }
             servers:
                 type: object
                 description: the nodelist per chain
@@ -602,6 +629,12 @@ definitions:
                 type: string
                 description: the impl used to handle the calls
                 enum: [ eth, ipfs, btc ]
+            ipfsUrl:
+                type: string
+                description: the url of the ipfs-client
+            timeout:
+                type: integer
+                description: number of milliseconds to wait before a request gets a timeout
             rpcUrl: 
                 type: string
                 description: the url of the client
