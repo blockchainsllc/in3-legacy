@@ -40,7 +40,7 @@ const block = await web.eth.getBlockByNumber('latest')
 In order to start the incubed-client as a standalone client (allowing others none-js-application to connect to it), you can start the container as
 
 ```
-docker run -d  slockit/in3:latest -p 8545:8545 --chainId=kovan
+docker run -d -p 8545:8545  slockit/in3:latest --chainId=kovan
 ```
 
 The application would then accept the following arguments:
@@ -78,4 +78,4 @@ The following docuemntations are available:
 - [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Defintion of datastructures used inside the client.
 - [Verification](https://github.com/slockit/in3/wiki/Ethereum-Verification-and-MerkleProof). A documentaion about the varification of proofs send by a IN3-Server.
 - [Wiki](https://github.com/slockit/in3/wiki). A wiki with examples and explanations of the protocol.
-- [Whitepaper](https://download.slock.it/whitepaper_incubed_draft.pdf). The whitepaper describing .
+- [Whitepaper](https://download.slock.it/whitepaper_incubed_draft.pdf). The whitepaper describing the vision and idea.
