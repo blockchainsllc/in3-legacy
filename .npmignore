@@ -1,0 +1,13 @@
+src
+tslint.json
+tsconfig.json
+Dockerfile
+.gitlab-ci.yml
+test
+proxy
+node_modules
+doc
+.tslintignore
+.nyc_output
+.vscode
+coverage
