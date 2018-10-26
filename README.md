@@ -25,7 +25,7 @@ const web3 = new Web3(new In3Client({
     proof: true,
     signatureCount: 1,
     requestCount : 2,
-    chainId: '0x01'
+    chainId: 'mainnet'
 }))
 
 // use the web3 
@@ -40,7 +40,7 @@ const block = await web.eth.getBlockByNumber('latest')
 In order to start the incubed-client as a standalone client (allowing others none-js-application to connect to it), you can start the container as
 
 ```
-docker run -d  docker.slock.it/in3/in3:latest -p 8545:8545 --chainId=tobalaba 
+docker run -d  slockit/in3:latest -p 8545:8545 --chainId=kovan
 ```
 
 The application would then accept the following arguments:
@@ -78,9 +78,4 @@ The following docuemntations are available:
 - [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Defintion of datastructures used inside the client.
 - [Verification](https://github.com/slockit/in3/wiki/Ethereum-Verification-and-MerkleProof). A documentaion about the varification of proofs send by a IN3-Server.
 - [Wiki](https://github.com/slockit/in3/wiki). A wiki with examples and explanations of the protocol.
-
-
-# Tests
-
-- Result of the last nightly tests for [in3](http://travis.slock.it/in3/) and [in3-server](http://travis.slock.it/in3-server/)
-- [Code Coverage](http://travis.slock.it/in3-server/coverage/index.html) for client and server
+- [Whitepaper](https://download.slock.it/whitepaper_incubed_draft.pdf). The whitepaper describing .
