@@ -61,7 +61,7 @@ export default class Client extends EventEmitter {
       autoUpdateList: true,
       requestCount: 3,
       loggerUrl: 'https://search-test-usn.slock.it/logIn3',
-      chainId: '0x2a',
+      chainId: '0x1',
       mainChain: '0x2a',
       chainRegistry: '0x53d02daE1253CDf7C9b93a6ED0462d97697C85F9',
       ...config,
