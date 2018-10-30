@@ -1,10 +1,8 @@
 # INCUBED
 
+The Minimal Verification Client
+
 INCUBED = A trustless INcentivized remote Node Network = IN3
-
-This is the Typescript-version of the incubed client.
-
-[![Build Status](https://travis-ci.com/slockit/in3.svg?token=2HePjq6vsCVWSbiYxgEy&branch=master)](https://travis-ci.com/slockit/in3)
 
 # Getting started
 
@@ -22,7 +20,7 @@ import * as web3 from 'web3'
 
 // use the In3Client as Http-Provider
 const web3 = new Web3(new In3Client({
-    proof: true,
+    proof: 'standard',
     signatureCount: 1,
     requestCount : 2,
     chainId: 'mainnet'
@@ -56,8 +54,7 @@ The application would then accept the following arguments:
 |--includeCode|if true, the request should include the codes of all accounts. otherwise only the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards|
 |--maxCodeCache|number of max bytes used to cache the code in memory|
 |--maxBlockCache|number of number of blocks cached  in memory|
-|--verifiedHashes|if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.|
-|--proof|if true the nodes should send a proof of the response|
+|--proof|'none' for no verification, 'standard' for verifying all important fields, 'full'  veryfying all fields even if this means a high payload.|
 |--signatureCount|number of signatures requested|
 |--minDeposit|min stake of the server. Only nodes owning at least this amount will be chosen.|
 |--replaceLatestBlock|if specified, the blocknumber *latest* will be replaced by blockNumber- specified value|
@@ -67,12 +64,11 @@ The application would then accept the following arguments:
 |--chainRegistry|main chain-registry contract|
 |--mainChain|main chain-id, where the chain registry is running.|
 |--autoUpdateList|if true the nodelist will be automaticly updated if the lastBlock is newer|
-|--cacheStorage|a cache handler offering 2 functions ( setItem(string,string), getItem(string) )|
 |--loggerUrl|a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }|
 
 # Documentation
 
-The following docuemntations are available:
+The following documentations are available:
 
 - [API](https://github.com/slockit/in3/blob/master/doc/README.md) - Definition of Classes and available functions.
 - [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Defintion of datastructures used inside the client.
@@ -152,9 +148,9 @@ services:
     command:
     - --privateKey=/secure/myKey.json                       # internal path to the key
     - --privateKeyPassphrase=dummy                          # passphrase to unlock the key
-    - --chain=0x2a                                          # chain (kovan)
+    - --chain=0x1                                           # chain (kovan)
     - --rpcUrl=http://incubed-parity:8545                   # url of the kovan-client
-    - --registry=0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e # url of the incubed-registry 
+    - --registry=0xFdb0eA8AB08212A1fFfDB35aFacf37C3857083ca # url of the incubed-registry 
     - --autoRegistry-url=http://in3.server:8500             # check or register this node for this url
     - --autoRegistry-deposit=2                              # deposit to use when registering
 
@@ -164,5 +160,4 @@ services:
     - --auto-update=none                                    # do not automaticly update the client
     - --pruning=archive 
     - --pruning-memory=30000                                # limit storage
-    - --testnet                                             # kovan
 ```

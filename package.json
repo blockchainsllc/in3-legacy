@@ -1,6 +1,6 @@
 {
   "name": "in3",
-  "version": "1.1.2",
+  "version": "1.1.5",
   "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
   "scripts": {
@@ -85,5 +85,13 @@
   "optionalDependencies": {
     "koa": "^2.5.3",
     "koa-bodyparser": "^4.2.1"
-  }
+  },
+  "keywords": [
+    "ethereum",
+    "slockit",
+    "iot",
+    "in3",
+    "client",
+    "jsonrpc"
+  ]
 }
