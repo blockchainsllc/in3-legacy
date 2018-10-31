@@ -84,7 +84,7 @@ Currently incubed is deployed on the following chains:
 
 ### Mainnet
 
-Registry : [0xFdb0eA8AB08212A1fFfDB35aFacf37C3857083ca](https://eth.slock.it/#/main/0xFdb0eA8AB08212A1fFfDB35aFacf37C3857083ca)    
+Registry : [0x2736D225f85740f42D17987100dc8d58e9e16252](https://eth.slock.it/#/main/0x2736D225f85740f42D17987100dc8d58e9e16252)    
 ChainId : 0x1 (alias `mainnet`)    
 Status : [https://in3.slock.it?n=mainnet](https://in3.slock.it?n=mainnet)    
 NodeList: [https://in3.slock.it/mainnet/nd-3](https://in3.slock.it/mainnet/nd-3/api/in3_nodeList) 
