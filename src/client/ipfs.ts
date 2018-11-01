@@ -86,7 +86,7 @@ export async function verifyIPFSHash(content: string | Buffer, encoding: string,
     reponseHash = await createIPFSHash(Buffer.isBuffer(content) ? content : Buffer.from(content, encoding))
   }
   catch (er) {
-    // TODO onlx in the react-native package he is not able to calculate the hash and throws, for now we ignore it, but we should find a solution to make it work there as well.
+    // TODO only in the react-native package he is not able to calculate the hash and throws, for now we ignore it, but we should find a solution to make it work there as well.
     return true
   }
   if (reponseHash !== requestedHash)
