@@ -517,8 +517,8 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     // exceptions
     if (request.method === 'eth_getLogs' && response.result && (response.result as any).length === 0) return true
     if (request.method.startsWith('eth_getTransaction') && !response.result) return true
-    if (throwException && !allowWithoutProof) throw new Error('the response does not contain any proof!')
-    return allowWithoutProof
+    if (throwException && !allowWithoutProof && !response.error) throw new Error('the response does not contain any proof!')
+    return !!response.error  || allowWithoutProof
   }
 
   // check BlockCache and convert all blockheaders to buffer
