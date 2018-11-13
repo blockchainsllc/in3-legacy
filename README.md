@@ -38,7 +38,7 @@ const block = await web.eth.getBlockByNumber('latest')
 In order to start the incubed-client as a standalone client (allowing others none-js-application to connect to it), you can start the container as
 
 ```
-docker run -d -p 8545:8545  slockit/in3:latest --chainId=kovan
+docker run -d -p 8545:8545  slockit/in3:latest --chainId=mainnet
 ```
 
 The application would then accept the following arguments:
