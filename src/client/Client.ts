@@ -30,6 +30,7 @@ import { EventEmitter } from 'events'
 import Cache from './cache'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
+const defaultConfig = require('./defaultConfig.json')
 
 
 /**
@@ -55,114 +56,10 @@ export default class Client extends EventEmitter {
       this.addListener('beforeRequest', adjustConfig)
     this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
-      proof: 'none',
-      signatureCount: 0,
-      minDeposit: 0,
-      autoUpdateList: true,
-      requestCount: 3,
-      loggerUrl: 'https://search-test-usn.slock.it/logIn3',
-      chainId: '0x1',
-      mainChain: '0x2a',
-      chainRegistry: '0x53d02daE1253CDf7C9b93a6ED0462d97697C85F9',
+      ...defaultConfig,
       ...config,
       servers: {
-        '0x1': {  // mainnet
-          needsUpdate: true,
-          contractChain: '0x1',
-          contract: '0x2736D225f85740f42D17987100dc8d58e9e16252',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x1'],
-              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
-              url: 'https://in3.slock.it/mainnet/nd-3',
-              props: 65535
-            },
-            {
-              deposit: 0,
-              chainIds: ['0x1'],
-              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
-              url: 'https://in3.slock.it/mainnet/nd-5',
-              props: 65535
-            }
-          ]
-        },
-        '0x44d': {  // tobalaba
-          needsUpdate: true,
-          contractChain: '0x44d',
-          contract: '0x845E484b505443814B992Bf0319A5e8F5e407879',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x44d'],
-              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
-              url: 'https://in3.slock.it/tobalaba/nd-3',
-              props: 65535
-            },
-            {
-              deposit: 0,
-              chainIds: ['0x44d'],
-              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
-              url: 'https://in3.slock.it/tobalaba/nd-5',
-              props: 65535
-            }          ]
-        },
-        '0x4b1': {  // evan
-          needsUpdate: true,
-          contractChain: '0x4b1',
-          contract: '0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x4b1'],
-              address: '0xeaC4B82273e828878fD765D993800891bA2E3475',
-              url: 'http://52.47.61.24:8500',
-              props: 65535
-            },
-            {
-              deposit: 0,
-              chainIds: ['0x4b1'],
-              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33A',
-              url: 'https://in3.slock.it/evan/nd-5',
-              props: 65535
-            }          
-          ]
-        },
-        '0x2a': {  // kovan
-          needsUpdate: true,
-          contractChain: '0x2a',
-          contract: '0x27a37a1210df14f7e058393d026e2fb53b7cf8c1',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x2a'],
-              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
-              url: 'https://in3.slock.it/kovan/nd-3',
-              props: 65535
-            },
-            {
-              deposit: 0,
-              chainIds: ['0x2a'],
-              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
-              url: 'https://in3.slock.it/kovan/nd-5',
-              props: 65535
-            }
-          ]
-        },
-        '0x7d0': { // ipfs
-          needsUpdate: true,
-          contractChain: '0x7d0',
-          contract: '0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x7d0'],
-              address: '0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a',
-              url: 'https://in3.slock.it/ipfs/nd-1',
-              props: 65535
-            }
-          ]
-        },
+        ...defaultConfig.servers,
         ...((config && config.servers) || {})
       }
     }

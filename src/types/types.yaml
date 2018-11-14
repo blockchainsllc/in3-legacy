@@ -177,6 +177,20 @@ definitions:
                 type: number
                 example: 326478
 
+    ChainSpec:
+        type: object
+        description: describes the chainspecific consensus params
+        properties:
+            engine:
+                description: the engine type (like Ethhash, authorityRound, ... )
+                type: string
+            validatorContract: 
+                description: the aura contract to get the validators
+                type: string
+            validatorList: 
+                description: the list of validators
+                type: array
+
     IN3Config:
         description: the iguration of the IN3-Client. This can be paritally overriden for every request.
         type: object
@@ -280,6 +294,12 @@ definitions:
                 additionalProperties:
                     type: object
                     properties:
+                        name:
+                            type: string
+                            description: a alias for the chain
+                        chainSpec:
+                            description: chain definition
+                            $ref: "#/definitions/ChainSpec"
                         initAddresses:
                             description: a list of addresses which should always be part of the nodelist when getting an update
                             type: array
