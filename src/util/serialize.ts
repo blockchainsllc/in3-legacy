@@ -190,7 +190,6 @@ export const toAccount = (account: AccountData) => [
 ] as Account
 
 
-
 /** create a Buffer[] from RPC-Response */
 export const toReceipt = (r: ReceiptData) => [
   uint(r.status || r.root),
@@ -202,7 +201,6 @@ export const toReceipt = (r: ReceiptData) => [
     bytes(l.data)
   ])
 ].slice(r.status === null && r.root === null ? 1 : 0) as Receipt
-
 
 
 
@@ -258,6 +256,11 @@ export class Block {
   /** the blockhash as buffer */
   hash(): Buffer {
     return hash(this.raw)
+  }
+
+  /** the blockhash as buffer without the seal fields*/
+  bareHash(): Buffer {
+    return hash(this.raw.slice(0,13))
   }
 
   /** the serialized header as buffer */
