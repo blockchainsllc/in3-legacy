@@ -32,7 +32,17 @@ test-in3:
   script:
     - sh /prepare.sh
     - npm install
+    - npm run build
     - npm test
+    - git clone git@git.slock.it:in3/in3-server.git
+    - cd in3-server
+    - npm install
+    - cd node_modules
+    - rm -rf in3
+    - ln -s ../../ in3
+    - npm run build
+    - npm test
+    
   artifacts:
     name: "test-reports-$CI_JOB_NAME"
     paths:
