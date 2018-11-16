@@ -1,6 +1,8 @@
 import { bytes, rlp, Block, hash, address, BlockData } from './serialize';
 import { recover } from 'secp256k1'
 import { publicToAddress } from 'ethereumjs-util'
+import ChainContext from '../client/chainContext';
+import { ChainSpec } from '../../js/src/types/types';
 
 /**
  * verify a Blockheader and returns the percentage of finality
@@ -8,6 +10,7 @@ import { publicToAddress } from 'ethereumjs-util'
  * @param getChainSpec 
  */
 export async function checkBlockSignatures(blockHeaders:(Buffer | string | BlockData)[], getChainSpec:(data:Block)=>Promise<{
+  spec:ChainSpec
   authorities: Buffer[]
   proposer: Buffer
 }>) {
@@ -17,6 +20,9 @@ export async function checkBlockSignatures(blockHeaders:(Buffer | string | Block
   // authority_round
   const chainSpec = await getChainSpec(blocks[0])
   const signatures=[]
+
+  // we only check signatures for authorityRound
+  if (!chainSpec || !chainSpec.spec || chainSpec.spec.engine!=='authorityRound') return 0
 
   // process all blockheaders and collect their signatures
   await Promise.all(blocks.map(async data=> {
@@ -47,25 +53,26 @@ export async function checkBlockSignatures(blockHeaders:(Buffer | string | Block
 
 
 
-export async function getChainSpec(b:Block) {
-  const a:any= {
-    authorities:[
-'0x4ba15b56452521c0826a35a6f2022e1210fc519b',
-'0xb5e8c1bf705f10bf4531941600f7d0a5bab7f5e8',
-'0x6a2b1a140ad141ef571e91d9ed2b2fc6fa294317',
-'0xd778a79ed8c7da5845bc3af0a14f4c73faede798',
-'0xa0fc126bf3423e36001a33395ff42c14f2017733',
-'0x68766b52c86b237dec0c334a5b9e4d825e265c8e',
-'0x419d94ff81a1138710ddd98ef5743c2b3d31c4e0',
-'0x23ef0e2552f07d793a8676c25350790a0116d68a',
-'0xbe20508bf4c43688a8aa4ea45f0afcf4092d990b',
-'0x3616ecf432fc1c075c50b10cdfecc3107236b6ff',
-'0x78d0558d9489e7f846a0cf9f40b1d917244615e2',
-'0x5fa6916603630fb3554780d5077c967ecd1fc78f',
-'0x0fba77c504235f2b843a6f68909de6e5253b0a45',
-'0xc6daf646d4c5ca352bac508ed6776e565d46c7c1'
-    ].map(address)
+export async function getChainSpec(b:Block, ctx:ChainContext) {
+
+  let authorities:string[] = null
+
+  if (ctx.chainSpec && ctx.chainSpec.validatorList)
+     authorities = ctx.chainSpec.validatorList
+  else {
+    const cache = ctx.getFromCache('validators')
+    if (!cache) {
+       ctx.client.sendRPC('eth_call')
+
+    }
+
+
   }
+  
+
+
+
+  const res:any= {  }
 
   const nonce = b.sealedFields[0].readUInt32BE(0)
   a.proposer = a.authorities[nonce % a.authorities.length]

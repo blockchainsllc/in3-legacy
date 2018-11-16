@@ -27,7 +27,7 @@ import Filters from './filter'
 import { toHex, toNumber, toMinHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
-import Cache from './cache'
+import ChainContext from './chainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
 const defaultConfig = require('./defaultConfig.json')
@@ -42,7 +42,7 @@ export default class Client extends EventEmitter {
   public defConfig: IN3Config
   private transport: Transport
   private filters: Filters
-  public cache: Cache
+  private chains: {[key:string]:ChainContext}
 
   /**
    * creates a new Client.
@@ -64,7 +64,17 @@ export default class Client extends EventEmitter {
       }
     }
     verifyConfig(this.defConfig)
-    this.cache = new Cache(this)
+    this.chains = {}
+  }
+
+  getChainContext(chainId:string) {
+     if (this.chains[chainId])
+       return this.chains[chainId]
+       
+     const chainConf = this.defConfig.servers[chainId]
+     if (!chainConf) throw new Error('chainid '+chainId+' does not exist in config!')
+
+      return this.chains[chainId]=new ChainContext(this,chainId,chainConf.chainSpec)
   }
 
   get config() {
@@ -248,19 +258,19 @@ export default class Client extends EventEmitter {
     // get the verified responses from the nodes
     let responses:RPCResponse[][] = null
     try {
-       responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.cache, [...excludes])))
+       responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.getChainContext(conf.chainId), [...excludes])))
     }
     catch (ex) {
       // we may retry without proof in order to handle this error
       if (conf.proof && conf.proof!='none' && conf.retryWithoutProof) 
-         responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, {...conf,proof:'none'}, this.transport, this.cache, [...excludes])))
+         responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, {...conf,proof:'none'}, this.transport, this.getChainContext(conf.chainId), [...excludes])))
       else 
          throw ex
     }
 
     // merge the result 
     const result: RPCResponse[] = await Promise.all(
-      externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport, this.cache))
+      externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport, this.getChainContext(conf.chainId)))
     )
 
     checkForAutoUpdates(conf, result, this)
@@ -299,7 +309,7 @@ function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: 
 /**
  * merges the results of all responses to one valid one.
  */
-async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: IN3Config, transport: Transport, cache: Cache) {
+async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: IN3Config, transport: Transport, cache: ChainContext) {
 
   // if only one left, this is the response
   if (responses.length === 1) return responses[0]
@@ -350,7 +360,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 /**
  * executes a one single request for one node and updates the stats
  */
-async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, cache: Cache, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
+async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, cache: ChainContext, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
   // keep the timestamp in order to calc the avgResponseTime
   const start = Date.now()
   // get the existing weights

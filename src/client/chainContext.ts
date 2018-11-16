@@ -20,19 +20,27 @@
 import Client from './Client'
 import { address, bytes, hash, rlp, serialize } from '../util/serialize';
 import { toHex, toMinHex } from '../util/util'
-import { RPCRequest, RPCResponse } from '../types/types'
+import { RPCRequest, RPCResponse, ChainSpec } from '../types/types';
 import { sha3 } from 'ethereumjs-util'
 const Buffer: any = require('buffer').Buffer
 
-
-export default class Cache {
+/**
+ * Context for a specific chain including cache and chainSpecs.
+ */
+export default class ChainContext {
   client: Client
+  chainSpec: ChainSpec
+  chainId: string
 
+  genericCache: {[key:string]:string}
   codeCache: CacheNode
   blockCache: { number: number, header: Buffer, hash: Buffer }[]
 
-  constructor(client: Client) {
+  constructor(client: Client, chainId:string, chainSpec:ChainSpec) {
     this.client = client
+    this.chainId =chainId
+    this.chainSpec = chainSpec
+    this.genericCache = {}
     this.codeCache = new CacheNode(client.defConfig.maxCodeCache || 100000)
     this.blockCache = []
     try {
@@ -49,13 +57,13 @@ export default class Cache {
     const result = addresses.map(a => this.codeCache.get(a))
     const missing: RPCRequest[] = result.map((_, i) => _ ? null : { method: 'eth_getCode', params: [toHex(addresses[i], 20), block[0]==='l'?block:toMinHex(block)], id: i + 1, jsonrpc: '2.0' as any }).filter(_ => _)
     if (missing.length) {
-      for (const r of await this.client.send(missing, undefined, { proof: 'none', signatureCount: 0 }) as RPCResponse[]) {
+      for (const r of await this.client.send(missing, undefined, { proof: 'none', signatureCount: 0, chainId:this.chainId }) as RPCResponse[]) {
         const i = r.id as number - 1
         if (r.error) throw new Error(' could not get the code for address ' + addresses[i] + ' : ' + r.error)
         this.codeCache.put(addresses[i], bytes(result[i] = r.result))
       }
-      if (this.client.defConfig.cacheStorage && this.client.defConfig.chainId)
-        this.client.defConfig.cacheStorage.setItem('in3.code.' + this.client.defConfig.chainId, this.codeCache.toStorage())
+      if (this.client.defConfig.cacheStorage && this.chainId)
+        this.client.defConfig.cacheStorage.setItem('in3.code.' + this.chainId, this.codeCache.toStorage())
 
     }
 
@@ -88,7 +96,7 @@ export default class Cache {
 
 
   initCache() {
-    const chainId = this.client.defConfig.chainId;
+    const chainId = this.chainId;
     if (this.client.defConfig.cacheStorage && chainId) {
 
       // read nodeList
@@ -99,6 +107,16 @@ export default class Cache {
       }
       catch (ex) {
         this.client.defConfig.cacheStorage.setItem('in3.nodeList.' + chainId, '')
+      }
+
+      // read cache
+      const cache = this.client.defConfig.cacheStorage.getItem('in3.cache.' + chainId)
+      try {
+        if (cache)
+          this.genericCache = JSON.parse(cache)
+      }
+      catch (ex) {
+        this.client.defConfig.cacheStorage.setItem('in3.cache.' + chainId, '')
       }
 
       // read codeCache
@@ -116,9 +134,19 @@ export default class Cache {
   }
 
   updateCache() {
-    if (this.client.defConfig.cacheStorage && this.client.defConfig.chainId && this.client.defConfig.servers[this.client.defConfig.chainId]) {
-      this.client.defConfig.cacheStorage.setItem('in3.nodeList.' + this.client.defConfig.chainId, JSON.stringify(this.client.defConfig.servers[this.client.defConfig.chainId]))
+    if (this.client.defConfig.cacheStorage && this.chainId && this.client.defConfig.servers[this.chainId]) {
+      this.client.defConfig.cacheStorage.setItem('in3.nodeList.' + this.chainId, JSON.stringify(this.client.defConfig.servers[this.chainId]))
     }
+  }
+
+  getFromCache(key:string):string {
+    return this.genericCache[key]
+  }
+
+  putInCache(key:string, value:string) {
+    this.genericCache[key]=value
+    if (this.client.defConfig.cacheStorage && this.chainId) 
+       this.client.defConfig.cacheStorage.setItem('in3.cache.' + this.chainId, JSON.stringify(this.genericCache))
   }
 
 
