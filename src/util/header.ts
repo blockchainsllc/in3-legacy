@@ -1,21 +1,23 @@
-import { bytes, rlp, Block, hash, address, BlockData } from './serialize';
+import { bytes, rlp, Block, hash, address, BlockData } from './serialize'
+import { toHex } from './util'
+import { rawDecode } from 'ethereumjs-abi'
 import { recover } from 'secp256k1'
 import { publicToAddress } from 'ethereumjs-util'
-import ChainContext from '../client/chainContext';
-import { ChainSpec } from '../../js/src/types/types';
+import ChainContext from '../client/chainContext'
+import { ChainSpec } from '../types/types'
 
 /**
  * verify a Blockheader and returns the percentage of finality
  * @param blocks 
  * @param getChainSpec 
  */
-export async function checkBlockSignatures(blockHeaders:(Buffer | string | BlockData)[], getChainSpec:(data:Block)=>Promise<{
+export async function checkBlockSignatures(blockHeaders:(Buffer | string | BlockData | Block)[], getChainSpec:(data:Block)=>Promise<{
   spec:ChainSpec
   authorities: Buffer[]
   proposer: Buffer
 }>) {
   // parse blockHeaders
-  const blocks = blockHeaders.map(_=>new Block(_))
+  const blocks = blockHeaders.map(_=> _ instanceof Block ? _ : new Block(_))
 
   // authority_round
   const chainSpec = await getChainSpec(blocks[0])
@@ -61,19 +63,25 @@ export async function getChainSpec(b:Block, ctx:ChainContext) {
      authorities = ctx.chainSpec.validatorList
   else {
     const cache = ctx.getFromCache('validators')
-    if (!cache) {
-       ctx.client.sendRPC('eth_call')
-
+    if (cache) {
+      try {
+        authorities = JSON.parse(cache)
+      }
+      catch (x) {}
     }
-
-
+    if (!authorities) {
+        // call getValidators
+        // currently we get it without proof, because we could not validate the blockheader of this call
+       const res = await ctx.client.sendRPC('eth_call',[{to:ctx.chainSpec.validatorContract,data:'0xb7ab4db5'},'latest'],ctx.chainId,{proof:'none'})
+       if (res.result) {
+        authorities = rawDecode(['address[]'],Buffer.from( res.result.substr(2) ,'hex'))[0].map(_=>Buffer.from(_,'hex'))
+        ctx.putInCache('validators', JSON.stringify(authorities.map(toHex)))
+      }
+      else throw new Error('Could not read the validators from the ValidatorContract '+ res.error)
+    }
   }
   
-
-
-
-  const res:any= {  }
-
+  const a:any= { authorities : authorities.map(address) , spec:ctx.chainSpec}
   const nonce = b.sealedFields[0].readUInt32BE(0)
   a.proposer = a.authorities[nonce % a.authorities.length]
   return a

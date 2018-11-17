@@ -30,6 +30,7 @@ import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util'
 import ChainContext from './chainContext'
 import { verifyIPFSHash } from './ipfs'
+import {checkBlockSignatures,getChainSpec} from '../util/header'
 
 // these method are accepted without proof
 const allowedWithoutProof = ['ipfs_get', 'ipfs_put', 'eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
@@ -44,17 +45,26 @@ export class BlackListError extends Error {
 }
 
 /** verify the signatures of a blockhash */
-export function verifyBlock(b: Block, signatures: Signature[], expectedSigners: Buffer[], expectedBlockHash: Buffer, ctx: ChainContext) {
+export async function verifyBlock(b: Block, signatures: Signature[], expectedSigners: Buffer[], expectedBlockHash: Buffer, ctx: ChainContext) {
 
   // calculate the blockHash
   const blockHash = b.hash()
   if (expectedBlockHash && !blockHash.equals(expectedBlockHash))
     throw new Error('The BlockHash is not the expected one!')
 
-  // if we don't expect signatures, we don't need to verify them.
-  if (!expectedSigners || expectedSigners.length === 0) return
+  // if we don't expect signatures
+  if (!expectedSigners || expectedSigners.length === 0) {
 
-  // TODO in the future we are not allowing block verification without signature
+    // for proof of authorities we can verify the signatures
+    if (ctx && ctx.chainSpec && ctx.chainSpec.engine==='authorityRound') {
+      const finality = await checkBlockSignatures([b],_=>getChainSpec(_,ctx))
+      // TODO: check if this is enough
+    }
+    // no expected signatures - no need to verify here
+    return
+  }
+
+  // we are not allowing block verification without signature
   if (!signatures) throw new Error('No signatures found ')
 
   const existing = ctx && ctx.getBlockHeaderByHash(blockHash)
@@ -104,7 +114,7 @@ export async function verifyTransactionProof(txHash: Buffer, proof: Proof, expec
   const block = blockFromHex(proof.block)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, bytes32(txData.blockHash), ctx)
+  await verifyBlock(block, proof.signatures, expectedSigners, bytes32(txData.blockHash), ctx)
 
   // TODO the from-address is not directly part of the hash, so manipulating this property would not be detected! 
   // we would have to take the from-address from the signature
@@ -135,7 +145,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, proof: Proof
   const block = blockFromHex(proof.block)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, bytes32(receipt.blockHash), ctx)
+  await verifyBlock(block, proof.signatures, expectedSigners, bytes32(receipt.blockHash), ctx)
 
   // TODO how can we be sure, that the receipt matches the transactionHash? 
   // I guess we would need to also deliver the transaction and verify the txIndex and block
@@ -186,7 +196,7 @@ export async function verifyLogProof(proof: Proof, expectedSigners: Buffer[], lo
     blockHashes[bn] = block.hash()
 
     // verify the blockhash and the signatures
-    verifyBlock(block, proof.signatures, expectedSigners, null, ctx)
+    await verifyBlock(block, proof.signatures, expectedSigners, null, ctx)
 
     // verifiy all merkle-Trees of the receipts
     await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
@@ -251,7 +261,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
     requiredHash = bytes32((data as BlockData).hash)
 
   // verify the blockhash and the signatures
-  verifyBlock(block, proof.signatures, expectedSigners, requiredHash, ctx)
+  await verifyBlock(block, proof.signatures, expectedSigners, requiredHash, ctx)
 
   // verify the transactions
   if (block.transactions) {
@@ -280,7 +290,7 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
   // verify the blockhash and the signatures
   const block = new Block(proof.block)
   // TODO if we expect a specific block in the request, we should also check if the block is the one requested
-  verifyBlock(block, proof.signatures, expectedSigners, null, ctx)
+  await verifyBlock(block, proof.signatures, expectedSigners, null, ctx)
 
   // get the account-proof
   const accountProof = proof.accounts[Object.keys(proof.accounts)[0]]
@@ -415,7 +425,7 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, proof:
   // verify the blockhash and the signatures
   const block = new Block(proof.block)
   // TODO if we expect a specific block in the request, we should also check if the block is the one requested
-  verifyBlock(block, proof.signatures, expectedSigners, null, ctx)
+  await verifyBlock(block, proof.signatures, expectedSigners, null, ctx)
 
   if (!proof.accounts) throw new Error('No Accounts to verify')
 
