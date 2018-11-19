@@ -34,7 +34,7 @@ test-in3:
     - npm install
     - npm run build
     - npm test
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/in3/in3-server.git
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/in3-server.git
     - cd in3-server
     - npm install
     - cd node_modules
