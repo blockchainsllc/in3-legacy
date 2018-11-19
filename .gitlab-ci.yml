@@ -32,7 +32,18 @@ test-in3:
   script:
     - sh /prepare.sh
     - npm install
+    - npm run build
     - npm test
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/in3/in3-server.git
+    - cd in3-server
+    - npm install
+    - cd node_modules
+    - rm -rf in3
+    - ln -s ../../ in3
+    - cd ..
+    - npm run build
+    - npm test
+
   artifacts:
     name: "test-reports-$CI_JOB_NAME"
     paths:
