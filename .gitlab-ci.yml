@@ -29,6 +29,28 @@ test-in3:
   stage: test
   tags:
     - short-jobs
+  variables:
+      RPCURL: http://parity:8545
+      IPFS_URL: http://ipfs:5001
+  services:
+      - name: jbenet/go-ipfs:latest
+        command:
+          - daemon
+          - --offline
+        alias: ipfs
+      - name: slockit/parity-in3:0.3
+        command:
+          - --jsonrpc-apis=all
+          - --logging=3
+          - --jsonrpc-interface=all
+          - --ws-interface=all
+          - --chain=dev
+          - --gas-cap=8000000
+          - --gasprice=0
+          - --reseal-min-period=0
+          - --gas-floor-target=8700000
+          - --tracing=on
+        alias: parity
   script:
     - sh /prepare.sh
     - npm install
