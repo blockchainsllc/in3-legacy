@@ -103,6 +103,7 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 *  **latestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **useRef** `boolean` - if true binary-data (starting with a 0x) will be refered if occuring again.   
 *  **useFullProof** `boolean` - if true all data in the response will be proven, which leads to a higher payload.   
+*  **finality** `number` - if given the server will deliver the blockheaders of the following blocks until at least the number in percent of the validators is reached.   
 *  **verification** `string` - defines the kind of proof the client is asking for   
  Must be one of the these values : `'never`', `'proof`', `'proofWithSignature`'
 *  **signatures** `string<address>[]` - a list of addresses requested to sign the blockhash   
@@ -143,6 +144,9 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
   proof: {
     type: 'accountProof',
     block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+    finalityBlocks: [
+      '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+    ],
     transactions: [],
     merkleProof: [
       null
@@ -163,13 +167,15 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
       }
     ]
   },
-  lastNodeList: 326478
+  lastNodeList: 326478,
+  currentBlock: 320126478
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
 *  **proof** [Proof](#proof) - the Proof-data   
 *  **lastNodeList** `number` - the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.   
+*  **currentBlock** `number` - the current blocknumber.   
 
 ### ChainSpec
 
@@ -305,6 +311,9 @@ const rPCResponse:types.RPCResponse = {
     proof: {
       type: 'accountProof',
       block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+      finalityBlocks: [
+        '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+      ],
       transactions: [],
       merkleProof: [
         null
@@ -325,7 +334,8 @@ const rPCResponse:types.RPCResponse = {
         }
       ]
     },
-    lastNodeList: 326478
+    lastNodeList: 326478,
+    currentBlock: 320126478
   },
   in3Node: {
     index: 13,
@@ -369,6 +379,9 @@ import {types} from 'incubed'
 const proof:types.Proof = {
   type: 'accountProof',
   block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+  finalityBlocks: [
+    '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+  ],
   transactions: [],
   merkleProof: [
     null
@@ -395,6 +408,7 @@ const proof:types.Proof = {
 *  **type** `string` (required)  - the type of the proof   
  Must be one of the these values : `'transactionProof`', `'receiptProof`', `'blockProof`', `'accountProof`', `'callProof`', `'logProof`'
 *  **block** `string` - the serialized blockheader as hex, required in most proofs   
+*  **finalityBlocks** `array` - the serialized blockheader as hex, required in case of finality asked   
 *  **transactions** `array` - the list of transactions of the block   
 *  **merkleProof** `string[]` - the serialized merle-noodes beginning with the root-node   
 *  **txProof** `string[]` - the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex   
@@ -460,6 +474,9 @@ const serverList:types.ServerList = {
   proof: {
     type: 'accountProof',
     block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+    finalityBlocks: [
+      '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+    ],
     transactions: [],
     merkleProof: [
       null
