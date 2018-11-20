@@ -21,6 +21,12 @@ export async function checkBlockSignatures(blockHeaders:(Buffer | string | Block
   // parse blockHeaders
   const blocks = blockHeaders.map(_=> _ instanceof Block ? _ : new Block(_))
 
+  // order blocks to make sure their hashes are connected
+  for (let i=1;i<blocks.length;i++) {
+    if (!blocks[i-1].hash().equals(blocks[i].parentHash))
+      throw new Error('The finality-Block does match the parentHash')
+  }
+
   // authority_round
   const chainSpec = await getChainSpec(blocks[0])
   const signatures=[]

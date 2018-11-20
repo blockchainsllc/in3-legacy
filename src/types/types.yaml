@@ -265,6 +265,13 @@ definitions:
                 default: 1
                 description: the number of request send when getting a first answer
                 example: 3
+            finality:
+                type: number
+                min: 0
+                max: 100
+                default: 0
+                description: the number in percent needed in order reach finality (% of signature of the validators)
+                example: 50
             timeout:
                 type: number
                 min: 1

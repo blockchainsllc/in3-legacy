@@ -381,6 +381,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       if (conf.chainId && canMultiChain(node))
         in3.chainId = conf.chainId
 
+      // tell server to return finality blocks
+      if (conf.finality)
+        in3.finality = conf.finality
+
       // tell server to replace latest with a older block
       if (conf.replaceLatestBlock)
         in3.latestBlock = conf.replaceLatestBlock

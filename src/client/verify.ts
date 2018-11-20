@@ -64,7 +64,7 @@ export async function verifyBlock(b: Block, proof:BlockHeaderProof, ctx: ChainCo
 
     // for proof of authorities we can verify the signatures
     if (ctx && ctx.chainSpec && ctx.chainSpec.engine==='authorityRound') {
-      const finality = await checkBlockSignatures([b, ...proof.proof.finalityBlocks],_=>getChainSpec(_,ctx))
+      const finality = await checkBlockSignatures([b, ...(proof.proof && proof.proof.finalityBlocks || [])],_=>getChainSpec(_,ctx))
       if  (proof.finality &&  proof.finality > finality)
          throw new Error('we have only a finality of '+finality+' but expected was '+proof.finality)
     }

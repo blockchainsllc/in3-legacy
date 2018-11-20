@@ -32,7 +32,7 @@ configuration-data for the Incubed-client / server
 a local weight of a n3-node. (This is used internally to weight the requests)
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const iN3NodeWeight:types.IN3NodeWeight = {
   weight: 0.5,
   responseCount: 147,
@@ -55,7 +55,7 @@ const iN3NodeWeight:types.IN3NodeWeight = {
 a configuration of a in3-server.
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const iN3NodeConfig:types.IN3NodeConfig = {
   index: 13,
   address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
@@ -81,7 +81,7 @@ const iN3NodeConfig:types.IN3NodeConfig = {
 additional config for a IN3 RPC-Request
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
   chainId: '0x1',
   includeCode: true,
@@ -113,7 +113,7 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 Verified ECDSA Signature. Signatures are a pair (r, s). Where r is computed as the X coordinate of a point R, modulo the curve order n.
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const signature:types.Signature = {
   address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
   block: 3123874,
@@ -139,7 +139,7 @@ const signature:types.Signature = {
 additional data returned from a IN3 Server
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const iN3ResponseConfig:types.IN3ResponseConfig = {
   proof: {
     type: 'accountProof',
@@ -182,7 +182,7 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
 describes the chainspecific consensus params
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const chainSpec:types.ChainSpec = {}
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -196,7 +196,7 @@ const chainSpec:types.ChainSpec = {}
 the iguration of the IN3-Client. This can be paritally overriden for every request.
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const iN3Config:types.IN3Config = {
   nodeLimit: 150,
   keepIn3: false,
@@ -214,6 +214,7 @@ const iN3Config:types.IN3Config = {
   minDeposit: 0,
   replaceLatestBlock: 6,
   requestCount: 3,
+  finality: 50,
   timeout: 3000,
   chainId: '0x1',
   chainRegistry: '0xe36179e2286ef405e929C90ad3E70E649B22a945',
@@ -239,6 +240,7 @@ const iN3Config:types.IN3Config = {
 *  **minDeposit** `number` (required)  - min stake of the server. Only nodes owning at least this amount will be chosen.   
 *  **replaceLatestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **requestCount** `number` (required)  - the number of request send when getting a first answer   
+*  **finality** `number` - the number in percent needed in order reach finality (% of signature of the validators)   
 *  **timeout** `number` - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.   
 *  **chainId** `string` (required)  - servers to filter for the given chain. The chain-id based on EIP-155.   
 *  **chainRegistry** `string` - main chain-registry contract   
@@ -265,7 +267,7 @@ const iN3Config:types.IN3Config = {
 a JSONRPC-Request with N3-Extension
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const rPCRequest:types.RPCRequest = {
   jsonrpc: '2.0',
   method: 'eth_getBalance',
@@ -302,7 +304,7 @@ const rPCRequest:types.RPCRequest = {
 a JSONRPC-Responset with N3-Extension
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const rPCResponse:types.RPCResponse = {
   jsonrpc: '2.0',
   id: 2,
@@ -364,7 +366,7 @@ const rPCResponse:types.RPCResponse = {
 a Object holding proofs for event logs. The key is the blockNumber as hex
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const logProof:types.LogProof = 
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -375,7 +377,7 @@ const logProof:types.LogProof =
 the Proof-data as part of the in3-section
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const proof:types.Proof = {
   type: 'accountProof',
   block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
@@ -423,7 +425,7 @@ const proof:types.Proof = {
 the Proof-for a single Account
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const accountProof:types.AccountProof = {
   accountProof: [
     null
@@ -457,7 +459,7 @@ const accountProof:types.AccountProof = {
 a List of nodes
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const serverList:types.ServerList = {
   nodes: [
     {
@@ -512,7 +514,7 @@ const serverList:types.ServerList = {
 the configuration for the rpc-handler
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const iN3RPCConfig:types.IN3RPCConfig = {
   db: {},
   profile: {},
@@ -555,7 +557,7 @@ const iN3RPCConfig:types.IN3RPCConfig = {
 the configuration for the rpc-handler
 
 ```javascript
-import {types} from 'incubed'
+import {types} from 'in3'
 const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
   handler: 'eth',
   autoRegistry: {
