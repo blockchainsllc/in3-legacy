@@ -21,15 +21,17 @@
 import { assert } from 'chai'
 import 'mocha'
 import { serialize, util } from '../src/index'
+import {checkBlockSignatures, getSigner, getAuthorities, getChainSpec} from '../src/util/header'
 import * as ethUtil from 'ethereumjs-util'
+import { toNumber } from '../src/util/util';
 const BN = ethUtil.BN
 const toHex = util.toHex
-
+const conf = require('../src/client/defaultConfig.json')
 describe('Util-Functions', () => {
 
 
-  it('calculate Blockhash for Kovan-Chain', () => {
-    verifyBlock({
+  it('calculate Blockhash for Kovan-Chain', async () => {
+    await verifyBlock({
       "author": "0x0010f94b296a852aaac52ea6c5ac72e03afd032d",
       "difficulty": "340282366920938463463374607431768211454",
       "extraData": "0xd5830109058650617269747986312e32342e31826c69",
@@ -78,12 +80,12 @@ describe('Util-Functions', () => {
       ],
       "transactionsRoot": "0x609b9fdb91fc9aeba07efa4382d3db7fbf835a5cf6d6bb2ff5db2ad8ea7942d0",
       "uncles": []
-    })
+    }, '0x2a')
   })
 
 
-  it('calculate Blockhash for Parity Dev-Chain', () => {
-    verifyBlock({
+  it('calculate Blockhash for Parity Dev-Chain', async () => {
+    await verifyBlock({
       "author": "0x0000000000000000000000000000000000000000",
       "difficulty": "0x20000",
       "extraData": "0xd5830108068650617269747986312e32332e30826c69",
@@ -130,8 +132,8 @@ describe('Util-Functions', () => {
     })
   })
 
-  it('calculate Blockhash for Mainnet', () => {
-    verifyBlock({
+  it('calculate Blockhash for Mainnet', async () => {
+    await verifyBlock({
       "difficulty": "3242227738538447",
       "extraData": "0xe4b883e5bda9e7a59ee4bb99e9b1bc",
       "gasLimit": 8003935,
@@ -262,7 +264,7 @@ describe('Util-Functions', () => {
 })
 
 
-function verifyBlock(blockData: any) {
+async function verifyBlock(blockData: any, chainId?:string) {
 
   const b = new serialize.Block(blockData)
 
@@ -291,6 +293,21 @@ function verifyBlock(blockData: any) {
 
   const hash = new serialize.Block(blockData).hash()
   assert.equal('0x' + hash.toString('hex'), blockData.hash)
+
+  if (chainId) {
+    const spec = conf.servers[chainId].chainSpec
+    const ctx = {
+      chainSpec:spec,
+      chainId,
+      getFromCache : key => ctx[key],
+      putInCache : (key, value) => ctx[key]=value
+    } as any
+    const chainSpec = await getChainSpec(b,ctx)
+    const authrities = await getAuthorities(spec,toNumber(b.number),()=>null)
+    const signer = getSigner(b)
+    assert.isDefined(authrities.find(_=>_.equals(signer)))
+    const finality = await checkBlockSignatures([b],async (block)=>chainSpec)
+  }
 
 }
 

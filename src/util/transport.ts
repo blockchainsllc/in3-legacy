@@ -63,7 +63,7 @@ export class AxiosTransport implements Transport {
     const requests = Array.isArray(data) ? data : [data]
 
     // add cbor-config
-    const conf = {}
+    const conf = {        headers: { 'Content-Type': 'application/json' }  }
     if (this.format === 'cbor')
       Object.assign(conf, {
         transformRequest: cbor.encodeRequests,

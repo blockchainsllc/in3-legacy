@@ -33,6 +33,9 @@ export const cbor = _cbor
 import * as _serialize from './util/serialize'
 export const serialize = _serialize
 
+import * as _header from './util/header'
+export const header = _header
+
 import * as _storage from './util/storage'
 export const storage = _storage
 
@@ -68,6 +71,7 @@ export type ReceiptData = _serialize.ReceiptData
 export type TransactionData = _serialize.TransactionData
 export type IN3RPCConfig = types.IN3RPCConfig
 export type IN3RPCHandlerConfig = types.IN3RPCHandlerConfig
+export type ChainSpec = types.ChainSpec
 
 export const AxiosTransport = transport.AxiosTransport
 export const typeDefs = types.validationDef

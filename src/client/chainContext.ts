@@ -22,6 +22,7 @@ import { address, bytes, hash, rlp, serialize } from '../util/serialize';
 import { toHex, toMinHex } from '../util/util'
 import { RPCRequest, RPCResponse, ChainSpec } from '../types/types';
 import { sha3 } from 'ethereumjs-util'
+import DeltaHistory from '../util/DeltaHistory'
 const Buffer: any = require('buffer').Buffer
 
 /**
@@ -43,6 +44,7 @@ export default class ChainContext {
     this.genericCache = {}
     this.codeCache = new CacheNode(client.defConfig.maxCodeCache || 100000)
     this.blockCache = []
+
     try {
       // if we are running in the browser we use to localStorage as cache
       if (client.defConfig.cacheStorage === undefined && window && window.localStorage)
@@ -148,6 +150,9 @@ export default class ChainContext {
     if (this.client.defConfig.cacheStorage && this.chainId) 
        this.client.defConfig.cacheStorage.setItem('in3.cache.' + this.chainId, JSON.stringify(this.genericCache))
   }
+
+
+
 
 
 }

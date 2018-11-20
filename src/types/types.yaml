@@ -112,6 +112,9 @@ definitions:
             useFullProof:
                 description: if true all data in the response will be proven, which leads to a higher payload.
                 type: boolean
+            finality:
+                description: if given the server will deliver the blockheaders of the following blocks until at least the number in percent of the validators is reached.
+                type: number
             verification: 
                 description: defines the kind of proof the client is asking for
                 type: string
@@ -176,6 +179,10 @@ definitions:
                 description: the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.
                 type: number
                 example: 326478
+            currentBlock: 
+                description: the current blocknumber.
+                type: number
+                example: 320126478
 
     ChainSpec:
         type: object
@@ -441,6 +448,10 @@ definitions:
                 type: string
                 description: the serialized blockheader as hex, required in most proofs 
                 example: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'            
+            finalityBlocks:
+                type: array
+                description: the serialized blockheader as hex, required in case of finality asked 
+                example: ['0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b']
             transactions:
                 type: array
                 description: the list of transactions of the block
