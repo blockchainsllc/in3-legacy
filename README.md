@@ -56,6 +56,7 @@ The application would then accept the following arguments:
 |--maxBlockCache|number of number of blocks cached  in memory|
 |--proof|'none' for no verification, 'standard' for verifying all important fields, 'full'  veryfying all fields even if this means a high payload.|
 |--signatureCount|number of signatures requested|
+|--finality|percenage of validators signed blockheaders - this is used for PoA (aura) |
 |--minDeposit|min stake of the server. Only nodes owning at least this amount will be chosen.|
 |--replaceLatestBlock|if specified, the blocknumber *latest* will be replaced by blockNumber- specified value|
 |--requestCount|the number of request send when getting a first answer|
