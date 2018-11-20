@@ -38,7 +38,7 @@ test-in3:
           - daemon
           - --offline
         alias: ipfs
-      - name: slockit/parity-in3:0.3
+      - name: slockit/parity-in3:v2.3
         command:
           - --jsonrpc-apis=all
           - --logging=3
