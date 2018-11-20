@@ -40,6 +40,7 @@ test-in3:
         alias: ipfs
       - name: slockit/parity-in3:v2.3
         command:
+          - --jsonrpc-experimental            
           - --jsonrpc-apis=all
           - --logging=3
           - --jsonrpc-interface=all
