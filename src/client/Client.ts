@@ -18,7 +18,7 @@
 ***********************************************************/
 
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig, ServerList } from '../types/types'
-import { verifyProof } from './modules'
+import { verifyProof, getModule } from './modules'
 import { canMultiChain, canProof } from './serverList'
 import { Transport, AxiosTransport } from '../util/transport'
 import { getChainData } from '../modules/eth/chainData' // this is an exception, because if we don't know anything about the chain, we must use eth
@@ -78,7 +78,7 @@ export default class Client extends EventEmitter {
      const chainConf = this.defConfig.servers[chainId]
      if (!chainConf) throw new Error('chainid '+chainId+' does not exist in config!')
 
-      return this.chains[chainId]=new ChainContext(this,chainId,chainConf.chainSpec)
+     return this.chains[chainId]= getModule(chainConf.verifier || 'eth').createChainContext(this,chainId,chainConf.chainSpec)
   }
 
   get config() {
