@@ -17,10 +17,10 @@
 * For questions, please contact info@slock.it              *
 ***********************************************************/
 
-import Client from './Client';
-import { RPCRequest, RPCResponse } from '../types/types'
-import { LogData } from '../util/serialize'
-import { checkForError } from '../util/util'
+import Client from '../../client/Client';
+import { RPCRequest, RPCResponse } from '../../types/types'
+import { LogData } from '../../util/serialize'
+import { checkForError } from '../../util/util'
 export type FilterType = 'event' | 'block' | 'pending'
 export interface FilterOptions {
   fromBlock?: number | string
@@ -50,7 +50,7 @@ export default class Filters {
     return id
   }
 
-  handleFilter(request: RPCRequest, client: Client): Promise<RPCResponse> {
+  handleIntern(request: RPCRequest, client: Client): Promise<RPCResponse> {
     switch (request.method) {
       case 'eth_newFilter':
         return this.addFilter(client, 'event', request.params[0])

@@ -250,6 +250,7 @@ const iN3Config:types.IN3Config = {
 *  **loggerUrl** `string` - a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }   
 *  **servers** `object` - the nodelist per chain   
     each key in this object will structure its value like: 
+    *  **verifier** `string` - name of the module responsible for handling the verification   
     *  **name** `string` - a alias for the chain   
     *  **chainSpec** [ChainSpec](#chainspec) - chain definition   
     *  **initAddresses** `string[]` - a list of addresses which should always be part of the nodelist when getting an update   

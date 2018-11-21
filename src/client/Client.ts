@@ -18,12 +18,11 @@
 ***********************************************************/
 
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig, ServerList } from '../types/types'
-import { verifyProof, BlackListError } from './verify'
+import { verifyProof } from './modules'
 import { canMultiChain, canProof } from './serverList'
 import { Transport, AxiosTransport } from '../util/transport'
-import { getChainData } from './chainData'
+import { getChainData } from '../modules/eth/chainData' // this is an exception, because if we don't know anything about the chain, we must use eth
 import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
-import Filters from './filter'
 import { toHex, toNumber, toMinHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
@@ -32,7 +31,14 @@ import { adjustConfig } from './configHandler'
 import axios from 'axios'
 const defaultConfig = require('./defaultConfig.json')
 
-
+/** special Error for making sure the correct node is blacklisted */
+export class BlackListError extends Error {
+  addresses: string[]
+  constructor(msg: string, addresses: string[]) {
+    super(msg)
+    this.addresses = addresses
+  }
+}
 /**
  * Client for N3.
  * 
@@ -41,7 +47,6 @@ export default class Client extends EventEmitter {
 
   public defConfig: IN3Config
   private transport: Transport
-  private filters: Filters
   private chains: {[key:string]:ChainContext}
 
   /**
@@ -51,7 +56,6 @@ export default class Client extends EventEmitter {
    */
   public constructor(config: Partial<IN3Config>={}, transport?: Transport) {
     super()
-    this.filters = new Filters()
     if (config && config.autoConfig)
       this.addListener('beforeRequest', adjustConfig)
     this.transport = transport || new AxiosTransport(config.format || 'json')
@@ -236,8 +240,9 @@ export default class Client extends EventEmitter {
     // filter requests are handled internally and externally
     const internResponses: Promise<RPCResponse>[] = []
     const externRequests: RPCRequest[] = []
+    const ctx = this.getChainContext(conf.chainId)
     requests.forEach(r => {
-      const res = this.filters.handleFilter(r, this)
+      const res = ctx.handleIntern(r)
       if (res) internResponses.push(res)
       else externRequests.push(r)
     })
@@ -437,7 +442,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
       // maybe we can still deliver a proof, but without data
       !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
-      true, cache)))
+      cache)))
 
     return responses
   }

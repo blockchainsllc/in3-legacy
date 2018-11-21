@@ -17,32 +17,24 @@
 * For questions, please contact info@slock.it              *
 ***********************************************************/
 
-
+import EthChainContext from './EthChainContext'
 import * as util from 'ethereumjs-util'
-import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../types/types';
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction } from '../util/serialize';
-import { toHex, toNumber, promisify, toMinHex, toBN } from '../util/util'
+import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../../types/types';
+import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction } from '../../util/serialize';
+import { toHex, toNumber, promisify, toMinHex, toBN } from '../../util/util'
 import { executeCall } from './call'
-import { createRandomIndexes } from './serverList'
-import verifyMerkleProof from '../util/merkleProof'
-import { getStorageArrayKey, getStringValue } from '../util/storage'
+import { createRandomIndexes } from '../../client/serverList'
+import verifyMerkleProof from '../../util/merkleProof'
+import { getStorageArrayKey, getStringValue } from '../../util/storage'
 import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util'
-import ChainContext from './chainContext'
-import { verifyIPFSHash } from './ipfs'
-import {checkBlockSignatures,getChainSpec} from '../util/header'
+import ChainContext from '../../client/chainContext'
+import { verifyIPFSHash } from '../ipfs/ipfs'
+import {checkBlockSignatures,getChainSpec} from '../../util/header'
+import {BlackListError} from '../../client/Client' 
 
 // these method are accepted without proof
 const allowedWithoutProof = ['ipfs_get', 'ipfs_put', 'eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
-
-/** special Error for making sure the correct node is blacklisted */
-export class BlackListError extends Error {
-  addresses: string[]
-  constructor(msg: string, addresses: string[]) {
-    super(msg)
-    this.addresses = addresses
-  }
-}
 
 export interface BlockHeaderProof {
   finality?:number
@@ -75,7 +67,7 @@ export async function verifyBlock(b: Block, proof:BlockHeaderProof, ctx: ChainCo
   // we are not allowing block verification without signature
   if (!proof.proof.signatures) throw new Error('No signatures found ')
 
-  const existing = ctx && ctx.getBlockHeaderByHash(blockHash)
+  const existing = ctx && ctx instanceof EthChainContext && ctx.getBlockHeaderByHash(blockHash)
 
   // filter valid signatures for the current block
   const signaturesForBlock = proof.proof.signatures.filter(_ => _ && toNumber(_.block) === toNumber(b.number))
@@ -102,7 +94,7 @@ export async function verifyBlock(b: Block, proof:BlockHeaderProof, ctx: ChainCo
       throw new Error('The signature was not signed by ' + proof.expectedSigners[i])
 
     // we have at least one valid signature, so we can try to cache it.
-    if (ctx && ctx.client.defConfig.maxBlockCache)
+    if (ctx && ctx instanceof EthChainContext && ctx.client.defConfig.maxBlockCache)
       ctx.addBlockHeader(toNumber(b.number), b.serializeHeader())
 
     // looks good ;-)
@@ -442,7 +434,7 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, header
   .filter(ac=> !headerProof.proof.accounts[ac].code && headerProof.proof.accounts[ac].codeHash !== '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' )
   
   // in case there are some missing codes, we fetch them with one unproved request through the cache, since they will be verified later anyway.
-  if (missingCode.length && ctx)
+  if (missingCode.length && ctx && ctx instanceof EthChainContext)
     await ctx.getCodeFor(missingCode.map(address), toHex(block.number)).then(_ => _.forEach((c, i) =>
     headerProof.proof.accounts[missingCode[i]].code = c as any
     ))
@@ -494,7 +486,7 @@ function isNotExistend(account: AccountProof) {
 
 function checkBlock(block: string, ctx: ChainContext, blockNumber?: number): any {
   if (!block) return block
-  if (typeof block === 'string' && !block.startsWith('0x')) {
+  if (typeof block === 'string' && !block.startsWith('0x') && ctx instanceof EthChainContext) {
     const bh = ctx.getBlockHeader(toNumber(block))
     if (!bh) throw new Error('The server returned a not supported blockheader : ' + block)
     return bh
@@ -514,17 +506,11 @@ function handleBlockCache(proof: Proof, ctx: ChainContext) {
 }
 
 /** general verification-function which handles it according to its given type. */
-export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, throwException = true, ctx?: ChainContext): Promise<boolean> {
+export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, ctx?: ChainContext): Promise<boolean> {
 
   // handle verification with implicit proof (like ipfs)
-  try {
-    if (request.method === 'ipfs_get' && response.result)
-      return verifyIPFSHash(response.result, request.params[1] || 'base64', request.params[0])
-  }
-  catch (ex) {
-    if (throwException) throw ex
-    return false
-  }
+  if (request.method === 'ipfs_get' && response.result)
+    return verifyIPFSHash(response.result, request.params[1] || 'base64', request.params[0])
 
   // make sure we only throw an exception for missing proof, if the proof is possible
   const proof = response && response.in3 && response.in3.proof
@@ -533,7 +519,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     // exceptions
     if (request.method === 'eth_getLogs' && response.result && (response.result as any).length === 0) return true
     if (request.method.startsWith('eth_getTransaction') && !response.result) return true
-    if (throwException && !allowWithoutProof && !response.error) throw new Error('the response does not contain any proof!')
+    if (!allowWithoutProof && !response.error) throw new Error('the response does not contain any proof!')
     return !!response.error  || allowWithoutProof
   }
 
@@ -543,33 +529,27 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
   // convert all signatures into buffer
   const headerProof:BlockHeaderProof = { proof, expectedSigners: request.in3 && request.in3.signatures && request.in3.signatures.map(address),finality: request.in3 && request.in3.finality }
 
-  try {
-    switch (proof.type) {
-      case 'transactionProof':
-        await verifyTransactionProof(bytes32(request.params[0]), headerProof, response.result, ctx)
-        break
-      case 'logProof':
-        await verifyLogProof(headerProof, response.result && response.result as LogData[], ctx)
-        break
-      case 'receiptProof':
-        await verifyTransactionReceiptProof(bytes32(request.params[0]), headerProof, response.result && response.result as any, ctx)
-        break
-      case 'blockProof':
-        await verifyBlockProof(request, response.result, headerProof, ctx)
-        break
-      case 'accountProof':
-        await verifyAccountProof(request, response.result as string, headerProof, ctx)
-        break
-      case 'callProof':
-        await verifyCallProof(request, bytes(response.result), headerProof, ctx)
-        break
-      default:
-        throw new Error('Unsupported proof-type : ' + proof.type)
-    }
-    return true
+  switch (proof.type) {
+    case 'transactionProof':
+      await verifyTransactionProof(bytes32(request.params[0]), headerProof, response.result, ctx)
+      break
+    case 'logProof':
+      await verifyLogProof(headerProof, response.result && response.result as LogData[], ctx)
+      break
+    case 'receiptProof':
+      await verifyTransactionReceiptProof(bytes32(request.params[0]), headerProof, response.result && response.result as any, ctx)
+      break
+    case 'blockProof':
+      await verifyBlockProof(request, response.result, headerProof, ctx)
+      break
+    case 'accountProof':
+      await verifyAccountProof(request, response.result as string, headerProof, ctx)
+      break
+    case 'callProof':
+      await verifyCallProof(request, bytes(response.result), headerProof, ctx)
+      break
+    default:
+      throw new Error('Unsupported proof-type : ' + proof.type)
   }
-  catch (ex) {
-    if (throwException) throw ex
-    return false
-  }
+  return true
 }

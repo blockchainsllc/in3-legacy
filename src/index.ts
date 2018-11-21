@@ -43,7 +43,7 @@ import * as _transport from './util/transport'
 export const transport = _transport
 
 
-import * as _chainData from './client/chainData'
+import * as _chainData from './modules/eth/chainData'
 export const chainData = _chainData
 
 import * as _nodeList from './client/serverList'
