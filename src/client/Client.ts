@@ -29,6 +29,9 @@ import { EventEmitter } from 'events'
 import ChainContext from './ChainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
+
+import EthAPI from '../modules/eth/api'
+
 const defaultConfig = require('./defaultConfig.json')
 
 /** special Error for making sure the correct node is blacklisted */
@@ -45,9 +48,16 @@ export class BlackListError extends Error {
  */
 export default class Client extends EventEmitter {
 
+  // APIS
+  public eth:EthAPI
+
+
+
   public defConfig: IN3Config
   private transport: Transport
   private chains: {[key:string]:ChainContext}
+
+
 
   /**
    * creates a new Client.
@@ -68,6 +78,7 @@ export default class Client extends EventEmitter {
       }
     }
     verifyConfig(this.defConfig)
+    this.eth = new EthAPI(this)
     this.chains = {}
   }
 
