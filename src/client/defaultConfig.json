@@ -11,6 +11,7 @@
 
   "servers": {
     "0x1": {
+      "verifier":"eth",
       "name":"mainnet",
       "needsUpdate": true,
       "contractChain": "0x1",
@@ -34,6 +35,7 @@
     },
     "0x44d" :{
       "name":"tobalaba",
+      "verifier":"eth",
       "chainSpec":{
         "engine":"authorityRound",
         "validatorContract":"0x1000000000000000000000000000000000000005"
@@ -59,6 +61,7 @@
     },
     "0x4b1" :{
       "name":"evan",
+      "verifier":"eth",
       "needsUpdate" :true,
       "contractChain" :"0x4b1",
       "contract" :"0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e",
@@ -81,6 +84,7 @@
     },
     "0x2a" :{
       "name":"kovan",
+      "verifier":"eth",
       "chainSpec":{
         "engine":"authorityRound",
         "validatorList":[
@@ -117,6 +121,7 @@
     },
     "0x7d0" :{
       "name":"ipfs",
+      "verifier":"ipfs",
       "needsUpdate" :true,
       "contractChain" :"0x7d0",
       "contract" :"0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9",

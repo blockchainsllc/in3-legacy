@@ -19,7 +19,7 @@
 
 import * as ethUtil from 'ethereumjs-util'
 import * as Tx from 'ethereumjs-tx'
-import { toBuffer, toHex } from './util'
+import { toBuffer, toHex } from '../../util/util'
 
 /** RLP-functions */
 export const rlp = ethUtil.rlp

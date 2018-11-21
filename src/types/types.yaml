@@ -308,6 +308,9 @@ definitions:
                 additionalProperties:
                     type: object
                     properties:
+                        verifier:
+                            type: string
+                            description: name of the module responsible for handling the verification
                         name:
                             type: string
                             description: a alias for the chain

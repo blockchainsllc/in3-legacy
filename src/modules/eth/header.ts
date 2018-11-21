@@ -1,12 +1,12 @@
 import { bytes, rlp, Block, hash, address, BlockData } from './serialize'
-import { toHex, toNumber } from './util'
-import DeltaHistory from './DeltaHistory'
+import { toHex, toNumber } from '../../util/util'
+import DeltaHistory from '../../util/DeltaHistory'
 import { rawDecode } from 'ethereumjs-abi'
 import { recover } from 'secp256k1'
 import { publicToAddress } from 'ethereumjs-util'
-import ChainContext from '../client/chainContext'
-import { ChainSpec } from '../types/types'
-import { RPCRequest, RPCResponse } from '..';
+import ChainContext from '../../client/ChainContext'
+import { ChainSpec } from '../../types/types'
+import { RPCRequest, RPCResponse } from '../..';
 
 /**
  * verify a Blockheader and returns the percentage of finality

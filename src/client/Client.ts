@@ -18,21 +18,27 @@
 ***********************************************************/
 
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig, ServerList } from '../types/types'
-import { verifyProof, BlackListError } from './verify'
+import { verifyProof, getModule } from './modules'
 import { canMultiChain, canProof } from './serverList'
 import { Transport, AxiosTransport } from '../util/transport'
-import { getChainData } from './chainData'
+import { getChainData } from '../modules/eth/chainData' // this is an exception, because if we don't know anything about the chain, we must use eth
 import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
-import Filters from './filter'
 import { toHex, toNumber, toMinHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
-import ChainContext from './chainContext'
+import ChainContext from './ChainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
 const defaultConfig = require('./defaultConfig.json')
 
-
+/** special Error for making sure the correct node is blacklisted */
+export class BlackListError extends Error {
+  addresses: string[]
+  constructor(msg: string, addresses: string[]) {
+    super(msg)
+    this.addresses = addresses
+  }
+}
 /**
  * Client for N3.
  * 
@@ -41,7 +47,6 @@ export default class Client extends EventEmitter {
 
   public defConfig: IN3Config
   private transport: Transport
-  private filters: Filters
   private chains: {[key:string]:ChainContext}
 
   /**
@@ -51,7 +56,6 @@ export default class Client extends EventEmitter {
    */
   public constructor(config: Partial<IN3Config>={}, transport?: Transport) {
     super()
-    this.filters = new Filters()
     if (config && config.autoConfig)
       this.addListener('beforeRequest', adjustConfig)
     this.transport = transport || new AxiosTransport(config.format || 'json')
@@ -74,7 +78,7 @@ export default class Client extends EventEmitter {
      const chainConf = this.defConfig.servers[chainId]
      if (!chainConf) throw new Error('chainid '+chainId+' does not exist in config!')
 
-      return this.chains[chainId]=new ChainContext(this,chainId,chainConf.chainSpec)
+     return this.chains[chainId]= getModule(chainConf.verifier || 'eth').createChainContext(this,chainId,chainConf.chainSpec)
   }
 
   get config() {
@@ -236,8 +240,9 @@ export default class Client extends EventEmitter {
     // filter requests are handled internally and externally
     const internResponses: Promise<RPCResponse>[] = []
     const externRequests: RPCRequest[] = []
+    const ctx = this.getChainContext(conf.chainId)
     requests.forEach(r => {
-      const res = this.filters.handleFilter(r, this)
+      const res = ctx.handleIntern(r)
       if (res) internResponses.push(res)
       else externRequests.push(r)
     })
@@ -360,7 +365,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 /**
  * executes a one single request for one node and updates the stats
  */
-async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, cache: ChainContext, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
+async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, ctx: ChainContext, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
   // keep the timestamp in order to calc the avgResponseTime
   const start = Date.now()
   // get the existing weights
@@ -437,7 +442,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
       // maybe we can still deliver a proof, but without data
       !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
-      true, cache)))
+      ctx)))
 
     return responses
   }
@@ -469,7 +474,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       })
 
       if (tryAgainWithoutSignature && retryCount > 0)
-        return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, cache, excludes, retryCount - 1)
+        return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, ctx, excludes, retryCount - 1)
 
     }
     else {
@@ -497,7 +502,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     if (!otherNodes.length)
       throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
-    return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, node.address, otherNodes[0].address])
+    return handleRequest(request, otherNodes[0], conf, transport, ctx, [...excludes, node.address, otherNodes[0].address])
   }
 }
 
