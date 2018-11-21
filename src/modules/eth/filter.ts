@@ -19,7 +19,7 @@
 
 import Client from '../../client/Client';
 import { RPCRequest, RPCResponse } from '../../types/types'
-import { LogData } from '../../util/serialize'
+import { LogData } from './serialize'
 import { checkForError } from '../../util/util'
 export type FilterType = 'event' | 'block' | 'pending'
 export interface FilterOptions {

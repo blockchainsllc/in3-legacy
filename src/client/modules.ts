@@ -1,5 +1,5 @@
 import { RPCRequest, RPCResponse, ChainSpec } from "../types/types"
-import ChainContext from "./chainContext"
+import ChainContext from "./ChainContext"
 import Client from "./Client"
 
 const modules:{ [name:string]:Module} = {}
@@ -37,3 +37,6 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
 export function register(module:Module) {
     modules[module.name]=module
 }
+
+// we are always importing the eth-modules because it is needed in order to verify the nodelist
+import '../modules/eth'

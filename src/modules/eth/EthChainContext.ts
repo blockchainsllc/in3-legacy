@@ -1,9 +1,9 @@
-import ChainContext from '../../client/chainContext'
+import ChainContext from '../../client/ChainContext'
 import { ChainSpec, RPCRequest, RPCResponse } from '../../types/types';
 import Client from '../../client/Client';
 import Filters from './filter'
 
-import { address, bytes, hash, rlp, serialize } from '../../util/serialize';
+import { address, bytes, hash, rlp, serialize } from './serialize';
 import { toHex, toMinHex } from '../../util/util'
 import { sha3 } from 'ethereumjs-util'
 const Buffer: any = require('buffer').Buffer

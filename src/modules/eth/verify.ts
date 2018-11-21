@@ -20,17 +20,17 @@
 import EthChainContext from './EthChainContext'
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../../types/types';
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction } from '../../util/serialize';
+import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction } from './serialize';
 import { toHex, toNumber, promisify, toMinHex, toBN } from '../../util/util'
 import { executeCall } from './call'
 import { createRandomIndexes } from '../../client/serverList'
 import verifyMerkleProof from '../../util/merkleProof'
-import { getStorageArrayKey, getStringValue } from '../../util/storage'
+import { getStorageArrayKey, getStringValue } from './storage'
 import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util'
-import ChainContext from '../../client/chainContext'
+import ChainContext from '../../client/ChainContext'
 import { verifyIPFSHash } from '../ipfs/ipfs'
-import {checkBlockSignatures,getChainSpec} from '../../util/header'
+import {checkBlockSignatures,getChainSpec} from './header'
 import {BlackListError} from '../../client/Client' 
 
 // these method are accepted without proof

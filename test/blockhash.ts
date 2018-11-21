@@ -21,7 +21,7 @@
 import { assert } from 'chai'
 import 'mocha'
 import { serialize, util } from '../src/index'
-import {checkBlockSignatures, getSigner, getAuthorities, getChainSpec} from '../src/util/header'
+import {checkBlockSignatures, getSigner, getAuthorities, getChainSpec} from '../src/modules/eth/header'
 import * as ethUtil from 'ethereumjs-util'
 import { toNumber } from '../src/util/util';
 const BN = ethUtil.BN

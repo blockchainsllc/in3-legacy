@@ -18,12 +18,8 @@
 ***********************************************************/
 
 import Client from './Client'
-import { address, bytes, hash, rlp, serialize } from '../util/serialize';
-import { toHex, toMinHex } from '../util/util'
 import { RPCRequest, RPCResponse, ChainSpec } from '../types/types';
-import { sha3 } from 'ethereumjs-util'
 import {getModule, Module} from './modules'
-const Buffer: any = require('buffer').Buffer
 
 /**
  * Context for a specific chain including cache and chainSpecs.
@@ -53,6 +49,12 @@ export default class ChainContext {
     client.addListener('nodeUpdateFinished', () => this.updateCache())
   }
 
+  /**
+   * this function is calleds before the server is asked.
+   * If it returns a promise than the request is handled internally otherwise the server will handle the response.
+   * this function should be overriden by modules that want to handle calls internally
+   * @param request 
+   */
   handleIntern(request:RPCRequest):Promise<RPCResponse> {
       return null
   }

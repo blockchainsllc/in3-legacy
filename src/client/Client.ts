@@ -26,7 +26,7 @@ import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
 import { toHex, toNumber, toMinHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
-import ChainContext from './chainContext'
+import ChainContext from './ChainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
 const defaultConfig = require('./defaultConfig.json')
@@ -365,7 +365,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 /**
  * executes a one single request for one node and updates the stats
  */
-async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, cache: ChainContext, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
+async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, ctx: ChainContext, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
   // keep the timestamp in order to calc the avgResponseTime
   const start = Date.now()
   // get the existing weights
@@ -442,7 +442,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
       // maybe we can still deliver a proof, but without data
       !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
-      cache)))
+      ctx)))
 
     return responses
   }
@@ -474,7 +474,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       })
 
       if (tryAgainWithoutSignature && retryCount > 0)
-        return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, cache, excludes, retryCount - 1)
+        return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, ctx, excludes, retryCount - 1)
 
     }
     else {
@@ -502,7 +502,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     if (!otherNodes.length)
       throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
-    return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, node.address, otherNodes[0].address])
+    return handleRequest(request, otherNodes[0], conf, transport, ctx, [...excludes, node.address, otherNodes[0].address])
   }
 }
 
