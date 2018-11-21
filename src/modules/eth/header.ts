@@ -4,7 +4,7 @@ import DeltaHistory from '../../util/DeltaHistory'
 import { rawDecode } from 'ethereumjs-abi'
 import { recover } from 'secp256k1'
 import { publicToAddress } from 'ethereumjs-util'
-import ChainContext from '../../client/ChainContext'
+import ChainContext from '../../client/Context'
 import { ChainSpec } from '../../types/types'
 import { RPCRequest, RPCResponse } from '../..';
 

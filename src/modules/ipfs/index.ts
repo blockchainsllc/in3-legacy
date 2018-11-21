@@ -2,7 +2,7 @@
 
 import {Module,register} from '../../client/modules'
 import { RPCRequest, RPCResponse } from '../../types/types'
-import ChainContext from '../../client/ChainContext'
+import ChainContext from '../../client/Context'
 import {verifyIPFSHash} from './ipfs'
 
 
