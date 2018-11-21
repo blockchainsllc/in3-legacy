@@ -1,4 +1,4 @@
-import ChainContext from '../../client/Context'
+import ChainContext from '../../client/ChainContext'
 import { ChainSpec, RPCRequest, RPCResponse } from '../../types/types';
 import Client from '../../client/Client';
 import Filters from './filter'

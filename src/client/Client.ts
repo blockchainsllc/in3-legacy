@@ -26,7 +26,7 @@ import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
 import { toHex, toNumber, toMinHex } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
-import ChainContext from './Context'
+import ChainContext from './ChainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
 const defaultConfig = require('./defaultConfig.json')

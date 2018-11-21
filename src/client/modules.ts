@@ -1,5 +1,5 @@
 import { RPCRequest, RPCResponse, ChainSpec } from "../types/types"
-import ChainContext from "./Context"
+import ChainContext from "./ChainContext"
 import Client from "./Client"
 
 const modules:{ [name:string]:Module} = {}
