@@ -20,8 +20,8 @@
 import EthChainContext from './EthChainContext'
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../../types/types';
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction } from './serialize';
-import { toHex, toNumber, promisify, toMinHex, toBN } from '../../util/util'
+import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp } from './serialize';
+import { toHex, toNumber, promisify, toMinHex, toBN, toBuffer } from '../../util/util'
 import { executeCall } from './call'
 import { createRandomIndexes } from '../../client/serverList'
 import verifyMerkleProof from '../../util/merkleProof'
@@ -137,9 +137,11 @@ export async function verifyTransactionProof(txHash: Buffer, headerProof:BlockHe
 }
 
 /** verifies a TransactionProof */
-export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:BlockHeaderProof, receipt: ReceiptData, ctx: ChainContext) {
+export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:BlockHeaderProof, receipt: ReceiptData, ctx: ChainContext, useFullProof:boolean) {
 
   if (!receipt) throw new Error('No ReceiptData!')
+  if (useFullProof && headerProof.proof.txIndex>0 && !headerProof.proof.merkleProofPrev)
+     throw new Error('For Fullproof we expect the merkleProofPrev, which is missing!')
 
   // decode the blockheader
   const block = blockFromHex(headerProof.proof.block)
@@ -147,10 +149,12 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
   // verify the blockhash and the signatures
   await verifyBlock(block, { ... headerProof, expectedBlockHash:bytes32(receipt.blockHash)}, ctx)
 
-  // TODO how can we be sure, that the receipt matches the transactionHash? 
-  // I guess we would need to also deliver the transaction and verify the txIndex and block
+  if (headerProof.proof.txIndex===0 && receipt.cumulativeGasUsed!==receipt.gasUsed)
+   throw new Error('gasUsed must match cumulativeGasUsed') 
 
   // since the blockhash is verified, we have the correct transaction root
+  // we use the txIndex, so only if both (the transaction matches the hash and ther receiptproof is verified, we know it is the right receipt)
+
   // verifiy the proof
   return Promise.all([
     verifyMerkleProof(
@@ -160,6 +164,18 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
       serialize(toReceipt(receipt)),
       'The TransactionReceipt can not be verified'
     ),
+    // prev
+    useFullProof && headerProof.proof.txIndex>0 && verifyMerkleProof(
+      block.receiptTrie, // expected merkle root
+      util.rlp.encode(toNumber(headerProof.proof.txIndex-1)), // path, which is the transsactionIndex
+      headerProof.proof.merkleProof.map(bytes),undefined)
+      .then(r=>{
+        const prevReceipt = rlp.decode(r)
+        const gasUsed = toNumber(receipt.cumulativeGasUsed) - toNumber(prevReceipt[prevReceipt.length-3])
+        if (toNumber(receipt.gasUsed) != gasUsed)
+          throw new Error('The Transaction did consumed '+gasUsed)
+      })
+    ,
     verifyMerkleProof(
       block.transactionsTrie, // expected merkle root
       util.rlp.encode(toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
@@ -259,6 +275,31 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
     throw new Error('The Block does not contain the required blocknumber')
   if (!requiredHash && request.method.indexOf('Count') < 0 && data)
     requiredHash = bytes32((data as BlockData).hash)
+
+  // we only need to verify the uncles, if they are actually part of the data
+  if (data && (data as BlockData).uncles) {
+    const bd = data as BlockData
+    
+    if (bd.uncles.length===0) {
+      if (!bytes32(bd.sha3Uncles).equals(bytes('0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347')))
+        throw new Error('Wrong uncle-hash')
+    }
+    else if (request.in3.useFullProof) {
+      if (!headerProof.proof.uncles || headerProof.proof.uncles.length!=bd.uncles.length)
+        throw new Error('The Uncles are missing or wrong size!')
+
+      // we only verify uncles for full proof
+      const trie = new Trie()
+      await Promise.all(headerProof.proof.uncles.map((b, i) => {
+        const header = toBuffer(b)
+        if (!hash(header).equals(toBuffer(bd.uncles[i])))
+           throw new Error('The uncle hash of uncle '+i+' is wrong')
+        return promisify(trie, trie.put, util.rlp.encode(i), header)
+      }))
+      if (!trie.root.equals(block.uncleHash))
+        throw new Error('The UncleRoot do not match uncles!')
+    }
+  }
 
   // verify the blockhash and the signatures
   await verifyBlock(block, { ...headerProof, expectedBlockHash:requiredHash}, ctx)
@@ -537,7 +578,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
       await verifyLogProof(headerProof, response.result && response.result as LogData[], ctx)
       break
     case 'receiptProof':
-      await verifyTransactionReceiptProof(bytes32(request.params[0]), headerProof, response.result && response.result as any, ctx)
+      await verifyTransactionReceiptProof(bytes32(request.params[0]), headerProof, response.result && response.result as any, ctx, request.in3.useFullProof)
       break
     case 'blockProof':
       await verifyBlockProof(request, response.result, headerProof, ctx)

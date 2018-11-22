@@ -57,6 +57,7 @@ export interface BlockData {
   mixHash?: string
   nonce?: string | number
   transactions?: any[]
+  uncles?: string[]
 }
 
 /** Transaction as returned by eth_getTransactionByHash */
@@ -115,6 +116,7 @@ export interface ReceiptData {
   status?: string | boolean
   root?: string
   cumulativeGasUsed?: string | number
+  gasUsed?: string | number
   logsBloom?: string
   logs: LogData[]
 }

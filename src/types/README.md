@@ -148,7 +148,11 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
       '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
     ],
     transactions: [],
+    uncles: [],
     merkleProof: [
+      null
+    ],
+    merkleProofPrev: [
       null
     ],
     txProof: [
@@ -318,7 +322,11 @@ const rPCResponse:types.RPCResponse = {
         '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
       ],
       transactions: [],
+      uncles: [],
       merkleProof: [
+        null
+      ],
+      merkleProofPrev: [
         null
       ],
       txProof: [
@@ -386,7 +394,11 @@ const proof:types.Proof = {
     '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
   ],
   transactions: [],
+  uncles: [],
   merkleProof: [
+    null
+  ],
+  merkleProofPrev: [
     null
   ],
   txProof: [
@@ -413,7 +425,9 @@ const proof:types.Proof = {
 *  **block** `string` - the serialized blockheader as hex, required in most proofs   
 *  **finalityBlocks** `array` - the serialized blockheader as hex, required in case of finality asked   
 *  **transactions** `array` - the list of transactions of the block   
+*  **uncles** `array` - the list of uncle-headers of the block   
 *  **merkleProof** `string[]` - the serialized merle-noodes beginning with the root-node   
+*  **merkleProofPrev** `string[]` - the serialized merkle-noodes beginning with the root-node of the previous entry (only for full proof of receipts)   
 *  **txProof** `string[]` - the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex   
 *  **logProof** [LogProof](#logproof) - the Log Proof in case of a Log-Request   
 *  **accounts** `object` - a map of addresses and their AccountProof   
@@ -481,7 +495,11 @@ const serverList:types.ServerList = {
       '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
     ],
     transactions: [],
+    uncles: [],
     merkleProof: [
+      null
+    ],
+    merkleProofPrev: [
       null
     ],
     txProof: [
