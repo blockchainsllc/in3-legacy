@@ -124,6 +124,8 @@ definitions:
                 type: string
                 enum: [ never, proof, proofWithSignature ]
                 example: 'proof'
+            clientSignature:
+                description: the signature of the client
             signatures: 
                 description: a list of addresses requested to sign the blockhash
                 type: array
@@ -694,6 +696,9 @@ definitions:
             rpcUrl: 
                 type: string
                 description: the url of the client
+            freeScore: 
+                type: number
+                description: the score for requests without a valid signature
             minBlockHeight:
                 type: integer
                 description: the minimal blockheight in order to sign

@@ -108,6 +108,7 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 *  **finality** `number` - if given the server will deliver the blockheaders of the following blocks until at least the number in percent of the validators is reached.   
 *  **verification** `string` - defines the kind of proof the client is asking for   
  Must be one of the these values : `'never`', `'proof`', `'proofWithSignature`'
+*  **clientSignature** [{"description":"the signature of the client"}](#{"description":"the signature of the client"}) - the signature of the client   
 *  **signatures** `string<address>[]` - a list of addresses requested to sign the blockhash   
 
 ### Signature
@@ -596,6 +597,7 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 *  **ipfsUrl** `string` - the url of the ipfs-client   
 *  **timeout** `integer` - number of milliseconds to wait before a request gets a timeout   
 *  **rpcUrl** `string` (required)  - the url of the client   
+*  **freeScore** `number` - the score for requests without a valid signature   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   
 *  **startBlock** `number` - blocknumber to start watching the registry   
