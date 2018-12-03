@@ -77,6 +77,10 @@ definitions:
                 description: the deposit of the node in wei
                 type: integer
                 example: 12350000
+            capacity:
+                description: the capacity of the node.
+                type: integer
+                example: 100
             props:
                 description: the properties of the node.
                 type: integer
@@ -724,6 +728,9 @@ definitions:
                     deposit:
                         type: number
                         description: the deposit you want ot store
+                    capacity:
+                        type: number
+                        description: max number of parallel requests
                     depositUnit:
                         type: string
                         description: unit of the deposit value

@@ -425,7 +425,9 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
     if (parseInt(toBN(deposit).toString()) != parseInt(n.deposit as any))
       throw new Error('wrong deposit ')
     //    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 3), bytes32(n.props), 'wrong props ')
+    const props:Buffer = bytes32(n.props)
+    if (n.capacity) props.writeUInt32BE(n.capacity,12)
+    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 3), props, 'wrong props ')
     const urlKey = getStorageArrayKey(0, n.index, 6, 0)
     const urlVal = getStringValue(getStorageValue(accountProof, urlKey), urlKey)
     if (typeof urlVal === 'string') {

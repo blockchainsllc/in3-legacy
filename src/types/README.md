@@ -64,6 +64,7 @@ const iN3NodeConfig:types.IN3NodeConfig = {
     '0x1'
   ],
   deposit: 12350000,
+  capacity: 100,
   props: 3
 }
 ```
@@ -74,6 +75,7 @@ const iN3NodeConfig:types.IN3NodeConfig = {
 *  **url** `string` (required)  - the endpoint to post to   
 *  **chainIds** `string<hex>[]` (required)  - the list of supported chains   
 *  **deposit** `integer` (required)  - the deposit of the node in wei   
+*  **capacity** `integer` - the capacity of the node.   
 *  **props** `integer` - the properties of the node.   
 
 ### IN3RPCRequestConfig
@@ -356,6 +358,7 @@ const rPCResponse:types.RPCResponse = {
       '0x1'
     ],
     deposit: 12350000,
+    capacity: 100,
     props: 3
   }
 }
@@ -485,6 +488,7 @@ const serverList:types.ServerList = {
         '0x1'
       ],
       deposit: 12350000,
+      capacity: 100,
       props: 3
     }
   ],
@@ -604,6 +608,7 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
     properties: 
     *  **url** `string` (required)  - the public url to reach this node   
     *  **deposit** `number` (required)  - the deposit you want ot store   
+    *  **capacity** `number` - max number of parallel requests   
     *  **depositUnit** `string` - unit of the deposit value   
      Must be one of the these values : `'ether`', `'finney`', `'szabo`', `'wei`'
     *  **capabilities** `object`   

@@ -523,7 +523,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
  */
 function getWeight(weight: IN3NodeWeight, node: IN3NodeConfig) {
   return (weight.weight === undefined ? 1 : weight.weight)
-    * (1 + (node.deposit || 0))
+    * (node.capacity || 1 ) 
     * (500 / (weight.avgResponseTime || 500))
 }
 
