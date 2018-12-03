@@ -22,8 +22,8 @@ import { verifyProof, getModule } from './modules'
 import { canMultiChain, canProof } from './serverList'
 import { Transport, AxiosTransport } from '../util/transport'
 import { getChainData } from '../modules/eth/chainData' // this is an exception, because if we don't know anything about the chain, we must use eth
-import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
-import { toHex, toNumber, toMinHex } from '../util/util'
+import { toChecksumAddress, keccak256, hashPersonalMessage, ecsign, toRpcSig } from 'ethereumjs-util'
+import { toHex, toNumber, toMinHex, toBuffer } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
 import ChainContext from './ChainContext'
@@ -433,6 +433,12 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // only if there is something to set, we will add the in3-key and merge it
       if (Object.keys(in3).length)
         r.in3 = { ...in3, ...r.in3 }
+
+      // sign it?
+      if (conf.key) {
+        const sig = ecsign( hashPersonalMessage(Buffer.from(JSON.stringify(r))), conf.key = toBuffer(conf.key), 1)
+        r.in3.clientSignature = toRpcSig(sig.v, sig.r, sig.s, 1)
+      }
     })
 
     // send the request to the server with a timeout

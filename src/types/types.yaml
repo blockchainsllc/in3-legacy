@@ -222,6 +222,9 @@ definitions:
                 type: string
                 enum: ["json","jsonRef","cbor"]
                 example: json
+            key:
+                description: the client key to sign requests
+                example: '0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7'
             autoConfig:
                 description: if true the config will be adjusted depending on the request
                 type: boolean
@@ -696,6 +699,9 @@ definitions:
             rpcUrl: 
                 type: string
                 description: the url of the client
+            clientKeys: 
+                type: string
+                description: a comma sepearted list of client keys to use for simulating clients
             freeScore: 
                 type: number
                 description: the score for requests without a valid signature

@@ -208,6 +208,7 @@ const iN3Config:types.IN3Config = {
   nodeLimit: 150,
   keepIn3: false,
   format: 'json',
+  key: '0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7',
   autoConfig: false,
   retryWithoutProof: false,
   includeCode: true,
@@ -235,6 +236,7 @@ const iN3Config:types.IN3Config = {
 *  **keepIn3** `boolean` - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.   
 *  **format** `string` - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding   
  Must be one of the these values : `'json`', `'jsonRef`', `'cbor`'
+*  **key** [{"description":"the client key to sign requests","example":"0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7"}](#{"description":"the client key to sign requests","example":"0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7"}) - the client key to sign requests   
 *  **autoConfig** `boolean` - if true the config will be adjusted depending on the request   
 *  **retryWithoutProof** `boolean` - if true the the request may be handled without proof in case of an error. (use with care!)   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
@@ -597,6 +599,7 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 *  **ipfsUrl** `string` - the url of the ipfs-client   
 *  **timeout** `integer` - number of milliseconds to wait before a request gets a timeout   
 *  **rpcUrl** `string` (required)  - the url of the client   
+*  **clientKeys** `string` - a comma sepearted list of client keys to use for simulating clients   
 *  **freeScore** `number` - the score for requests without a valid signature   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   
