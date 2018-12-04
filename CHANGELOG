@@ -1,2 +1,0 @@
-- support for config `proof` ( 'none', 'standard', 'full' ) 
-- support for config `format` ('json','jsonRef', 'cbor' )
