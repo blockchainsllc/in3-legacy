@@ -8,6 +8,7 @@
     "build": "tsc -p .; cp src/client/defaultConfig.json js/src/client/",
     "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
     "updateTypes": "slockit-types ",
+    "changelog":"auto-changelog",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
     "cmd": "node --inspect -e \"axios=require('axios').default;in3=require('./js/src/index');Client=in3.default;c=new Client()\" -i"
@@ -52,6 +53,7 @@
     "@types/mocha": "^5.2.0",
     "@types/winston": "^2.3.8",
     "args": "^5.0.0",
+    "auto-changelog": "^1.10.2",
     "babelify": "^9.0.0",
     "browserify": "^16.2.2",
     "chai": "^4.1.2",

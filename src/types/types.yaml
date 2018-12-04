@@ -701,7 +701,10 @@ definitions:
                 description: the url of the client
             clientKeys: 
                 type: string
-                description: a comma sepearted list of client keys to use for simulating clients
+                description: a comma sepearted list of client keys to use for simulating clients for the watchdog
+            watchdogInterval: 
+                type: number
+                description: average time between sending requests to the same node. 0 turns it off (default)
             freeScore: 
                 type: number
                 description: the score for requests without a valid signature

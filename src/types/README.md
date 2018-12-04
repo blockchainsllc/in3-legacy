@@ -599,7 +599,8 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 *  **ipfsUrl** `string` - the url of the ipfs-client   
 *  **timeout** `integer` - number of milliseconds to wait before a request gets a timeout   
 *  **rpcUrl** `string` (required)  - the url of the client   
-*  **clientKeys** `string` - a comma sepearted list of client keys to use for simulating clients   
+*  **clientKeys** `string` - a comma sepearted list of client keys to use for simulating clients for the watchdog   
+*  **watchdogInterval** `number` - average time between sending requests to the same node. 0 turns it off (default)   
 *  **freeScore** `number` - the score for requests without a valid signature   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   
