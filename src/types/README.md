@@ -232,6 +232,7 @@ const iN3Config:types.IN3Config = {
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
+*  **cacheTimeout** `number` - number of seconds requests can be cached.   
 *  **nodeLimit** `number` - the limit of nodes to store in the client.   
 *  **keepIn3** `boolean` - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.   
 *  **format** `string` - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding   
