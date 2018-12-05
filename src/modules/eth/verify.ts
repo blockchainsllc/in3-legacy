@@ -222,6 +222,15 @@ export async function verifyLogProof(headerProof:BlockHeaderProof, logs: LogData
         blockProof.receipts[txHash].proof.map(bytes), // array of Buffer with the merkle-proof-data
         undefined // we don't want to check, but use the found value in the next step
       ).then(value => receiptData[txHash] = util.rlp.decode(value))
+    )),
+    // verifiy all merkle-Trees of the receipts
+    await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
+      verifyMerkleProof(
+        block.transactionsTrie, // expected merkle root
+        util.rlp.encode(blockProof.receipts[txHash].txIndex), // path, which is the transsactionIndex
+        blockProof.receipts[txHash].txProof.map(bytes), // array of Buffer with the merkle-proof-data
+        undefined // we don't want to check, but use the found value in the next step
+      ).then(value => bytes32(txHash).equals(hash(value)) || Promise.reject(new Error('wrong txhash'))  )
     ))
   }))
 
