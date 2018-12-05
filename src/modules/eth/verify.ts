@@ -234,8 +234,6 @@ export async function verifyLogProof(headerProof:BlockHeaderProof, logs: LogData
     ))
   }))
 
-  // TODO the transactionHash itself is never verified! We cannot be sure the transactionIndex is correct.
-
   // now verify the logdata
   logs.forEach(l => {
     const receipt = receiptData[l.transactionHash]
