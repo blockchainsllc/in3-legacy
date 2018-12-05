@@ -551,6 +551,14 @@ function handleBlockCache(proof: Proof, ctx: ChainContext) {
 /** general verification-function which handles it according to its given type. */
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof = true, ctx?: ChainContext): Promise<boolean> {
 
+
+  // make sure we ignore errors caused by sending a trnasaction to multiple servers.
+  if (request.method === 'eth_sendRawTransaction' && response.error && ((response.error as any).code === -32010 || response.error.toString().indexOf('already imported')>=0 )) {
+    delete response.error
+    response.result = toHex(hash(bytes(request.params[0])),20)
+  }
+    
+
   // handle verification with implicit proof (like ipfs)
   if (request.method === 'ipfs_get' && response.result)
     return verifyIPFSHash(response.result, request.params[1] || 'base64', request.params[0])
