@@ -33,6 +33,9 @@ import axios from 'axios'
 import EthAPI from '../modules/eth/api'
 
 const defaultConfig = require('./defaultConfig.json')
+const CACHEABLE     = ['ipfs_get','web3_clientVersion','web3_sha3','net_version','eth_protocolVersion','eth_coinbase','eth_gasPrice','eth_accounts','eth_getBalance','eth_getStorageAt','eth_getTransactionCount','eth_getBlockTransactionCountByHash','eth_getBlockTransactionCountByNumber',
+'eth_getUncleCountByBlockHash','eth_getUncleCountByBlockNumber','eth_getCode','eth_sign','eth_call','eth_estimateGas','eth_getBlockByHash','eth_getBlockByNumber','eth_getTransactionByHash','eth_getTransactionByBlockHashAndIndex',
+'eth_getTransactionByBlockNumberAndIndex','eth_getTransactionReceipt','eth_getUncleByBlockHashAndIndex','eth_getUncleByBlockNumberAndIndex','eth_getCompilers','eth_compileLLL','eth_compileSolidity','eth_compileSerpent','eth_getLogs','eth_getProof']
 
 /** special Error for making sure the correct node is blacklisted */
 export class BlackListError extends Error {
@@ -385,7 +388,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
   const stats: IN3NodeWeight = weights[node.address] || (weights[node.address] = {})
 
   try {
-    request.forEach(r => {
+    const cacheEntries = request.map(r => {
       // make sure the requests are valid
       r.jsonrpc = r.jsonrpc || '2.0'
       r.id = r.id || idCount++
@@ -439,32 +442,86 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         const sig = ecsign( hashPersonalMessage(Buffer.from(JSON.stringify(r))), conf.key = toBuffer(conf.key), 1)
         r.in3.clientSignature = toRpcSig(sig.v, sig.r, sig.s, 1)
       }
+
+      // prepare cache-entry
+      if (conf.cacheTimeout && CACHEABLE.indexOf(r.method)>=0) {
+        const key = r.method+r.params.map(_=>_.toString()).join()
+        const content = ctx.getFromCache(key)
+        const json = content && JSON.parse(content)
+        return {key, content: json && json.r, ts: json && json.t}
+      }
+      return null
     })
 
+    // we will sennd all non cachable requests or the ones that timedout
+    const toSend = request.filter((r,i)=>!cacheEntries[i] || !cacheEntries[i].ts || cacheEntries[i].ts+conf.cacheTimeout*1000<start)
+    let resultsFromCache = false
+
     // send the request to the server with a timeout
-    const responses = resolveRefs(await transport.handle(node.url, request, conf.timeout).then(_ => Array.isArray(_) ? _ : [_]))
+    const responses = toSend.length==0 ? []: resolveRefs(await transport.handle(node.url, toSend, conf.timeout)
+    .then(
+      _  => Array.isArray(_) ? _ : [_], 
+      err=> transport.isOnline().then(o=>{
+        // if we are not online we can check if the cache still contains all the results and use it.
+        if (o) throw err
+        resultsFromCache=true
+        return toSend.map(r=> {
+          const i = request.findIndex(_=>_.id===r.id)
+          if (i>=0 && cacheEntries[i] && cacheEntries[i].content) 
+            return {
+              id:r.id,
+              jsonrpc:r.jsonrpc,
+              result:cacheEntries[i].content
+            } as RPCResponse
+          else
+            throw err
+        })
+      })
+    ))
 
     // update stats
-    stats.responseCount = (stats.responseCount || 0) + 1
-    stats.avgResponseTime = ((stats.avgResponseTime || 0) * (stats.responseCount - 1) + Date.now() - start) / stats.responseCount
-    stats.lastRequest = start
+    if (!resultsFromCache && responses.length) {
+      stats.responseCount = (stats.responseCount || 0) + 1
+      stats.avgResponseTime = ((stats.avgResponseTime || 0) * (stats.responseCount - 1) + Date.now() - start) / stats.responseCount
+      stats.lastRequest = start
+
+      // assign the used node to each response
+      responses.forEach(_ => _.in3Node = node)
+
+      // verify each response by checking the proof. This will throw if it can't be verified
+      await Promise.all(responses.map((response, i) => verifyProof(
+        request[i],
+        response,
+        // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
+        // maybe we can still deliver a proof, but without data
+        !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
+        ctx)))
+
+      // add them to cache
+      if (conf.cacheTimeout) 
+        responses.filter(_=>_.result).forEach(res=>{
+          const cacheEntry = cacheEntries[request.findIndex(_=>_.id===res.id)]
+          if (cacheEntry) 
+             ctx.putInCache(cacheEntry.key,JSON.stringify({t:start, r:res.result}))
+        })
+    }
+
+    // merge cache and reponses
+    const allResponses = request.map((r,i)=>responses.find(_=>_.id===r.id) || (cacheEntries[i] && cacheEntries[i].content && {
+      id:r.id,
+      jsonrpc:r.jsonrpc,
+      result:cacheEntries[i].content
+    }))
 
     // assign the used node to each response
-    responses.forEach(_ => _.in3Node = node)
+    allResponses.forEach(_ => _.in3Node = node)
 
-    // verify each response by checking the proof. This will throw if it can't be verified
-    await Promise.all(responses.map((response, i) => verifyProof(
-      request[i],
-      response,
-      // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
-      // maybe we can still deliver a proof, but without data
-      !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
-      ctx)))
-
-    return responses
+    
+    return allResponses
   }
   catch (err) {
 
+    // log errors
     if (conf.loggerUrl)
       axios.post(conf.loggerUrl, { level: 'error', message: 'error handling request for ' + node.url + ' : ' + err.message + ' (' + err.stack + ') ', meta: request })
         .then(_ => _, console.log('Error logging (' + err.message + ') : ', node.url, request) as any)
