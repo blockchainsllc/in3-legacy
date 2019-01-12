@@ -212,6 +212,9 @@ definitions:
         type: object
         required: [ minDeposit, requestCount, chainId]
         properties:
+            cacheTimeout:
+                type: number
+                description: number of seconds requests can be cached.
             nodeLimit:
                 description: the limit of nodes to store in the client. 
                 type: number
