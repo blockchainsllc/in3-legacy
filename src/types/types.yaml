@@ -113,6 +113,9 @@ definitions:
             useRef:
                 description: if true binary-data (starting with a 0x) will be refered if occuring again.
                 type: boolean
+            useBinary:
+                description: if true binary-data will be used.
+                type: boolean
             useFullProof:
                 description: if true all data in the response will be proven, which leads to a higher payload.
                 type: boolean

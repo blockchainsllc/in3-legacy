@@ -104,6 +104,7 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 *  **verifiedHashes** `string<bytes32>[]` - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number.   
 *  **latestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **useRef** `boolean` - if true binary-data (starting with a 0x) will be refered if occuring again.   
+*  **useBinary** `boolean` - if true binary-data will be used.   
 *  **useFullProof** `boolean` - if true all data in the response will be proven, which leads to a higher payload.   
 *  **finality** `number` - if given the server will deliver the blockheaders of the following blocks until at least the number in percent of the validators is reached.   
 *  **verification** `string` - defines the kind of proof the client is asking for   
