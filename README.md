@@ -33,6 +33,28 @@ const block = await web.eth.getBlockByNumber('latest')
 
 ```
 
+# Features
+
+- failsafe connection to any ethereum-blockchain (providing in3-servers)
+- MultiChain-support 
+- preconfigured boot nodes for mainnet, kovan, evan, tobalaba, ipfs
+- Full Verification of all important JSON-RPC-Methods (including `eth_call`)
+- IPFS-Support including verification of all IPFS-content.
+- Caching Support (for RPC-Requests, blocks, code and nodelists)
+- custom configuration per request
+- configurable Security (different proof-levels: `standard` - for verifying only relevant properties, `full` - for complete vertification including uncles (higher payload) )
+- configurable number of signatures (for PoW)
+- PoW-Support (Deposit-based security with signed blockhashes)
+- PoA-Support (aura - with static Validatorlist or contract based validators )
+- for PoA: configurable finality ( the client will require number of percent of signatures to accept it as final )
+- support for different transport-formats (json/cbor/in3)
+- automaticly replace `latest`-block with configurable block-height.
+- custom boot-node configuration.
+- typesafe light Ethereum API ( `in3.eth.getBalance('0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5')` ) including calling contract-function.
+- full TypeScript Support.
+- support for Browsers, nodejs and react-native
+
+
 # Docker
 
 In order to start the incubed-client as a standalone client (allowing others none-js-application to connect to it), you can start the container as
