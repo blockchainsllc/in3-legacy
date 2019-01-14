@@ -53,6 +53,7 @@ const block = await web.eth.getBlockByNumber('latest')
 - typesafe light Ethereum API ( `in3.eth.getBalance('0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5')` ) including calling contract-function.
 - full TypeScript Support.
 - support for Browsers, nodejs and react-native
+- support for Incentivication-Layer (signed requests)
 
 
 # Docker
