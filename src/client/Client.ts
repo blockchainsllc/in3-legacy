@@ -198,7 +198,7 @@ export default class Client extends EventEmitter {
    * This function supports callback so it can be used as a Provider for the web3.
    */
   public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): void | Promise<RPCResponse | RPCResponse[]> {
-    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : this.defConfig)
+    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : {...this.defConfig})
     if (callback)
       p.then(_ => {
         this.emit('afterRequest', { request, result: Array.isArray(request) ? _ : _[0] })
