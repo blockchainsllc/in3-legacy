@@ -8,13 +8,13 @@ This is why a lot of users try remote-nodes to server their devices. But this in
 
 So the first step is decentralizing remote nodes by sharing rpc-nodes with other apps. 
 
-![Alt text](./incubed.svg)
+![](./incubed2.svg)
 
 ## Verification
 
 While this removes the single point of failure it introduces the risk of trust. We cannot simply trust other RPC-nodes. In order to turn this into a trustless Architecture, each Server needs to provide verifiable proofs. (for Details See [Ethereum Verification and MerkleProof](./Ethereum-Verification-and-MerkleProof) )
 
-![Alt text](./proof.svg)
+![](./proof.svg)
 
 ## Incentivization for nodes
 
@@ -31,7 +31,7 @@ clients are able to share keys as long as the owner of the node is able to ensur
 The owner may also register as many keys as he wants for his server or even changes them from time to time. (as long as only one client key points to one server)
 The key is registered in a client-contract, holding a mapping from the key to the server address.
 
-![Alt text](./registry.svg)
+![](./registry.svg)
 
 
 ## Ensuring Client Access
@@ -42,7 +42,7 @@ This creates a very strong incentive to deliver all clients, because if a server
 To actually figure out which node delivers to clients, each server node will use one of the client keys to send Test-Requests and measure the Availability based on verified responses.
 
 
-![Alt text](./verifyingNodes.svg)
+![](./verifyingNodes.svg)
 
 
 The servers will measure the $`A_{availability}`$ by checking periodically (like every hour, in order to make sure a malicious server will not respond to test requests only, these requests may be sent through an anonymous network like tor)
@@ -62,7 +62,7 @@ A =  1 - ( 1 - \frac{A_{long} + 5 \cdot A_{short}}6 )^{10}
 - $`A_{long}`$ - the ratio between valid request received and sent within the last month
 - $`A_{short}`$ - the ratio between valid request received and sent within the last 24h
 
-![Alt text](./graphAvailable.png)
+![](./graphAvailable.png)
 
 Depending on the longtime availibility the a disconnected node will lose its score over time.
 
@@ -104,7 +104,7 @@ D_{weight} = \frac1{1 + e^{1-\frac{3 D}{D_{avg}}}}
 
 A node without any deposit will so get only 26.8% of the max cap while any node with a average deposit gets 88% and above it quickly reaches 99%
 
-![Alt text](./depositWeight.png)
+![](./depositWeight.png)
 
 
 ## LoadBalancing

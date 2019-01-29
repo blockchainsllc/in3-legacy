@@ -133,13 +133,13 @@ Depending on how many malicious Nodes have registered themselves and are working
 
 
 
-![Alt text](./image1.png)
+![](./image1.png)
 
 
 
 In case of a attacker controlling 50% of all nodes, it looks a bit different. Here one signature would give you a risk of 25% to get a bad response and it takes more than 4 Signatures to reduce this under 1%.
 
-![Alt text](./image2.png)
+![](./image2.png)
 
 
 

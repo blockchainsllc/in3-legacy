@@ -39,12 +39,15 @@ release = u'1.2'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.todo',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
-    'recommonmark'
+    'recommonmark',
+    'sphinxcontrib.inkscapeconverter'
 ]
+
+recommonmark_config = {
+    'enable_math' : True,
+    'enable_inline_math' : True
+
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

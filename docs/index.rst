@@ -5,7 +5,9 @@ Welcome to Incubed's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   intro
    getting_started
+   features
    Ethereum-Verification-and-MerkleProof
    incentivization
    decentralizing_services

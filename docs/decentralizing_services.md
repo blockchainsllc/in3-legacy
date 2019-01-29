@@ -7,7 +7,7 @@ Many DAPPs still need some offchain-services, like search-services running on a 
 
 If these requirements are met, the service can be registered defining the server behavior in a docker image.
 
-![Alt text](./service_registry.svg)
+![](./service_registry.svg)
 
 # Incentivication
 
