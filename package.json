@@ -4,11 +4,11 @@
   "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
   "scripts": {
-    "docu": "typedoc  --exclude test --excludePrivate  --readme none --ignoreCompilerErrors --target ES6  --mode 'modules' --json doc.json src/index.ts ; cat  doc.json | slockit-docu index slockit/in3/blob/master/src \"# INCUBED API\n\nThis documentation contains a list of all Datastructures and Classes used within the IN3 Client.\n\" >  doc/README.md ; rm doc.json",
+    "docu": "typedoc  --exclude test --excludePrivate  --readme none --ignoreCompilerErrors --target ES6  --mode 'modules' --json doc.json src/index.ts ; cat  doc.json | slockit-docu index slockit/in3/blob/master/src \"# Data Structures\n\nThis page contains a list of all Datastructures and Classes used within the IN3 Client.\n\" >  docs/api.md ; rm doc.json",
     "build": "tsc -p .; cp src/client/defaultConfig.json js/src/client/",
     "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
     "updateTypes": "slockit-types ",
-    "changelog":"auto-changelog",
+    "changelog": "auto-changelog",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
     "cmd": "node --inspect -e \"axios=require('axios').default;in3=require('./js/src/index');Client=in3.default;c=new Client()\" -i"
