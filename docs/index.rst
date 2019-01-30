@@ -11,8 +11,6 @@ Welcome to Incubed's documentation!
    Ethereum-Verification-and-MerkleProof
    incentivization
    decentralizing_services
-   milestones
-   Threat-Model-for-Incubed
    api
 
 Indices and tables
