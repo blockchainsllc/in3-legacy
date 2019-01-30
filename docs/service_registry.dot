@@ -1,0 +1,64 @@
+digraph minimal_nonplanar_graphs {
+graph [ rankdir = "LR" ]
+fontname="Helvetica"
+
+  subgraph all {
+      label="Registry"
+
+    subgraph cluster_client_registry {
+        label="ServiceRegistry"  color=lightblue  style=filled
+        node [ fontsize = "12", style="",  shape = "record" color=black fontname="Helvetica" ]
+
+        M[label="<f0>Matrix|matrix/matrix:latest|wasm"]
+        S[label="<f0>Search|slockit/search:latest|wasm"]
+        W[label="<f0>Whisper|whisper:latest|wasm"]
+
+
+  
+    }
+
+
+    subgraph cluster_registry {
+        label="ServerRegistry"  color=lightblue  style=filled
+        node [ fontsize = "12", shape = "record",  color=black style="" fontname="Helvetica" ]
+
+        sa[label="<f0>Server A|<offer>offer|<rewards>rewards|<f2>http://rpc.s1.."]
+        sb[label="<f0>Server B|<offer>offer|<rewards>rewards|<f2>http://rpc.s2.."]
+        sc[label="<f0>Server C|<offer>offer|<rewards>rewards|<f2>http://rpc.s3.."]
+
+        sa:offer -> M:f0 [color=darkgreen]
+        sa:offer -> S:f0 [color=darkgreen]
+        sb:offer -> W:f0 [color=darkgreen]
+        sc:offer -> W:f0 [color=darkgreen]
+
+        M:f0  -> sa:rewards [color=orange]
+        M:f0  -> sb:rewards [color=orange]
+        W:f0  -> sc:rewards [color=orange]
+
+
+    }
+
+
+    subgraph cluster_cloud {
+        label="cloud"  color=lightblue  style=filled
+        node [ fontsize = "12",  color=white style=filled  fontname="Helvetica" ]
+
+        A[label="Server A"]
+        A -> {       
+             AM[label="Matrix", shape=record]
+             AS[label="Search", shape=record]
+        }
+
+        B[label="Server B"]
+        {B C} -> {       
+             BW[label="Whisper", shape=record]
+        }
+        C[label="Server C"]
+  
+     }
+
+
+
+
+  }
+}

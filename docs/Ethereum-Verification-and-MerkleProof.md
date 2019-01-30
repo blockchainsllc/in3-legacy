@@ -118,6 +118,7 @@ verifyMerkleProof(
 )
 ```
 
+
 The Proof-Data will look like these:
 
 ```js
@@ -174,7 +175,7 @@ transactionReceipt = rlp.encode([
     l.topics.map( bytes32 ),
     bytes( l.data )
   ])
-])
+].slice(r.status === null && r.root === null ? 1 : 0))
 ``` 
 
 3. verify the merkleProof of the transaction receipt with
@@ -253,7 +254,11 @@ Prooving an account-value applies to these functions:
 
 ### eth_getProof
 
-For the Transaction or Block Proofs all needed data can be found in the block itself and retrieved through standard rpc calls, but if we want to approve the values of an account, we need the MerkleTree of the state, which is not accessable through the standard rpc. That's why we have forked [parity](https://github.com/slockit/parity) and added one additional rpc-method: `eth_getProof`
+For the Transaction or Block Proofs all needed data can be found in the block itself and retrieved through standard rpc calls, but if we want to approve the values of an account, we need the MerkleTree of the state, which is not accessable through the standard rpc. That's why we have created a [EIP](https://github.com/ethereum/EIPs/issues/1186) to add this function and also implemented this in geth and parity:
+
+- [parity](https://github.com/paritytech/parity/pull/9001) (Status: pending pull request) - [Docker](https://hub.docker.com/r/slockit/parity-in3/tags/)
+- [geth](https://github.com/ethereum/go-ethereum/pull/17737) (Status: pending pull request) - [Docker](https://hub.docker.com/r/slockit/geth-in3/tags/)
+
 
 This function accepts 3 parameter :
 1. `account` - the address of the account to proof
@@ -393,14 +398,14 @@ For Verifying you need to follow these steps:
     const account = new Account([ac.nonce, ac.balance, ac.stateRoot, ac.codeHash])
 
     // if we have a code, we will set the code
-    if (ac.code) account.setCode( trie, bytes( ac.code ))
+    if (ac.code) account.setCode( state, bytes( ac.code ))
 
     // set all storage-values
     for (const s of ac.storageProof)
-      account.setStorage( trie, bytes32( s.key ), rlp.encode( bytes32( s.value )))
+      account.setStorage( state, bytes32( s.key ), rlp.encode( bytes32( s.value )))
 
     // set the account data
-    trie.put( address( adr ), account.serialize())
+    state.put( address( adr ), account.serialize())
   }
 
   // add listener on each step to make sure it uses only values found in the proof
@@ -424,5 +429,6 @@ For Verifying you need to follow these steps:
   return result.vm.return
 ```
 
+In the future we will be using the same approach to verify calls with ewasm.
 
 
