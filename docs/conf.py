@@ -39,15 +39,36 @@ release = u'1.2'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'recommonmark',
-    'sphinxcontrib.inkscapeconverter'
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.mathjax',
+#    'recommonmark',
+#    'sphinxcontrib.inkscapeconverter'
 ]
 
-recommonmark_config = {
-    'enable_math' : True,
-    'enable_inline_math' : True
+import recommonmark
+from recommonmark.parser import CommonMarkParser
+from recommonmark.transform import AutoStructify
 
+source_parsers = {
+    '.md': CommonMarkParser
 }
+
+source_suffix = ['.rst', '.md']
+
+# app setup hook
+def setup(app):
+    app.add_config_value('recommonmark_config', {
+        #'url_resolver': lambda url: github_doc_root + url,
+        'auto_toc_tree_section': 'Contents',
+        'enable_eval_rst': True,
+        'enable_math' : True,
+        'enable_inline_math' : True
+    }, True)
+    app.add_transform(AutoStructify)
+
+
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
