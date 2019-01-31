@@ -1,5 +1,7 @@
 # Incentivization
 
+*Important: This concept is still in development and discussion and not fully implemented yet.*
+
 The original idea of blockchain is a permissionless peer-to-peer network, where anybody can participate if he only runs a node and sync with the other peers. Why this is still true, we know that such a node won't run on a small iot-device.
 
 ## Decentralizing Access
@@ -8,13 +10,118 @@ This is why a lot of users try remote-nodes to server their devices. But this in
 
 So the first step is decentralizing remote nodes by sharing rpc-nodes with other apps. 
 
-![](./incubed2.svg)
+```eval_rst
+.. graphviz::
+
+  graph minimal_nonplanar_graphs {
+    node [style=filled  fontname="Helvetica"]
+  fontname="Helvetica"
+
+  subgraph cluster_infura {
+    label="centralized"  color=lightblue  style=filled
+    node [color=white]
+
+    i[label="infura"]
+    __a[label="a"]
+    __b[label="b"]
+    __c[label="c"]
+
+    i -- __a
+    i -- __b
+    i -- __c
+  }
+
+  subgraph cluster_1 {
+      label="centralized per Dapp"  color=lightblue  style=filled
+      node [color=white]
+      _C[label="C"]
+      _B[label="B"]
+      _A[label="A"]
+      _c[label="c"]
+      _b[label="b"]
+      _a[label="a"]
+
+      _C -- _c
+      _A -- _a
+      _B -- _b
+    }
+
+
+    subgraph cluster_0 {
+      label="Incubed"  color=lightblue  style=filled
+      node [color=white]
+      {A B C} -- {a b c}
+    }
+  }
+```
+
+
+
 
 ## Verification
 
 While this removes the single point of failure it introduces the risk of trust. We cannot simply trust other RPC-nodes. In order to turn this into a trustless Architecture, each Server needs to provide verifiable proofs. (for Details See [Ethereum Verification and MerkleProof](./Ethereum-Verification-and-MerkleProof) )
 
-![](./proof.svg)
+```eval_rst
+.. graphviz::
+
+  digraph minimal_nonplanar_graphs {
+    node [style=filled  fontname="Helvetica"]
+  fontname="Helvetica"
+  edge[ fontname="Helvetica"]
+
+  subgraph cluster_pow {
+    label="Proof or Work"  color=lightblue  style=filled
+    node [color=white]
+
+    c[label="Client"]
+
+    A[label="Node A"]
+    B[label="Node B"]
+    C[label="Node C"]
+
+    c -> B[label=""]
+    B -> c[label=" response\n + proof  \n + signed\n    header"]
+    B -> A[label=" sign"]
+    B -> C
+
+  
+  }
+
+  subgraph cluster_poa {
+    label="Proof of Authority"  color=lightblue  style=filled
+    node [color=white]
+
+    _c[label="Client"]
+
+    _B[label="Node"]
+
+    _c -> _B[label=""]
+    _B -> _c[label=" response\n + proof  \n + header"]
+  }
+
+  subgraph cluster_pos {
+    label="Proof of Stake"  color=lightblue  style=filled
+    node [color=white]
+  rank=same x N V
+      
+    x[label="Client"]
+
+    N[label="Node"]
+    V[label="Node (Validator)"]
+
+    x -> N[label=""]
+    N -> x[label=" response\n + proof  \n + header"]
+
+    x -> V[label=" header"]
+
+  
+  }
+
+  }
+
+
+```
 
 ## Incentivization for nodes
 
@@ -31,7 +138,64 @@ clients are able to share keys as long as the owner of the node is able to ensur
 The owner may also register as many keys as he wants for his server or even changes them from time to time. (as long as only one client key points to one server)
 The key is registered in a client-contract, holding a mapping from the key to the server address.
 
-![](./registry.svg)
+
+```eval_rst
+.. graphviz::
+
+    digraph minimal_nonplanar_graphs {
+    graph [ rankdir = "LR" ]
+    fontname="Helvetica"
+      subgraph all {
+          label="Registry"
+
+        subgraph cluster_cloud {
+            label="cloud"  color=lightblue  style=filled
+            node [ fontsize = "12",  color=white style=filled  fontname="Helvetica" ]
+
+            A[label="Server A"]
+            B[label="Server B"]
+            C[label="Server C"]
+      
+        }
+
+        subgraph cluster_registry {
+            label="ServerRegistry"  color=lightblue  style=filled
+            node [ fontsize = "12", shape = "record",  color=black style="" fontname="Helvetica" ]
+
+            sa[label="<f0>Server A|cap:10|<f2>http://rpc.s1.."]
+            sb[label="<f0>Server B|cap:100|<f2>http://rpc.s2.."]
+            sc[label="<f0>Server C|cap:20|<f2>http://rpc.s3.."]
+
+            sa:f2 -> A
+            sb:f2 -> B
+            sc:f2 -> C
+      
+        }
+
+
+        subgraph cluster_client_registry {
+            label="ClientRegistry"  color=lightblue  style=filled
+            node [ fontsize = "12", style="", color=black fontname="Helvetica" ]
+
+            ca[label="a"]
+            cb[label="b"]
+            cc[label="c"]
+            cd[label="d"]
+            ce[label="e"]
+
+            ca:f0 -> sa:f0
+            cb:f0 -> sb:f0
+            cd:f0 -> sc:f0
+            cc:f0 -> sc:f0
+            ce:f0 -> sc:f0
+      
+        }
+
+
+      }
+    }
+
+```
 
 
 ## Ensuring Client Access
@@ -41,8 +205,31 @@ This creates a very strong incentive to deliver all clients, because if a server
 
 To actually figure out which node delivers to clients, each server node will use one of the client keys to send Test-Requests and measure the Availability based on verified responses.
 
+```eval_rst
+.. graphviz::
 
-![](./verifyingNodes.svg)
+    digraph minimal_nonplanar_graphs {
+      node [style=filled  fontname="Helvetica"]
+    fontname="Helvetica"
+
+    ratio=0.8;
+
+    subgraph cluster_1 {
+        label="Verifying Nodes"  color=lightblue  style=filled
+        node [color=white]
+        ranksep=900000;
+    //    rank=same
+        A -> {B C D E }
+        B -> {A C D E }
+        C -> {A B D E }
+        D -> {A B C E }
+        E -> {A B C D  }
+      }
+
+
+    }
+
+```
 
 
 The servers will measure the `$ A_{availability}$` by checking periodically (like every hour, in order to make sure a malicious server will not respond to test requests only, these requests may be sent through an anonymous network like tor)

@@ -1,4 +1,6 @@
-# Incubed - Verification
+# Technical Background 
+
+## Ethereum Verification
 
 The Incubed is also often called Minimal Verifying Client, because he may not be syncing, but still is able to verify all incomming data. This is possible because the ethereum is based a technology allowing to verify almost any value.
 
@@ -18,11 +20,7 @@ Depending on the Method different Proofs would be needed, which are described in
 - **[Call Proof](#call-proof)** - verifies the result of a `eth_call` - response
 
 
-
-
-
-
-## BlockProof
+### BlockProof
 
 BlockProofs are used whenever you want to read data of a Block and verify them. This would be:
 
@@ -76,7 +74,7 @@ if (keccak256(blockHeader) !== singedBlockHash)
 In case of the `eth_getBlockTransactionCountBy...` the proof contains the full blockHeader already serilalized + all transactionHashes. This is needed in order to verify them in a merkleTree and compare them with the `transactionRoot`
 
 
-## Transaction Proof
+### Transaction Proof
 
 TransactionProofs are used for the following transaction-methods:
 
@@ -151,7 +149,7 @@ The Proof-Data will look like these:
 ```
 
 
-## Receipt Proof
+### Receipt Proof
 
 Proofs for the transactionReceipt are used for the following transaction-method:
 
@@ -191,7 +189,7 @@ verifyMerkleProof(
 
 4. Since the merkle-Proof is only proving the value for the given transactionIndex, we also need to prove that the transactionIndex matches the transactionHash requested. This is done by adding another MerkleProof for the Transaction itself as described in the [Transaction Proof](#transaction-proof)
 
-## Log Proof
+### Log Proof
 
 Proofs for logs are only for the one rpc-method:
 
@@ -243,7 +241,7 @@ verifyMerkleProof(
 
 3. The resulting values are the receipts. For each log-entry, we are comparing the verified values of the receipt with the returned logs to ensure that they are correct. 
 
-## Account Proof
+### Account Proof
 
 Prooving an account-value applies to these functions:
 
@@ -252,7 +250,7 @@ Prooving an account-value applies to these functions:
 - [eth_getTransactionCount](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactioncount)
 - [eth_getStorageAt](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getstorageat)
 
-### eth_getProof
+#### eth_getProof
 
 For the Transaction or Block Proofs all needed data can be found in the block itself and retrieved through standard rpc calls, but if we want to approve the values of an account, we need the MerkleTree of the state, which is not accessable through the standard rpc. That's why we have created a [EIP](https://github.com/ethereum/EIPs/issues/1186) to add this function and also implemented this in geth and parity:
 
@@ -363,7 +361,7 @@ verifyMerkleProof(
 
 
 
-## Call Proof
+### Call Proof
 
 Call Proofs are used whenever you are calling a read-only function of smart contract:
 
