@@ -7,15 +7,8 @@ Welcome to Incubed's documentation!
 
    intro
    getting_started
-   features
    Ethereum-Verification-and-MerkleProof
    incentivization
    decentralizing_services
+   milestones
    api
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

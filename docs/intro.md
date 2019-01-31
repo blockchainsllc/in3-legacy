@@ -10,7 +10,7 @@ forced to trust single players are undermined or there is a risk of malfunction 
 
 With the presented Trustless Incentivized Remote Node Network, in short INCUBED, it will be possible to establish a decentralized and secure network of remote-nodes, which enables trustworthy and fast access to blockchain for a large number of low-performance IoT devices.
 
-## Situation
+### Situation
 
 The number of IoT devices is increasing rapidly. This opens up many new possibilities for equipping these devices with payment or sharing functionality.
  While desktop computers can run an Ethereum full client without any problems,
@@ -29,7 +29,7 @@ A possible solution for this can be a decentralized network of remote-nodes (net
 
 
 
-## Low-Performance Hardware
+### Low-Performance Hardware
 
 There are several classes of IoT devices, for which running a full- or light-client is somehow problematic and a INNN can be a real benefit or even a job enabler:
 
@@ -45,24 +45,24 @@ There are several classes of IoT devices, for which running a full- or light-cli
 
     Devices, which are not connected to the internet all time, also have trouble running a full-client or a light-client, because these clients need to be in sync, before they can be used. 
 
-## Scaleability
+### Scaleability
 
 One of the most important topics discussed regarding blockchain technology is scaleability. Of course, a working INCUBED does not solve the scaling problems that more transactions can be executed per second. However, it does contribute to providing access to the Ethereum network for devices that could not be integrated with existing clients (full client, light client) due to their lack of performance or availability of continuous internet connection with sufficient bandwidth.
 
 
-# Use-Cases
+## Use-Cases
 
 With the following use-cases, some realistic scenarios should be drafted, where the use of the INCUBED will be at least useful. These use-cases are meant just as real-life relevant examples to envision the potential of this technology but are by no means a somehow complete list of possible applications. 
 
-## Public Accessible Environment Sensor
+### Public Accessible Environment Sensor
 
-### Description
+#### Description
 
 An environment sensor, measuring some characteristics describing the air quality, is installed inside the city of Stuttgart. All measuring data is stored locally and can be accessed via internet by paying a small fee. Also a hash of the current data set is published to the public Ethereum blockchain to validate the integrity of the data. 
 
 The computational power of the control unit is restricted to collecting the measuring data from the sensors and storing these data to the local storage. It is able to encrypt or cryptographically sign messages. Because this sensor is one of thousands around Europe, the energy consumption must be a low as possible. A special low-performance hardware is installed. An internet connection is available, but the available bandwidth is not sufficient synchronizing a blockchain client. 
 
-### Blockchain Integration
+#### Blockchain Integration
 
 The connection to the blockchain is only needed if someone is requesting the data and to send the validation hash code to the smart contract.
 
@@ -70,43 +70,43 @@ The installed hardware (available computational power) and the requirement to mi
 
 Using a netservice-client connected to the INCUBED can be realized using the existing hardware and internet connection. No additional hardware or internet bandwidth is needed. The netservice-client connects to the INCUBED only to send signed messages to trigger transactions or to request information from the blockchain. 
 
-## Smart Bike Lock
+### Smart Bike Lock
 
-### Description
+#### Description
 
 An smart bike look enabling sharing is installed on a e-bike. It is able to connect to the internet to check if renting is allowed and the current user is entitled to open the lock.
 
 The computational power of the control unit is restricted to the control of the lock. Because the energy is provided by the e-bike's battery, the controller is running only if needed in order to save energy. For this reason, it is also not possible to maintain a permanent Internet connection. 
 
-### Blockchain Integration
+#### Blockchain Integration
 
 Running a light-client on such a platform would consume far too much energy, but also synchronizing the client only when needed would take too much time and require an Internet connection with the corresponding bandwidth, which is not always the case. With a netservice-client running on the lock, a secure connection to the blockchain can be established at the required times, even if the internet connection only allows a limited bandwidth. In the times when there is no rental process in action, neither computing power is needed nor data is transferred.
 
-## Smart Home - Smart Thermostat
+### Smart Home - Smart Thermostat
 
-### Description
+#### Description
 
 With smart-home devices it is possible to realize new business models for e. g. the energy supply. With smart thermostats, it is possible to bill heating energy pay-per-use. During operation, the thermostat must only be connected to the blockchain if there is a heating requirement and a demand exists. Then the thermostat must check whether the user is authorized and then also perform the transactions for payment.
 
-### Blockchain Integration
+#### Blockchain Integration
 
 Similar to the cycle lock application, a thermostat does not need to be permanently connected to the blockchain to keep a client in sync. Furthermore, its hardware is not able to run a full-client or light-client. Here it is also suitable to use a netservice-client. Such a client can be developed especially for this hardware. 
 
-##  Smartphone App
+###  Smartphone App
 
-###  Description
+####  Description
 
 The range of smartphone apps that can or should be connected to the blockchain is widely diversified. These can be any apps with payment functions, apps that use blockchain as a notary service, apps that control or lend IoT devices, apps that visualize data from the blockchain, and much more.
 
 Often these apps only need sporadic access to the blockchain. Due to the limited battery power and limited data volume, neither a full client nor a light client is really suitable for such applications, as these clients require a permanent connection to keep the blockchain up-to-date.
 
-### Blockchain Integration
+#### Blockchain Integration
 
 To minimize energy consumption and the amount of data to be transferred, it makes sense to implement smartphone applications that do not necessarily require a permanent connection to the Internet and thus also to the blockchain with a netservice-client. This makes it possible to dispense with a centralized remote server solution, but only have to access the blockchain when it is needed, without having to wait long before the client is synchronized.
 
 
 
-## Advantages
+### Advantages
 
 As has already been pointed out in the use-cases, there are various advantages that speak for the use of INCUBED: 
 
@@ -124,24 +124,24 @@ As has already been pointed out in the use-cases, there are various advantages t
 
 - Net service clients for special and proprietary hardware can be implemented independently of current Ethereum developments.
 
-## Challenges
+### Challenges
 
 Of course, there are several challenges that need to be solved in order to implement a working INCUBED.
 
-### Security
+#### Security
 
 The biggest challenge for a decentralized and trust-free system is to ensure that one can make sure that the information supplied is actually correct. If a full-client runs on a device and is synchronized with the network, it can check the correctness itself. A light-client can also check that the block headers match, but does not have the transactions available and requires a connection to a full-client for this information. A remote-client that communicates with a full-client via the REST API has no direct way to verify that the answer is correct. In a decentralized network of netservice-nodes whose trustworthiness is not known, a way to be able to be certain with a high probability that the answer is correct is required. The INCUBED system provides the nodes that supply the information with additional nodes that serve as validators. 
 
-###  Business models
+####  Business models
 
 In order to provide an incentive to provide nodes for a decentralized solution, any transaction or query that passes through such a node would have to be remunerated with an additional fee for the operator of the node. However, this would further increase the transaction costs, which are already a real problem for micro-payments. However, there are also numerous non-monetary incentives that encourage participation in this infrastructure.
 
 
 
 
-# Architecture
+## Architecture
 
-## Overview
+### Overview
 
 An INCUBED network consists of several components:
 
@@ -153,13 +153,13 @@ An INCUBED network consists of several components:
 
 4. Watchdogs, who as autonomous authorities (bots) ensure that misbehavior of nodes is uncovered and punished.
 
-### Initialization of a Client
+#### Initialization of a Client
 
 Each client gets an initial list of boot nodes by default. Before its first "real" communication with the network, the current list of nodes must be queried as they are registered in the registry (see section [subsec:IN3-Registry-Smart-Contract]). Initially, this can only be done using an invalidated query (see figure [fig:unvalidated request]). In order to have the maximum possible security, this query can and should be made to several or even all boot nodes in order to obtain a valid list with great certainty.
 
 This list must be updated at regular intervals to ensure that the current network is always available.
 
-### Unvalidated Requests / Transactions
+#### Unvalidated Requests / Transactions
 
 Unvalidated queries and transactions are performed by the client by selecting one or more nodes from the registry and sending them the request (see figure [fig:unvalidated request]). Although the responses cannot be verified directly, the option to send the request to multiple nodes in parallel remains. The returned results can then be checked for consistency by the client. Assuming that the majority will deliver the correct result (or execute the transaction correctly), this will at least increase the likelihood of receiving the correct response (Proof of Majority).
 
@@ -181,7 +181,7 @@ In the case of a misbehavior, the client can blacklist this node or at least red
 
 An unvalidated answer will be returned unsigned. Thus, it is not possible to punish the sender in case of an incorrect response, except that the client can blacklist or down-rate the sender in the above-mentioned form.
 
-#### Validated Requests
+##### Validated Requests
 
 The second form of the queries are validated requests. The nodes must be able to provide various verification options and proofs in addition to the result of the request. With validated requests, it is possible to achieve a similar level of security with an INCUBED client as with a light or even full client, without having to blindly trust a centralized middleman (as is the case with a remote client). Depending on the security requirements and the available resources (e.g. computing power), different validations and proofs are possible.
 
@@ -245,7 +245,7 @@ The security deposit of the node has a decisive influence on how much trust is p
 ![](incubed_principle1.png)
 
 
-## IN3-Registry Smart Contract
+### IN3-Registry Smart Contract
 
 Each client is able to fetch the complete list including the deposit and other information from the contract, which is required in order to operate. The client must update the list of nodes logged on to the registry during initialization and regularly during operation to notice changes (e.g. if a node is removed from the registry intentionally or due to misbehavior detected).
 
@@ -331,13 +331,13 @@ To register, the owner of the node need to provide the following data:
 
 - **msg.sender** : the sender of the transaction is set as owner of the node and therefore able to manage it at any given time.
 
-### Deposit
+#### Deposit
 
 The deposit is an important incentive for the secure operation of the INCUBED network. The risk of losing the deposit if misconduct is detected motivates the nodes to provide correct and verifiable answers.
 
 The amount of the deposit can be part of the decision criterion for the clients when selecting the node for a request. The "value" of the request can therefore influence the selection of the node (as information provider). For example, a request that is associated with a high value may not be sent to a node that has a very low deposit. On the other hand, for a request for a dashboard, which only provides an overview of some information, the size of the deposit may play a subordinate role.
 
-## Netservice-Node
+### Netservice-Node
 
 The net service node (short: node) is the communication interface for the client to the blockchain client. It can be implemented as a separate application or as an integrated module of a blockchain client (such as Geth or Parity).
 
@@ -347,7 +347,7 @@ Nodes must provide two different services:
 
 - Validator.
 
-### Information Provider
+#### Information Provider
 
 A client directly addresses a node (information provider) to retrieve the desired information. Similar to a remote client, the node interacts with the blockchain via its blockchain client and returns the information to the requesting client. Furthermore, the node (information provider) provides the information the client needs to verify the result of the query (validation and proof). For the service, it can request payment when it returns a validated response.
 
@@ -355,17 +355,17 @@ A client directly addresses a node (information provider) to retrieve the desire
 
 If an information provider is found to return incorrect information as a validated response, it loses its deposit and is removed from the registry. It can be transferred by a validator or watchdog.
 
-### Validator
+#### Validator
 
 The second service that a node has to provide is validation. When a client submits a validated request to the information provider, it also specifies the node(s) that are designated as validators. Each node that is logged on to the registry must also accept the task as validator. 
 
 If a validator is found to return false information as validation, it loses its deposit and is removed from the registry. It can be transferred by another validator or a watchdog.
 
-### Watchdog
+#### Watchdog
 
 Watchdogs are independent bots, which randomly validators, which are logged in to the registry, are checked by specific queries to detect misbehavior. In order to provide an incentive for validator activity, watchdogs can also deliberately pretend misbehavior and thus give the validator the opportunity to claim the security deposit.
 
-## Netservice-Client
+### Netservice-Client
 
 The netservice client (short client) is the instance running on the device that needs the connection to the blockchain. It communicates with the nodes of the INCUBED network via a REST API. 
 
@@ -375,13 +375,13 @@ The client receives the list of available nodes of the INCUBED network from the 
 
 A client can communicate with different blockchains at the same time. In the registry, nodes of different blockchains (identified by their ID) are registered, so that the client can and must filter the list so that it identifies the nodes that can process (and validate, if necessary) its request. 
 
-### Local Reputation System
+#### Local Reputation System
 
 The local reputations system aims to support the selection of a node. 
 
 The reputation system is also the only way for a client to blacklist nodes that are unreliable or classified as fraudulent. This can happen, for example, in the case of an unvalidated query if the results of a node do not match those of the majority, or in the case of validated queries, if the validation is correct but the proof is incorrect.
 
-### Performance-Weighting 
+#### Performance-Weighting 
 
 In order to balance the network, each client may weight each node by:
 
@@ -389,21 +389,21 @@ In order to balance the network, each client may weight each node by:
 
 Based on the weight of each node a random node is chosen for each request. While the deposit is read from the contract, the avgResponseTime is managed by the client himself. The client will do so, by measuring the time between request and response and calculate the average (in ms) of within the last 24 hours. This way the load will be balanced and faster servers will get more traffic.
 
-## Payment / Incentives
+### Payment / Incentives
 
 To build an incentive-based network, it is necessary to have appropriate technologies to process payments. The payments to be made in INCUBED (e.g. as a fee for a validated answer) are micro payments without exception (except the deposit of the deposit, which is part of the registration of a node and which is not mentioned here, however). When designing a suitable payment solution, it must therefore be ensured that a reasonable balance is always found between the actual fee, transaction costs and transaction times.
 
-### Direct Transaction Payment 
+#### Direct Transaction Payment 
 
 Direct payment by transaction is of course possible, but this is not possible due to the high transaction costs. Exceptions to this could be transactions with a high value, so that corresponding transaction costs would be acceptable.
 
 However, such payments are not practical for general use.
 
-### State Channels
+#### State Channels
 
 State channels are well suited for the processing of micropayments. A decisive point of the protocol is that the node must always be selected randomly (albeit weighted according to further criteria). However, it is not practical for a client to open a separate state channel (including deposit) with each potential node that it wants to use for a request. To establish a suitable micropayment system based on state channels, a state channel network such as Raiden is required. If enough partners are networked together in such a network and a path can be found between two partners, payments can also be exchanged between these participants.
 
-### Probabilistic Payment
+#### Probabilistic Payment
 
 Another way of making small payments is probabilistic micropayments. The idea is based on issuing probabilistic lottery tickets instead of very small direct payments, which, with a certain probability, promise to pay out a higher amount. The probability distribution is adjusted so that the expected value corresponds to the payment to be made.
 
@@ -420,19 +420,19 @@ For the application in the INCUBED protocol, it is not practical to establish in
 The analog to a state channel network are pooled probabilistic payments. Payers can be pooled and recipients can also be connected in a pool, or both.
 
 
-# Scaling
+## Scaling
 
 The interface between client and node is independent of the blockchain with which the node communicates. This allows a client to communicate with multiple blockchains / networks simultaneously as long as suitable nodes are registered in the registry. 
 
 For example, a payment transaction can take place on the Ethereum Mainnet and access authorization can be triggered in a special application chain.
 
-## Multi Chain Support
+### Multi Chain Support
 
 Each node may support one or more network or chains. The supported list can be read by filtering the list of all servers in the contract. 
 
 The ChainId referrs to a list based on EIP-155. The ChainIds defined there will be extended by enabling even custom chains to register a new chainId.
 
-## Conclusion
+### Conclusion
 
 INCUBED establishes a decentralized network of validatable remote nodes, which enables IoT devices in particular to gain secure and reliable access to the blockchain. The demands on the client's computing and storage capacity can be reduced to a minimum, as can the requirements on connectivity and network traffic.
 
