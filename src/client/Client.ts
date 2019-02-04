@@ -33,9 +33,9 @@ import axios from 'axios'
 import EthAPI from '../modules/eth/api'
 
 const defaultConfig = require('./defaultConfig.json')
-const CACHEABLE     = ['ipfs_get','web3_clientVersion','web3_sha3','net_version','eth_protocolVersion','eth_coinbase','eth_gasPrice','eth_accounts','eth_getBalance','eth_getStorageAt','eth_getTransactionCount','eth_getBlockTransactionCountByHash','eth_getBlockTransactionCountByNumber',
-'eth_getUncleCountByBlockHash','eth_getUncleCountByBlockNumber','eth_getCode','eth_sign','eth_call','eth_estimateGas','eth_getBlockByHash','eth_getBlockByNumber','eth_getTransactionByHash','eth_getTransactionByBlockHashAndIndex',
-'eth_getTransactionByBlockNumberAndIndex','eth_getTransactionReceipt','eth_getUncleByBlockHashAndIndex','eth_getUncleByBlockNumberAndIndex','eth_getCompilers','eth_compileLLL','eth_compileSolidity','eth_compileSerpent','eth_getLogs','eth_getProof']
+const CACHEABLE = ['ipfs_get', 'web3_clientVersion', 'web3_sha3', 'net_version', 'eth_protocolVersion', 'eth_coinbase', 'eth_gasPrice', 'eth_accounts', 'eth_getBalance', 'eth_getStorageAt', 'eth_getTransactionCount', 'eth_getBlockTransactionCountByHash', 'eth_getBlockTransactionCountByNumber',
+  'eth_getUncleCountByBlockHash', 'eth_getUncleCountByBlockNumber', 'eth_getCode', 'eth_sign', 'eth_call', 'eth_estimateGas', 'eth_getBlockByHash', 'eth_getBlockByNumber', 'eth_getTransactionByHash', 'eth_getTransactionByBlockHashAndIndex',
+  'eth_getTransactionByBlockNumberAndIndex', 'eth_getTransactionReceipt', 'eth_getUncleByBlockHashAndIndex', 'eth_getUncleByBlockNumberAndIndex', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getLogs', 'eth_getProof']
 
 /** special Error for making sure the correct node is blacklisted */
 export class BlackListError extends Error {
@@ -52,13 +52,13 @@ export class BlackListError extends Error {
 export default class Client extends EventEmitter {
 
   // APIS
-  public eth:EthAPI
+  public eth: EthAPI
 
 
 
   public defConfig: IN3Config
   private transport: Transport
-  private chains: {[key:string]:ChainContext}
+  private chains: { [key: string]: ChainContext }
 
 
 
@@ -67,7 +67,7 @@ export default class Client extends EventEmitter {
    * @param config the configuration
    * @param transport a optional transport-object. default: AxiosTransport
    */
-  public constructor(config: Partial<IN3Config>={}, transport?: Transport) {
+  public constructor(config: Partial<IN3Config> = {}, transport?: Transport) {
     super()
     if (config && config.autoConfig)
       this.addListener('beforeRequest', adjustConfig)
@@ -85,24 +85,24 @@ export default class Client extends EventEmitter {
     this.chains = {}
   }
 
-  getChainContext(chainId:string) {
-     if (this.chains[chainId])
-       return this.chains[chainId]
-       
-     const chainConf = this.defConfig.servers[chainId]
-     if (!chainConf) throw new Error('chainid '+chainId+' does not exist in config!')
+  getChainContext(chainId: string) {
+    if (this.chains[chainId])
+      return this.chains[chainId]
 
-     return this.chains[chainId]= getModule(chainConf.verifier || 'eth').createChainContext(this,chainId,chainConf.chainSpec)
+    const chainConf = this.defConfig.servers[chainId]
+    if (!chainConf) throw new Error('chainid ' + chainId + ' does not exist in config!')
+
+    return this.chains[chainId] = getModule(chainConf.verifier || 'eth').createChainContext(this, chainId, chainConf.chainSpec)
   }
 
   get config() {
     return this.defConfig
-  } 
+  }
 
   set config(val) {
     this.defConfig = val
     verifyConfig(this.defConfig)
-  } 
+  }
 
   /**
    * fetches the nodeList from the servers.
@@ -198,7 +198,7 @@ export default class Client extends EventEmitter {
    * This function supports callback so it can be used as a Provider for the web3.
    */
   public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): void | Promise<RPCResponse | RPCResponse[]> {
-    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : {...this.defConfig})
+    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : { ...this.defConfig })
     if (callback)
       p.then(_ => {
         this.emit('afterRequest', { request, result: Array.isArray(request) ? _ : _[0] })
@@ -275,16 +275,16 @@ export default class Client extends EventEmitter {
     const excludes = [...(prevExcludes || []), ...nodes.map(_ => _.address)].filter((e, i, a) => a.indexOf(e) === i)
 
     // get the verified responses from the nodes
-    let responses:RPCResponse[][] = null
+    let responses: RPCResponse[][] = null
     try {
-       responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.getChainContext(conf.chainId), [...excludes])))
+      responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.getChainContext(conf.chainId), [...excludes])))
     }
     catch (ex) {
       // we may retry without proof in order to handle this error
-      if (conf.proof && conf.proof!='none' && conf.retryWithoutProof) 
-         responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, {...conf,proof:'none'}, this.transport, this.getChainContext(conf.chainId), [...excludes])))
-      else 
-         throw ex
+      if (conf.proof && conf.proof != 'none' && conf.retryWithoutProof)
+        responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, { ...conf, proof: 'none' }, this.transport, this.getChainContext(conf.chainId), [...excludes])))
+      else
+        throw ex
     }
 
     // merge the result 
@@ -439,45 +439,45 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
 
       // sign it?
       if (conf.key) {
-        const sig = ecsign( hashPersonalMessage(Buffer.from(JSON.stringify(r))), conf.key = toBuffer(conf.key), 1)
+        const sig = ecsign(hashPersonalMessage(Buffer.from(JSON.stringify(r))), conf.key = toBuffer(conf.key), 1)
         r.in3.clientSignature = toRpcSig(sig.v, sig.r, sig.s, 1)
       }
 
       // prepare cache-entry
-      if (conf.cacheTimeout && CACHEABLE.indexOf(r.method)>=0) {
-        const key = r.method+r.params.map(_=>_.toString()).join()
+      if (conf.cacheTimeout && CACHEABLE.indexOf(r.method) >= 0) {
+        const key = r.method + r.params.map(_ => _.toString()).join()
         const content = ctx.getFromCache(key)
         const json = content && JSON.parse(content)
-        return {key, content: json && json.r, ts: json && json.t}
+        return { key, content: json && json.r, ts: json && json.t }
       }
       return null
     })
 
     // we will sennd all non cachable requests or the ones that timedout
-    const toSend = request.filter((r,i)=>!cacheEntries[i] || !cacheEntries[i].ts || cacheEntries[i].ts+conf.cacheTimeout*1000<start)
+    const toSend = request.filter((r, i) => !cacheEntries[i] || !cacheEntries[i].ts || cacheEntries[i].ts + conf.cacheTimeout * 1000 < start)
     let resultsFromCache = false
 
     // send the request to the server with a timeout
-    const responses = toSend.length==0 ? []: resolveRefs(await transport.handle(node.url, toSend, conf.timeout)
-    .then(
-      _  => Array.isArray(_) ? _ : [_], 
-      err=> transport.isOnline().then(o=>{
-        // if we are not online we can check if the cache still contains all the results and use it.
-        if (o) throw err
-        resultsFromCache=true
-        return toSend.map(r=> {
-          const i = request.findIndex(_=>_.id===r.id)
-          if (i>=0 && cacheEntries[i] && cacheEntries[i].content) 
-            return {
-              id:r.id,
-              jsonrpc:r.jsonrpc,
-              result:cacheEntries[i].content
-            } as RPCResponse
-          else
-            throw err
+    const responses = toSend.length == 0 ? [] : resolveRefs(await transport.handle(node.url, toSend, conf.timeout)
+      .then(
+        _ => Array.isArray(_) ? _ : [_],
+        err => transport.isOnline().then(o => {
+          // if we are not online we can check if the cache still contains all the results and use it.
+          if (o) throw err
+          resultsFromCache = true
+          return toSend.map(r => {
+            const i = request.findIndex(_ => _.id === r.id)
+            if (i >= 0 && cacheEntries[i] && cacheEntries[i].content)
+              return {
+                id: r.id,
+                jsonrpc: r.jsonrpc,
+                result: cacheEntries[i].content
+              } as RPCResponse
+            else
+              throw err
+          })
         })
-      })
-    ))
+      ))
 
     // update stats
     if (!resultsFromCache && responses.length) {
@@ -498,25 +498,25 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         ctx)))
 
       // add them to cache
-      if (conf.cacheTimeout) 
-        responses.filter(_=>_.result).forEach(res=>{
-          const cacheEntry = cacheEntries[request.findIndex(_=>_.id===res.id)]
-          if (cacheEntry) 
-             ctx.putInCache(cacheEntry.key,JSON.stringify({t:start, r:res.result}))
+      if (conf.cacheTimeout)
+        responses.filter(_ => _.result).forEach(res => {
+          const cacheEntry = cacheEntries[request.findIndex(_ => _.id === res.id)]
+          if (cacheEntry)
+            ctx.putInCache(cacheEntry.key, JSON.stringify({ t: start, r: res.result }))
         })
     }
 
     // merge cache and reponses
-    const allResponses = request.map((r,i)=>responses.find(_=>_.id===r.id) || (cacheEntries[i] && cacheEntries[i].content && {
-      id:r.id,
-      jsonrpc:r.jsonrpc,
-      result:cacheEntries[i].content
+    const allResponses = request.map((r, i) => responses.find(_ => _.id === r.id) || (cacheEntries[i] && cacheEntries[i].content && {
+      id: r.id,
+      jsonrpc: r.jsonrpc,
+      result: cacheEntries[i].content
     }))
 
     // assign the used node to each response
     allResponses.forEach(_ => _.in3Node = node)
 
-    
+
     return allResponses
   }
   catch (err) {
@@ -586,7 +586,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
  */
 function getWeight(weight: IN3NodeWeight, node: IN3NodeConfig) {
   return (weight.weight === undefined ? 1 : weight.weight)
-    * (node.capacity || 1 ) 
+    * (node.capacity || 1)
     * (500 / (weight.avgResponseTime || 500))
 }
 
@@ -660,7 +660,7 @@ function cleanResult(r: RPCResponse): RPCResponse {
     : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
 }
 
-export const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet:'0x1' }
+export const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
 
 function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
   if (!conf) return {}

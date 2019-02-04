@@ -188,6 +188,9 @@ definitions:
                 description: the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.
                 type: number
                 example: 326478
+            lastValidatorChange:
+                description: the blocknumber of gthe last change of the validatorList
+                type: number
             currentBlock: 
                 description: the current blocknumber.
                 type: number

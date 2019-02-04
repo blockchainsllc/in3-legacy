@@ -183,6 +183,7 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
 
 *  **proof** [Proof](#proof) - the Proof-data   
 *  **lastNodeList** `number` - the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.   
+*  **lastValidatorChange** `number` - the blocknumber of gthe last change of the validatorList   
 *  **currentBlock** `number` - the current blocknumber.   
 
 ### ChainSpec
