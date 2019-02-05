@@ -1,16 +1,17 @@
 {
   "name": "in3",
-  "version": "1.1.2",
+  "version": "1.1.6",
   "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
   "scripts": {
-    "docu": "typedoc  --exclude test --excludePrivate  --readme none --ignoreCompilerErrors --target ES6  --mode 'modules' --json doc.json src/index.ts ; cat  doc.json | slockit-docu index slockit/in3/blob/master/src \"# INCUBED API\n\nThis documentation contains a list of all Datastructures and Classes used within the IN3 Client.\n\" >  doc/README.md ; rm doc.json",
-    "build": "tsc -p .",
+    "docu": "typedoc  --exclude test --excludePrivate  --readme none --ignoreCompilerErrors --target ES6  --mode 'modules' --json doc.json src/index.ts ; cat  doc.json | slockit-docu index slockit/in3/blob/master/src \"# Data Structures\n\nThis page contains a list of all Datastructures and Classes used within the IN3 Client.\n\" >  docs/api.md ; rm doc.json",
+    "build": "tsc -p .; cp src/client/defaultConfig.json js/src/client/",
     "test": "nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
     "updateTypes": "slockit-types ",
+    "changelog": "auto-changelog",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
-    "cmd": "node --inspect --experimental-repl-await -e \"axios=require('axios').default;in3=require('./js/src/index');Client=in3.default\" -i"
+    "cmd": "node --inspect -e \"axios=require('axios').default;in3=require('./js/src/index');Client=in3.default;c=new Client()\" -i"
   },
   "nyc": {
     "include": [
@@ -52,6 +53,7 @@
     "@types/mocha": "^5.2.0",
     "@types/winston": "^2.3.8",
     "args": "^5.0.0",
+    "auto-changelog": "^1.10.2",
     "babelify": "^9.0.0",
     "browserify": "^16.2.2",
     "chai": "^4.1.2",
@@ -59,11 +61,9 @@
     "dtsgenerator": "^0.9.9",
     "mocha": "^5.1.1",
     "nyc": "^11.8.0",
-    "slockit-generator": "^1.0.1",
     "source-map-support": "^0.5.6",
     "ts-node": "^6.0.3",
     "typedoc": "^0.11.1",
-    "typescript": "^2.7.2",
     "uglify-es": "^3.2.0"
   },
   "dependencies": {
@@ -80,10 +80,19 @@
     "ethjs-util": "0.1.4",
     "merkle-patricia-tree": "^2.3.1",
     "multihashing-async": "^0.5.1",
-    "protons": "^1.0.1"
+    "protons": "^1.0.1",
+    "slockit-generator": "^1.0.3"
   },
   "optionalDependencies": {
     "koa": "^2.5.3",
     "koa-bodyparser": "^4.2.1"
-  }
+  },
+  "keywords": [
+    "ethereum",
+    "slockit",
+    "iot",
+    "in3",
+    "client",
+    "jsonrpc"
+  ]
 }

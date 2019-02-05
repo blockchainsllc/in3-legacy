@@ -30,17 +30,20 @@ export type IN3Client = Client
 import * as _cbor from './util/cbor'
 export const cbor = _cbor
 
-import * as _serialize from './util/serialize'
+import * as _serialize from './modules/eth/serialize'
 export const serialize = _serialize
 
-import * as _storage from './util/storage'
+import * as _header from './modules/eth/header'
+export const header = _header
+
+import * as _storage from './modules/eth/storage'
 export const storage = _storage
 
 import * as _transport from './util/transport'
 export const transport = _transport
 
 
-import * as _chainData from './client/chainData'
+import * as _chainData from './modules/eth/chainData'
 export const chainData = _chainData
 
 import * as _nodeList from './client/serverList'
@@ -68,6 +71,7 @@ export type ReceiptData = _serialize.ReceiptData
 export type TransactionData = _serialize.TransactionData
 export type IN3RPCConfig = types.IN3RPCConfig
 export type IN3RPCHandlerConfig = types.IN3RPCHandlerConfig
+export type ChainSpec = types.ChainSpec
 
 export const AxiosTransport = transport.AxiosTransport
 export const typeDefs = types.validationDef

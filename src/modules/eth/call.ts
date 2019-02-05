@@ -23,9 +23,9 @@ import * as Account from 'ethereumjs-account'
 import * as Block from 'ethereumjs-block'
 import * as Trie from 'merkle-patricia-tree'
 import { rlp } from 'ethereumjs-util'
-import { createTx, bytes32 } from '../util/serialize'
-import { promisify, toBuffer, toHex } from '../util/util'
-import { AccountProof } from '../types/types'
+import { createTx, bytes32 } from './serialize'
+import { promisify, toBuffer, toHex } from '../../util/util'
+import { AccountProof } from '../../types/types'
 
 /** executes a transaction-call to a smart contract */
 export async function executeCall(args: {

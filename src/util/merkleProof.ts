@@ -13,7 +13,7 @@
 * For information about liability, maintenance etc. also   *
 * refer to the contract concluded with Slock.it GmbH.      *
 ************************************************************
-* For more information, please refer to https://slock.it    *
+* For more information, please refer to https://slock.it   *
 * For questions, please contact info@slock.it              *
 ***********************************************************/
 

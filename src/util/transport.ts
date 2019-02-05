@@ -63,7 +63,7 @@ export class AxiosTransport implements Transport {
     const requests = Array.isArray(data) ? data : [data]
 
     // add cbor-config
-    const conf = {}
+    const conf = {        headers: { 'Content-Type': 'application/json' }  }
     if (this.format === 'cbor')
       Object.assign(conf, {
         transformRequest: cbor.encodeRequests,
@@ -74,6 +74,7 @@ export class AxiosTransport implements Transport {
 
     // execute request
     try {
+      //     requests.forEach(r=>console.log(' => req '+r.method+'('+r.params.map(_=>JSON.stringify(_)).join()+')'))
       const res = await axios.post(url, requests, { ...conf, timeout: timeout || 5000 })
 
       // throw if the status is an error

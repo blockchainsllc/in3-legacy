@@ -18,166 +18,91 @@
 ***********************************************************/
 
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig, ServerList } from '../types/types'
-import { verifyProof, BlackListError } from './verify'
+import { verifyProof, getModule } from './modules'
 import { canMultiChain, canProof } from './serverList'
 import { Transport, AxiosTransport } from '../util/transport'
-import { getChainData } from './chainData'
-import { toChecksumAddress, keccak256 } from 'ethereumjs-util'
-import Filters from './filter'
-import { toHex, toNumber, toMinHex } from '../util/util'
+import { getChainData } from '../modules/eth/chainData' // this is an exception, because if we don't know anything about the chain, we must use eth
+import { toChecksumAddress, keccak256, hashPersonalMessage, ecsign, toRpcSig } from 'ethereumjs-util'
+import { toHex, toNumber, toMinHex, toBuffer } from '../util/util'
 import { resolveRefs } from '../util/cbor'
 import { EventEmitter } from 'events'
-import Cache from './cache'
+import ChainContext from './ChainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
 
+import EthAPI from '../modules/eth/api'
 
+const defaultConfig = require('./defaultConfig.json')
+const CACHEABLE = ['ipfs_get', 'web3_clientVersion', 'web3_sha3', 'net_version', 'eth_protocolVersion', 'eth_coinbase', 'eth_gasPrice', 'eth_accounts', 'eth_getBalance', 'eth_getStorageAt', 'eth_getTransactionCount', 'eth_getBlockTransactionCountByHash', 'eth_getBlockTransactionCountByNumber',
+  'eth_getUncleCountByBlockHash', 'eth_getUncleCountByBlockNumber', 'eth_getCode', 'eth_sign', 'eth_call', 'eth_estimateGas', 'eth_getBlockByHash', 'eth_getBlockByNumber', 'eth_getTransactionByHash', 'eth_getTransactionByBlockHashAndIndex',
+  'eth_getTransactionByBlockNumberAndIndex', 'eth_getTransactionReceipt', 'eth_getUncleByBlockHashAndIndex', 'eth_getUncleByBlockNumberAndIndex', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getLogs', 'eth_getProof']
+
+/** special Error for making sure the correct node is blacklisted */
+export class BlackListError extends Error {
+  addresses: string[]
+  constructor(msg: string, addresses: string[]) {
+    super(msg)
+    this.addresses = addresses
+  }
+}
 /**
  * Client for N3.
  * 
  */
 export default class Client extends EventEmitter {
 
+  // APIS
+  public eth: EthAPI
+
+
+
   public defConfig: IN3Config
   private transport: Transport
-  private filters: Filters
-  public cache: Cache
+  private chains: { [key: string]: ChainContext }
+
+
 
   /**
    * creates a new Client.
    * @param config the configuration
    * @param transport a optional transport-object. default: AxiosTransport
    */
-  public constructor(config: Partial<IN3Config>={}, transport?: Transport) {
+  public constructor(config: Partial<IN3Config> = {}, transport?: Transport) {
     super()
-    this.filters = new Filters()
     if (config && config.autoConfig)
       this.addListener('beforeRequest', adjustConfig)
     this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
-      proof: 'none',
-      signatureCount: 0,
-      minDeposit: 0,
-      autoUpdateList: true,
-      requestCount: 3,
-      loggerUrl: 'https://search-test-usn.slock.it/logIn3',
-      chainId: '0x1',
-      mainChain: '0x2a',
-      chainRegistry: '0x53d02daE1253CDf7C9b93a6ED0462d97697C85F9',
+      ...defaultConfig,
       ...config,
       servers: {
-        '0x1': {  // mainnet
-          needsUpdate: true,
-          contractChain: '0x1',
-          contract: '0xFdb0eA8AB08212A1fFfDB35aFacf37C3857083ca',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x1'],
-              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
-              url: 'https://in3.slock.it/mainnet/nd-3',
-              props: 65535
-            },
-            {
-              deposit: 0,
-              chainIds: ['0x1'],
-              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
-              url: 'https://in3.slock.it/mainnet/nd-5',
-              props: 65535
-            }
-          ]
-        },
-        '0x44d': {  // tobalaba
-          needsUpdate: true,
-          contractChain: '0x44d',
-          contract: '0x845E484b505443814B992Bf0319A5e8F5e407879',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x44d'],
-              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
-              url: 'https://in3.slock.it/tobalaba/nd-3',
-              props: 65535
-            },
-            {
-              deposit: 0,
-              chainIds: ['0x44d'],
-              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
-              url: 'https://in3.slock.it/tobalaba/nd-5',
-              props: 65535
-            }          ]
-        },
-        '0x4b1': {  // evan
-          needsUpdate: true,
-          contractChain: '0x4b1',
-          contract: '0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x4b1'],
-              address: '0xeaC4B82273e828878fD765D993800891bA2E3475',
-              url: 'http://52.47.61.24:8500',
-              props: 65535
-            },
-            {
-              deposit: 0,
-              chainIds: ['0x4b1'],
-              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33A',
-              url: 'https://in3.slock.it/evan/nd-5',
-              props: 65535
-            }          
-          ]
-        },
-        '0x2a': {  // kovan
-          needsUpdate: true,
-          contractChain: '0x2a',
-          contract: '0x27a37a1210df14f7e058393d026e2fb53b7cf8c1',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x2a'],
-              address: '0x8f354b72856e516f1e931c97d1ed3bf1709f38c9',
-              url: 'https://in3.slock.it/kovan/nd-3',
-              props: 65535
-            },
-            {
-              deposit: 0,
-              chainIds: ['0x2a'],
-              address: '0x243D5BB48A47bEd0F6A89B61E4660540E856A33D',
-              url: 'https://in3.slock.it/kovan/nd-5',
-              props: 65535
-            }
-          ]
-        },
-        '0x7d0': { // ipfs
-          needsUpdate: true,
-          contractChain: '0x7d0',
-          contract: '0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9',
-          nodeList: [
-            {
-              deposit: 0,
-              chainIds: ['0x7d0'],
-              address: '0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a',
-              url: 'https://in3.slock.it/ipfs/nd-1',
-              props: 65535
-            }
-          ]
-        },
+        ...defaultConfig.servers,
         ...((config && config.servers) || {})
       }
     }
     verifyConfig(this.defConfig)
-    this.cache = new Cache(this)
+    this.eth = new EthAPI(this)
+    this.chains = {}
+  }
+
+  getChainContext(chainId: string) {
+    if (this.chains[chainId])
+      return this.chains[chainId]
+
+    const chainConf = this.defConfig.servers[chainId]
+    if (!chainConf) throw new Error('chainid ' + chainId + ' does not exist in config!')
+
+    return this.chains[chainId] = getModule(chainConf.verifier || 'eth').createChainContext(this, chainId, chainConf.chainSpec)
   }
 
   get config() {
     return this.defConfig
-  } 
+  }
 
   set config(val) {
     this.defConfig = val
     verifyConfig(this.defConfig)
-  } 
+  }
 
   /**
    * fetches the nodeList from the servers.
@@ -273,7 +198,7 @@ export default class Client extends EventEmitter {
    * This function supports callback so it can be used as a Provider for the web3.
    */
   public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): void | Promise<RPCResponse | RPCResponse[]> {
-    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : this.defConfig)
+    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : { ...this.defConfig })
     if (callback)
       p.then(_ => {
         this.emit('afterRequest', { request, result: Array.isArray(request) ? _ : _[0] })
@@ -329,8 +254,9 @@ export default class Client extends EventEmitter {
     // filter requests are handled internally and externally
     const internResponses: Promise<RPCResponse>[] = []
     const externRequests: RPCRequest[] = []
+    const ctx = this.getChainContext(conf.chainId)
     requests.forEach(r => {
-      const res = this.filters.handleFilter(r, this)
+      const res = ctx.handleIntern(r)
       if (res) internResponses.push(res)
       else externRequests.push(r)
     })
@@ -349,21 +275,21 @@ export default class Client extends EventEmitter {
     const excludes = [...(prevExcludes || []), ...nodes.map(_ => _.address)].filter((e, i, a) => a.indexOf(e) === i)
 
     // get the verified responses from the nodes
-    let responses:RPCResponse[][] = null
+    let responses: RPCResponse[][] = null
     try {
-       responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.cache, [...excludes])))
+      responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, conf, this.transport, this.getChainContext(conf.chainId), [...excludes])))
     }
     catch (ex) {
       // we may retry without proof in order to handle this error
-      if (conf.proof && conf.proof!='none' && conf.retryWithoutProof) 
-         responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, {...conf,proof:'none'}, this.transport, this.cache, [...excludes])))
-      else 
-         throw ex
+      if (conf.proof && conf.proof != 'none' && conf.retryWithoutProof)
+        responses = await Promise.all(nodes.map(_ => handleRequest(externRequests, _, { ...conf, proof: 'none' }, this.transport, this.getChainContext(conf.chainId), [...excludes])))
+      else
+        throw ex
     }
 
     // merge the result 
     const result: RPCResponse[] = await Promise.all(
-      externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport, this.cache))
+      externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport, this.getChainContext(conf.chainId)))
     )
 
     checkForAutoUpdates(conf, result, this)
@@ -402,7 +328,7 @@ function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: 
 /**
  * merges the results of all responses to one valid one.
  */
-async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: IN3Config, transport: Transport, cache: Cache) {
+async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf: IN3Config, transport: Transport, cache: ChainContext) {
 
   // if only one left, this is the response
   if (responses.length === 1) return responses[0]
@@ -453,7 +379,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 /**
  * executes a one single request for one node and updates the stats
  */
-async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, cache: Cache, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
+async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, ctx: ChainContext, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
   // keep the timestamp in order to calc the avgResponseTime
   const start = Date.now()
   // get the existing weights
@@ -462,7 +388,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
   const stats: IN3NodeWeight = weights[node.address] || (weights[node.address] = {})
 
   try {
-    request.forEach(r => {
+    const cacheEntries = request.map(r => {
       // make sure the requests are valid
       r.jsonrpc = r.jsonrpc || '2.0'
       r.id = r.id || idCount++
@@ -473,6 +399,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // only if the node supports chainId, we add it, because if the node is a simple remote-server it might refuse the request with additional keys
       if (conf.chainId && canMultiChain(node))
         in3.chainId = conf.chainId
+
+      // tell server to return finality blocks
+      if (conf.finality)
+        in3.finality = conf.finality
 
       // tell server to replace latest with a older block
       if (conf.replaceLatestBlock)
@@ -506,32 +436,92 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // only if there is something to set, we will add the in3-key and merge it
       if (Object.keys(in3).length)
         r.in3 = { ...in3, ...r.in3 }
+
+      // sign it?
+      if (conf.key) {
+        const sig = ecsign(hashPersonalMessage(Buffer.from(JSON.stringify(r))), conf.key = toBuffer(conf.key), 1)
+        r.in3.clientSignature = toRpcSig(sig.v, sig.r, sig.s, 1)
+      }
+
+      // prepare cache-entry
+      if (conf.cacheTimeout && CACHEABLE.indexOf(r.method) >= 0) {
+        const key = r.method + r.params.map(_ => _.toString()).join()
+        const content = ctx.getFromCache(key)
+        const json = content && JSON.parse(content)
+        return { key, content: json && json.r, ts: json && json.t }
+      }
+      return null
     })
 
+    // we will sennd all non cachable requests or the ones that timedout
+    const toSend = request.filter((r, i) => !cacheEntries[i] || !cacheEntries[i].ts || cacheEntries[i].ts + conf.cacheTimeout * 1000 < start)
+    let resultsFromCache = false
+
     // send the request to the server with a timeout
-    const responses = resolveRefs(await transport.handle(node.url, request, conf.timeout).then(_ => Array.isArray(_) ? _ : [_]))
+    const responses = toSend.length == 0 ? [] : resolveRefs(await transport.handle(node.url, toSend, conf.timeout)
+      .then(
+        _ => Array.isArray(_) ? _ : [_],
+        err => transport.isOnline().then(o => {
+          // if we are not online we can check if the cache still contains all the results and use it.
+          if (o) throw err
+          resultsFromCache = true
+          return toSend.map(r => {
+            const i = request.findIndex(_ => _.id === r.id)
+            if (i >= 0 && cacheEntries[i] && cacheEntries[i].content)
+              return {
+                id: r.id,
+                jsonrpc: r.jsonrpc,
+                result: cacheEntries[i].content
+              } as RPCResponse
+            else
+              throw err
+          })
+        })
+      ))
 
     // update stats
-    stats.responseCount = (stats.responseCount || 0) + 1
-    stats.avgResponseTime = ((stats.avgResponseTime || 0) * (stats.responseCount - 1) + Date.now() - start) / stats.responseCount
-    stats.lastRequest = start
+    if (!resultsFromCache && responses.length) {
+      stats.responseCount = (stats.responseCount || 0) + 1
+      stats.avgResponseTime = ((stats.avgResponseTime || 0) * (stats.responseCount - 1) + Date.now() - start) / stats.responseCount
+      stats.lastRequest = start
+
+      // assign the used node to each response
+      responses.forEach(_ => _.in3Node = node)
+
+      // verify each response by checking the proof. This will throw if it can't be verified
+      await Promise.all(responses.map((response, i) => verifyProof(
+        request[i],
+        response,
+        // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
+        // maybe we can still deliver a proof, but without data
+        !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
+        ctx)))
+
+      // add them to cache
+      if (conf.cacheTimeout)
+        responses.filter(_ => _.result).forEach(res => {
+          const cacheEntry = cacheEntries[request.findIndex(_ => _.id === res.id)]
+          if (cacheEntry)
+            ctx.putInCache(cacheEntry.key, JSON.stringify({ t: start, r: res.result }))
+        })
+    }
+
+    // merge cache and reponses
+    const allResponses = request.map((r, i) => responses.find(_ => _.id === r.id) || (cacheEntries[i] && cacheEntries[i].content && {
+      id: r.id,
+      jsonrpc: r.jsonrpc,
+      result: cacheEntries[i].content
+    }))
 
     // assign the used node to each response
-    responses.forEach(_ => _.in3Node = node)
+    allResponses.forEach(_ => _.in3Node = node)
 
-    // verify each response by checking the proof. This will throw if it can't be verified
-    await Promise.all(responses.map((response, i) => verifyProof(
-      request[i],
-      response,
-      // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
-      // maybe we can still deliver a proof, but without data
-      !request[i].in3 || (request[i].in3.verification || 'never') === 'never',
-      true, cache)))
 
-    return responses
+    return allResponses
   }
   catch (err) {
 
+    // log errors
     if (conf.loggerUrl)
       axios.post(conf.loggerUrl, { level: 'error', message: 'error handling request for ' + node.url + ' : ' + err.message + ' (' + err.stack + ') ', meta: request })
         .then(_ => _, console.log('Error logging (' + err.message + ') : ', node.url, request) as any)
@@ -558,7 +548,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       })
 
       if (tryAgainWithoutSignature && retryCount > 0)
-        return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, cache, excludes, retryCount - 1)
+        return handleRequest(request, node, { ...conf, signatureCount: 0 }, transport, ctx, excludes, retryCount - 1)
 
     }
     else {
@@ -586,7 +576,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     if (!otherNodes.length)
       throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
-    return handleRequest(request, otherNodes[0], conf, transport, cache, [...excludes, node.address, otherNodes[0].address])
+    return handleRequest(request, otherNodes[0], conf, transport, ctx, [...excludes, node.address, otherNodes[0].address])
   }
 }
 
@@ -596,7 +586,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
  */
 function getWeight(weight: IN3NodeWeight, node: IN3NodeConfig) {
   return (weight.weight === undefined ? 1 : weight.weight)
-    * (1 + (node.deposit || 0))
+    * (node.capacity || 1)
     * (500 / (weight.avgResponseTime || 500))
 }
 
@@ -670,7 +660,7 @@ function cleanResult(r: RPCResponse): RPCResponse {
     : { jsonrpc: r.jsonrpc, id: r.id, result: r.result }
 }
 
-export const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet:'0x1' }
+export const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
 
 function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
   if (!conf) return {}

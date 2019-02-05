@@ -8,6 +8,7 @@ configuration-data for the Incubed-client / server
 *  [IN3RPCRequestConfig](#in3rpcrequestconfig)
 *  [Signature](#signature)
 *  [IN3ResponseConfig](#in3responseconfig)
+*  [ChainSpec](#chainspec)
 *  [IN3Config](#in3config)
 *  [RPCRequest](#rpcrequest)
 *  [RPCResponse](#rpcresponse)
@@ -63,6 +64,7 @@ const iN3NodeConfig:types.IN3NodeConfig = {
     '0x1'
   ],
   deposit: 12350000,
+  capacity: 100,
   props: 3
 }
 ```
@@ -73,6 +75,7 @@ const iN3NodeConfig:types.IN3NodeConfig = {
 *  **url** `string` (required)  - the endpoint to post to   
 *  **chainIds** `string<hex>[]` (required)  - the list of supported chains   
 *  **deposit** `integer` (required)  - the deposit of the node in wei   
+*  **capacity** `integer` - the capacity of the node.   
 *  **props** `integer` - the properties of the node.   
 
 ### IN3RPCRequestConfig
@@ -101,9 +104,12 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
 *  **verifiedHashes** `string<bytes32>[]` - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number.   
 *  **latestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **useRef** `boolean` - if true binary-data (starting with a 0x) will be refered if occuring again.   
+*  **useBinary** `boolean` - if true binary-data will be used.   
 *  **useFullProof** `boolean` - if true all data in the response will be proven, which leads to a higher payload.   
+*  **finality** `number` - if given the server will deliver the blockheaders of the following blocks until at least the number in percent of the validators is reached.   
 *  **verification** `string` - defines the kind of proof the client is asking for   
  Must be one of the these values : `'never`', `'proof`', `'proofWithSignature`'
+*  **clientSignature** [{"description":"the signature of the client"}](#{"description":"the signature of the client"}) - the signature of the client   
 *  **signatures** `string<address>[]` - a list of addresses requested to sign the blockhash   
 
 ### Signature
@@ -142,8 +148,15 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
   proof: {
     type: 'accountProof',
     block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+    finalityBlocks: [
+      '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+    ],
     transactions: [],
+    uncles: [],
     merkleProof: [
+      null
+    ],
+    merkleProofPrev: [
       null
     ],
     txProof: [
@@ -162,13 +175,30 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
       }
     ]
   },
-  lastNodeList: 326478
+  lastNodeList: 326478,
+  currentBlock: 320126478
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
 *  **proof** [Proof](#proof) - the Proof-data   
 *  **lastNodeList** `number` - the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.   
+*  **lastValidatorChange** `number` - the blocknumber of gthe last change of the validatorList   
+*  **currentBlock** `number` - the current blocknumber.   
+
+### ChainSpec
+
+describes the chainspecific consensus params
+
+```javascript
+import {types} from 'in3'
+const chainSpec:types.ChainSpec = {}
+```
+ See [types.yaml](../blob/develop/src/types/types.yaml)
+
+*  **engine** `string` - the engine type (like Ethhash, authorityRound, ... )   
+*  **validatorContract** `string` - the aura contract to get the validators   
+*  **validatorList** `array` - the list of validators   
 
 ### IN3Config
 
@@ -180,6 +210,7 @@ const iN3Config:types.IN3Config = {
   nodeLimit: 150,
   keepIn3: false,
   format: 'json',
+  key: '0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7',
   autoConfig: false,
   retryWithoutProof: false,
   includeCode: true,
@@ -193,6 +224,7 @@ const iN3Config:types.IN3Config = {
   minDeposit: 0,
   replaceLatestBlock: 6,
   requestCount: 3,
+  finality: 50,
   timeout: 3000,
   chainId: '0x1',
   chainRegistry: '0xe36179e2286ef405e929C90ad3E70E649B22a945',
@@ -202,10 +234,12 @@ const iN3Config:types.IN3Config = {
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
+*  **cacheTimeout** `number` - number of seconds requests can be cached.   
 *  **nodeLimit** `number` - the limit of nodes to store in the client.   
 *  **keepIn3** `boolean` - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.   
 *  **format** `string` - the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding   
  Must be one of the these values : `'json`', `'jsonRef`', `'cbor`'
+*  **key** [{"description":"the client key to sign requests","example":"0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7"}](#{"description":"the client key to sign requests","example":"0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7"}) - the client key to sign requests   
 *  **autoConfig** `boolean` - if true the config will be adjusted depending on the request   
 *  **retryWithoutProof** `boolean` - if true the the request may be handled without proof in case of an error. (use with care!)   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
@@ -218,6 +252,7 @@ const iN3Config:types.IN3Config = {
 *  **minDeposit** `number` (required)  - min stake of the server. Only nodes owning at least this amount will be chosen.   
 *  **replaceLatestBlock** `integer` - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value   
 *  **requestCount** `number` (required)  - the number of request send when getting a first answer   
+*  **finality** `number` - the number in percent needed in order reach finality (% of signature of the validators)   
 *  **timeout** `number` - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.   
 *  **chainId** `string` (required)  - servers to filter for the given chain. The chain-id based on EIP-155.   
 *  **chainRegistry** `string` - main chain-registry contract   
@@ -227,6 +262,9 @@ const iN3Config:types.IN3Config = {
 *  **loggerUrl** `string` - a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }   
 *  **servers** `object` - the nodelist per chain   
     each key in this object will structure its value like: 
+    *  **verifier** `string` - name of the module responsible for handling the verification   
+    *  **name** `string` - a alias for the chain   
+    *  **chainSpec** [ChainSpec](#chainspec) - chain definition   
     *  **initAddresses** `string[]` - a list of addresses which should always be part of the nodelist when getting an update   
     *  **lastBlock** `integer` - the blockNumber of the last event in the registry   
     *  **contract** `string` - the address of the registry contract   
@@ -288,8 +326,15 @@ const rPCResponse:types.RPCResponse = {
     proof: {
       type: 'accountProof',
       block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+      finalityBlocks: [
+        '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+      ],
       transactions: [],
+      uncles: [],
       merkleProof: [
+        null
+      ],
+      merkleProofPrev: [
         null
       ],
       txProof: [
@@ -308,7 +353,8 @@ const rPCResponse:types.RPCResponse = {
         }
       ]
     },
-    lastNodeList: 326478
+    lastNodeList: 326478,
+    currentBlock: 320126478
   },
   in3Node: {
     index: 13,
@@ -318,6 +364,7 @@ const rPCResponse:types.RPCResponse = {
       '0x1'
     ],
     deposit: 12350000,
+    capacity: 100,
     props: 3
   }
 }
@@ -352,8 +399,15 @@ import {types} from 'in3'
 const proof:types.Proof = {
   type: 'accountProof',
   block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+  finalityBlocks: [
+    '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+  ],
   transactions: [],
+  uncles: [],
   merkleProof: [
+    null
+  ],
+  merkleProofPrev: [
     null
   ],
   txProof: [
@@ -378,8 +432,11 @@ const proof:types.Proof = {
 *  **type** `string` (required)  - the type of the proof   
  Must be one of the these values : `'transactionProof`', `'receiptProof`', `'blockProof`', `'accountProof`', `'callProof`', `'logProof`'
 *  **block** `string` - the serialized blockheader as hex, required in most proofs   
+*  **finalityBlocks** `array` - the serialized blockheader as hex, required in case of finality asked   
 *  **transactions** `array` - the list of transactions of the block   
+*  **uncles** `array` - the list of uncle-headers of the block   
 *  **merkleProof** `string[]` - the serialized merle-noodes beginning with the root-node   
+*  **merkleProofPrev** `string[]` - the serialized merkle-noodes beginning with the root-node of the previous entry (only for full proof of receipts)   
 *  **txProof** `string[]` - the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex   
 *  **logProof** [LogProof](#logproof) - the Log Proof in case of a Log-Request   
 *  **accounts** `object` - a map of addresses and their AccountProof   
@@ -437,14 +494,22 @@ const serverList:types.ServerList = {
         '0x1'
       ],
       deposit: 12350000,
+      capacity: 100,
       props: 3
     }
   ],
   proof: {
     type: 'accountProof',
     block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+    finalityBlocks: [
+      '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+    ],
     transactions: [],
+    uncles: [],
     merkleProof: [
+      null
+    ],
+    merkleProofPrev: [
       null
     ],
     txProof: [
@@ -537,6 +602,9 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 *  **ipfsUrl** `string` - the url of the ipfs-client   
 *  **timeout** `integer` - number of milliseconds to wait before a request gets a timeout   
 *  **rpcUrl** `string` (required)  - the url of the client   
+*  **clientKeys** `string` - a comma sepearted list of client keys to use for simulating clients for the watchdog   
+*  **watchdogInterval** `number` - average time between sending requests to the same node. 0 turns it off (default)   
+*  **freeScore** `number` - the score for requests without a valid signature   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   
 *  **startBlock** `number` - blocknumber to start watching the registry   
@@ -549,6 +617,7 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
     properties: 
     *  **url** `string` (required)  - the public url to reach this node   
     *  **deposit** `number` (required)  - the deposit you want ot store   
+    *  **capacity** `number` - max number of parallel requests   
     *  **depositUnit** `string` - unit of the deposit value   
      Must be one of the these values : `'ether`', `'finney`', `'szabo`', `'wei`'
     *  **capabilities** `object`   

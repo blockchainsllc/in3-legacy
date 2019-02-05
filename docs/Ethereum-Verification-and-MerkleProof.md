@@ -1,4 +1,6 @@
-# Incubed - Verification
+# Technical Background 
+
+## Ethereum Verification
 
 The Incubed is also often called Minimal Verifying Client, because he may not be syncing, but still is able to verify all incomming data. This is possible because the ethereum is based a technology allowing to verify almost any value.
 
@@ -18,11 +20,7 @@ Depending on the Method different Proofs would be needed, which are described in
 - **[Call Proof](#call-proof)** - verifies the result of a `eth_call` - response
 
 
-
-
-
-
-## BlockProof
+### BlockProof
 
 BlockProofs are used whenever you want to read data of a Block and verify them. This would be:
 
@@ -76,7 +74,7 @@ if (keccak256(blockHeader) !== singedBlockHash)
 In case of the `eth_getBlockTransactionCountBy...` the proof contains the full blockHeader already serilalized + all transactionHashes. This is needed in order to verify them in a merkleTree and compare them with the `transactionRoot`
 
 
-## Transaction Proof
+### Transaction Proof
 
 TransactionProofs are used for the following transaction-methods:
 
@@ -118,6 +116,7 @@ verifyMerkleProof(
 )
 ```
 
+
 The Proof-Data will look like these:
 
 ```js
@@ -150,7 +149,7 @@ The Proof-Data will look like these:
 ```
 
 
-## Receipt Proof
+### Receipt Proof
 
 Proofs for the transactionReceipt are used for the following transaction-method:
 
@@ -174,7 +173,7 @@ transactionReceipt = rlp.encode([
     l.topics.map( bytes32 ),
     bytes( l.data )
   ])
-])
+].slice(r.status === null && r.root === null ? 1 : 0))
 ``` 
 
 3. verify the merkleProof of the transaction receipt with
@@ -190,7 +189,7 @@ verifyMerkleProof(
 
 4. Since the merkle-Proof is only proving the value for the given transactionIndex, we also need to prove that the transactionIndex matches the transactionHash requested. This is done by adding another MerkleProof for the Transaction itself as described in the [Transaction Proof](#transaction-proof)
 
-## Log Proof
+### Log Proof
 
 Proofs for logs are only for the one rpc-method:
 
@@ -242,7 +241,7 @@ verifyMerkleProof(
 
 3. The resulting values are the receipts. For each log-entry, we are comparing the verified values of the receipt with the returned logs to ensure that they are correct. 
 
-## Account Proof
+### Account Proof
 
 Prooving an account-value applies to these functions:
 
@@ -251,9 +250,13 @@ Prooving an account-value applies to these functions:
 - [eth_getTransactionCount](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactioncount)
 - [eth_getStorageAt](https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getstorageat)
 
-### eth_getProof
+#### eth_getProof
 
-For the Transaction or Block Proofs all needed data can be found in the block itself and retrieved through standard rpc calls, but if we want to approve the values of an account, we need the MerkleTree of the state, which is not accessable through the standard rpc. That's why we have forked [parity](https://github.com/slockit/parity) and added one additional rpc-method: `eth_getProof`
+For the Transaction or Block Proofs all needed data can be found in the block itself and retrieved through standard rpc calls, but if we want to approve the values of an account, we need the MerkleTree of the state, which is not accessable through the standard rpc. That's why we have created a [EIP](https://github.com/ethereum/EIPs/issues/1186) to add this function and also implemented this in geth and parity:
+
+- [parity](https://github.com/paritytech/parity/pull/9001) (Status: pending pull request) - [Docker](https://hub.docker.com/r/slockit/parity-in3/tags/)
+- [geth](https://github.com/ethereum/go-ethereum/pull/17737) (Status: pending pull request) - [Docker](https://hub.docker.com/r/slockit/geth-in3/tags/)
+
 
 This function accepts 3 parameter :
 1. `account` - the address of the account to proof
@@ -358,7 +361,7 @@ verifyMerkleProof(
 
 
 
-## Call Proof
+### Call Proof
 
 Call Proofs are used whenever you are calling a read-only function of smart contract:
 
@@ -393,14 +396,14 @@ For Verifying you need to follow these steps:
     const account = new Account([ac.nonce, ac.balance, ac.stateRoot, ac.codeHash])
 
     // if we have a code, we will set the code
-    if (ac.code) account.setCode( trie, bytes( ac.code ))
+    if (ac.code) account.setCode( state, bytes( ac.code ))
 
     // set all storage-values
     for (const s of ac.storageProof)
-      account.setStorage( trie, bytes32( s.key ), rlp.encode( bytes32( s.value )))
+      account.setStorage( state, bytes32( s.key ), rlp.encode( bytes32( s.value )))
 
     // set the account data
-    trie.put( address( adr ), account.serialize())
+    state.put( address( adr ), account.serialize())
   }
 
   // add listener on each step to make sure it uses only values found in the proof
@@ -424,5 +427,6 @@ For Verifying you need to follow these steps:
   return result.vm.return
 ```
 
+In the future we will be using the same approach to verify calls with ewasm.
 
 

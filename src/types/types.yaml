@@ -77,6 +77,10 @@ definitions:
                 description: the deposit of the node in wei
                 type: integer
                 example: 12350000
+            capacity:
+                description: the capacity of the node.
+                type: integer
+                example: 100
             props:
                 description: the properties of the node.
                 type: integer
@@ -109,14 +113,22 @@ definitions:
             useRef:
                 description: if true binary-data (starting with a 0x) will be refered if occuring again.
                 type: boolean
+            useBinary:
+                description: if true binary-data will be used.
+                type: boolean
             useFullProof:
                 description: if true all data in the response will be proven, which leads to a higher payload.
                 type: boolean
+            finality:
+                description: if given the server will deliver the blockheaders of the following blocks until at least the number in percent of the validators is reached.
+                type: number
             verification: 
                 description: defines the kind of proof the client is asking for
                 type: string
                 enum: [ never, proof, proofWithSignature ]
                 example: 'proof'
+            clientSignature:
+                description: the signature of the client
             signatures: 
                 description: a list of addresses requested to sign the blockhash
                 type: array
@@ -176,12 +188,36 @@ definitions:
                 description: the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.
                 type: number
                 example: 326478
+            lastValidatorChange:
+                description: the blocknumber of gthe last change of the validatorList
+                type: number
+            currentBlock: 
+                description: the current blocknumber.
+                type: number
+                example: 320126478
+
+    ChainSpec:
+        type: object
+        description: describes the chainspecific consensus params
+        properties:
+            engine:
+                description: the engine type (like Ethhash, authorityRound, ... )
+                type: string
+            validatorContract: 
+                description: the aura contract to get the validators
+                type: string
+            validatorList: 
+                description: the list of validators
+                type: array
 
     IN3Config:
         description: the iguration of the IN3-Client. This can be paritally overriden for every request.
         type: object
         required: [ minDeposit, requestCount, chainId]
         properties:
+            cacheTimeout:
+                type: number
+                description: number of seconds requests can be cached.
             nodeLimit:
                 description: the limit of nodes to store in the client. 
                 type: number
@@ -195,6 +231,9 @@ definitions:
                 type: string
                 enum: ["json","jsonRef","cbor"]
                 example: json
+            key:
+                description: the client key to sign requests
+                example: '0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7'
             autoConfig:
                 description: if true the config will be adjusted depending on the request
                 type: boolean
@@ -244,6 +283,13 @@ definitions:
                 default: 1
                 description: the number of request send when getting a first answer
                 example: 3
+            finality:
+                type: number
+                min: 0
+                max: 100
+                default: 0
+                description: the number in percent needed in order reach finality (% of signature of the validators)
+                example: 50
             timeout:
                 type: number
                 min: 1
@@ -280,6 +326,15 @@ definitions:
                 additionalProperties:
                     type: object
                     properties:
+                        verifier:
+                            type: string
+                            description: name of the module responsible for handling the verification
+                        name:
+                            type: string
+                            description: a alias for the chain
+                        chainSpec:
+                            description: chain definition
+                            $ref: "#/definitions/ChainSpec"
                         initAddresses:
                             description: a list of addresses which should always be part of the nodelist when getting an update
                             type: array
@@ -421,13 +476,28 @@ definitions:
                 type: string
                 description: the serialized blockheader as hex, required in most proofs 
                 example: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'            
+            finalityBlocks:
+                type: array
+                description: the serialized blockheader as hex, required in case of finality asked 
+                example: ['0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b']
             transactions:
                 type: array
                 description: the list of transactions of the block
                 example: []
+            uncles:
+                type: array
+                description: the list of uncle-headers of the block
+                example: []
             merkleProof: 
                 type: array
                 description: the serialized merle-noodes beginning with the root-node
+                exmaple: [ '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b', '0x01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1', '0xcf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbd']
+                items:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]+$
+            merkleProofPrev:
+                type: array
+                description: the serialized merkle-noodes beginning with the root-node of the previous entry (only for full proof of receipts)
                 exmaple: [ '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b', '0x01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1', '0xcf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbd']
                 items:
                     type: string
@@ -638,6 +708,15 @@ definitions:
             rpcUrl: 
                 type: string
                 description: the url of the client
+            clientKeys: 
+                type: string
+                description: a comma sepearted list of client keys to use for simulating clients for the watchdog
+            watchdogInterval: 
+                type: number
+                description: average time between sending requests to the same node. 0 turns it off (default)
+            freeScore: 
+                type: number
+                description: the score for requests without a valid signature
             minBlockHeight:
                 type: integer
                 description: the minimal blockheight in order to sign
@@ -672,6 +751,9 @@ definitions:
                     deposit:
                         type: number
                         description: the deposit you want ot store
+                    capacity:
+                        type: number
+                        description: max number of parallel requests
                     depositUnit:
                         type: string
                         description: unit of the deposit value

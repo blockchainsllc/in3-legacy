@@ -21,15 +21,17 @@
 import { assert } from 'chai'
 import 'mocha'
 import { serialize, util } from '../src/index'
+import { checkBlockSignatures, getSigner, getAuthorities, getChainSpec } from '../src/modules/eth/header'
 import * as ethUtil from 'ethereumjs-util'
+import { toNumber } from '../src/util/util';
 const BN = ethUtil.BN
 const toHex = util.toHex
-
+const conf = require('../src/client/defaultConfig.json')
 describe('Util-Functions', () => {
 
 
-  it('calculate Blockhash for Kovan-Chain', () => {
-    verifyBlock({
+  it('calculate Blockhash for Kovan-Chain', async () => {
+    await verifyBlock({
       "author": "0x0010f94b296a852aaac52ea6c5ac72e03afd032d",
       "difficulty": "340282366920938463463374607431768211454",
       "extraData": "0xd5830109058650617269747986312e32342e31826c69",
@@ -78,12 +80,40 @@ describe('Util-Functions', () => {
       ],
       "transactionsRoot": "0x609b9fdb91fc9aeba07efa4382d3db7fbf835a5cf6d6bb2ff5db2ad8ea7942d0",
       "uncles": []
+    }, '0x2a')
+  })
+
+  it('calculate Blockhash for Goerli-Chain', async () => {
+    await verifyBlock({
+      "author": "0x0000000000000000000000000000000000000000",
+      "difficulty": "0x2",
+      "extraData": "0x506172697479205465636820417574686f7269747900000000000000000000002c83a0626f7c0b8107123dae2385a133720299b6a938922c9da999f5806d15966cab2cb974fac40607d63df9da456e764c564dae625476bc6aa0d05c9eeda33f00",
+      "gasLimit": "0x7a1200",
+      "gasUsed": "0x0",
+      "hash": "0xc4e82b4592c18837595f1e840815b7977c9fab915ec2431de577b1d4134480f2",
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "miner": "0x0000000000000000000000000000000000000000",
+      "number": "0xd5e",
+      "parentHash": "0x9a69790d68becc844227ffd3299dcf5ec2bfc0930925db0d822ad82299bb0ade",
+      "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "sealFields": [
+        "0xa00000000000000000000000000000000000000000000000000000000000000000",
+        "0x880000000000000000"
+      ],
+      "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      "size": "0x260",
+      "stateRoot": "0x5d6cded585e73c4e322c30c2f782a336316f17dd85a4863b9d838d2d4b8b3008",
+      "timestamp": "0x5c53d870",
+      "totalDifficulty": "0x1abd",
+      "transactions": [],
+      "transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "uncles": []
     })
   })
 
 
-  it('calculate Blockhash for Parity Dev-Chain', () => {
-    verifyBlock({
+  it('calculate Blockhash for Parity Dev-Chain', async () => {
+    await verifyBlock({
       "author": "0x0000000000000000000000000000000000000000",
       "difficulty": "0x20000",
       "extraData": "0xd5830108068650617269747986312e32332e30826c69",
@@ -130,8 +160,8 @@ describe('Util-Functions', () => {
     })
   })
 
-  it('calculate Blockhash for Mainnet', () => {
-    verifyBlock({
+  it('calculate Blockhash for Mainnet', async () => {
+    await verifyBlock({
       "difficulty": "3242227738538447",
       "extraData": "0xe4b883e5bda9e7a59ee4bb99e9b1bc",
       "gasLimit": 8003935,
@@ -262,7 +292,7 @@ describe('Util-Functions', () => {
 })
 
 
-function verifyBlock(blockData: any) {
+async function verifyBlock(blockData: any, chainId?: string) {
 
   const b = new serialize.Block(blockData)
 
@@ -291,6 +321,21 @@ function verifyBlock(blockData: any) {
 
   const hash = new serialize.Block(blockData).hash()
   assert.equal('0x' + hash.toString('hex'), blockData.hash)
+
+  if (chainId) {
+    const spec = conf.servers[chainId].chainSpec
+    const ctx = {
+      chainSpec: spec,
+      chainId,
+      getFromCache: key => ctx[key],
+      putInCache: (key, value) => ctx[key] = value
+    } as any
+    const chainSpec = await getChainSpec(b, ctx)
+    const authrities = await getAuthorities(spec, toNumber(b.number), () => null)
+    const signer = getSigner(b)
+    assert.isDefined(authrities.find(_ => _.equals(signer)))
+    const finality = await checkBlockSignatures([b], async (block) => chainSpec)
+  }
 
 }
 

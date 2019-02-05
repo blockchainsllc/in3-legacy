@@ -1,0 +1,31 @@
+digraph minimal_nonplanar_graphs {
+#graph [ rankdir = "LR" ]
+fontname="Helvetica"
+
+  subgraph all {
+    label="Registry"
+
+    subgraph cluster_client_registry {
+        label="ServiceRegistry"  color=lightblue  style=filled
+        node [ fontsize = "12", style="",  shape = "record" color=black fontname="Helvetica" ]
+
+        R[label="0x12345"  color=red fontcolor=red]
+        A[label=" <a> 0x1234| || |   | | | |<b> 0x1234 | |"]
+        B[label="<a> | | | | | | <b> 0x1234| | | | | |"]
+        BTX[label="TX B"]
+        C[label="<a> | | |<b> 0x1234 | | | | | | | | |"]
+        D[label="TX A"  color=red fontcolor=red]
+
+
+        A:b  [ fontcolor=red ]
+
+        A->R [ color=red ]
+        B->A:b  [ color=red ]
+        C->B:b  [ color=red ]
+        D->C:b  [ color=red ]
+
+        BTX->A:a
+
+    }
+  }
+}

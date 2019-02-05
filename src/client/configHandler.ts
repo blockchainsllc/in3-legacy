@@ -18,7 +18,6 @@
 ***********************************************************/
 
 import { IN3Config, RPCRequest } from '../types/types'
-import { request } from 'https';
 
 /**
  * this method will adjust the config depending on the method.

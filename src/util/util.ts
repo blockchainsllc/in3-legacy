@@ -95,8 +95,8 @@ export function toNumber(val: any): number {
     case 'string':
       return parseInt(val)
     default:
-      if (Buffer.isBuffer(val))
-        return val.length == 0 ? 0 : val.readUIntBE(0, val.length)
+      if (Buffer.isBuffer(val)) 
+        return val.length == 0 ? 0 : parseInt(toMinHex(val))
       else if (BN.isBN(val))
         return val.bitLength() > 53 ? toNumber(val.toArrayLike(Buffer)) : val.toNumber()
       else if (val === undefined || val === null)

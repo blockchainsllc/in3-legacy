@@ -18,9 +18,9 @@
 ***********************************************************/
 
 import { toChecksumAddress, BN, keccak256 } from 'ethereumjs-util'
-import { toHex, toBuffer, toNumber } from './util';
+import { toHex, toBuffer, toNumber } from '../../util/util';
 import { bytes32 } from './serialize'
-import { AxiosTransport } from './transport'
+import { AxiosTransport } from '../../util/transport'
 
 /**
  * calc the storrage array key

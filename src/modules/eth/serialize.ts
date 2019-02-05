@@ -19,7 +19,7 @@
 
 import * as ethUtil from 'ethereumjs-util'
 import * as Tx from 'ethereumjs-tx'
-import { toBuffer, toHex } from './util'
+import { toBuffer, toHex } from '../../util/util'
 
 /** RLP-functions */
 export const rlp = ethUtil.rlp
@@ -57,6 +57,7 @@ export interface BlockData {
   mixHash?: string
   nonce?: string | number
   transactions?: any[]
+  uncles?: string[]
 }
 
 /** Transaction as returned by eth_getTransactionByHash */
@@ -115,6 +116,7 @@ export interface ReceiptData {
   status?: string | boolean
   root?: string
   cumulativeGasUsed?: string | number
+  gasUsed?: string | number
   logsBloom?: string
   logs: LogData[]
 }
@@ -190,7 +192,6 @@ export const toAccount = (account: AccountData) => [
 ] as Account
 
 
-
 /** create a Buffer[] from RPC-Response */
 export const toReceipt = (r: ReceiptData) => [
   uint(r.status || r.root),
@@ -202,7 +203,6 @@ export const toReceipt = (r: ReceiptData) => [
     bytes(l.data)
   ])
 ].slice(r.status === null && r.root === null ? 1 : 0) as Receipt
-
 
 
 
@@ -258,6 +258,11 @@ export class Block {
   /** the blockhash as buffer */
   hash(): Buffer {
     return hash(this.raw)
+  }
+
+  /** the blockhash as buffer without the seal fields*/
+  bareHash(): Buffer {
+    return hash(this.raw.slice(0,13))
   }
 
   /** the serialized header as buffer */
