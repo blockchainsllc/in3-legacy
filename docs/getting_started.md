@@ -164,6 +164,14 @@ Status : [https://in3.slock.it?n=evan](https://in3.slock.it?n=evan)
 NodeList: [https://in3.slock.it/evan/nd-3](https://in3.slock.it/evan/nd-3/api/in3_nodeList) 
 
 
+### Görli
+
+Registry : [0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e](https://eth.slock.it/#/goerli/0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e)    
+ChainId : 0x5 (alias `goerli`)    
+Status : [https://in3.slock.it?n=goerli](https://in3.slock.it?n=goerli)    
+NodeList: [https://in3.slock.it/goerli/nd-3](https://in3.slock.it/goerli/nd-3/api/in3_nodeList) 
+
+
 ### IPFS
 
 Registry : [0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9](https://eth.slock.it/#/kovan/0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9)    

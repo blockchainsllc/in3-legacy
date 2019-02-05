@@ -8,6 +8,7 @@ Welcome to Incubed's documentation!
    intro
    getting_started
    Ethereum-Verification-and-MerkleProof
+   poa
    incentivization
    decentralizing_services
    milestones
