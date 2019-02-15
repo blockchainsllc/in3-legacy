@@ -242,6 +242,10 @@ definitions:
                 description: if true the the request may be handled without proof in case of an error. (use with care!)
                 type: boolean
                 example: false
+            maxAttempts:
+                description: max number of attempts in case a response is rejected
+                type: number
+                example: 10
             includeCode: 
                 description: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
                 type: boolean

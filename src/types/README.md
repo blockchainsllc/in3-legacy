@@ -213,6 +213,7 @@ const iN3Config:types.IN3Config = {
   key: '0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7',
   autoConfig: false,
   retryWithoutProof: false,
+  maxAttempts: 10,
   includeCode: true,
   maxCodeCache: 100000,
   maxBlockCache: 100,
@@ -242,6 +243,7 @@ const iN3Config:types.IN3Config = {
 *  **key** [{"description":"the client key to sign requests","example":"0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7"}](#{"description":"the client key to sign requests","example":"0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7"}) - the client key to sign requests   
 *  **autoConfig** `boolean` - if true the config will be adjusted depending on the request   
 *  **retryWithoutProof** `boolean` - if true the the request may be handled without proof in case of an error. (use with care!)   
+*  **maxAttempts** `number` - max number of attempts in case a response is rejected   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **maxCodeCache** `integer` - number of max bytes used to cache the code in memory   
 *  **maxBlockCache** `integer` - number of number of blocks cached  in memory   

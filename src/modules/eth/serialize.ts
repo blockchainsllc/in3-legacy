@@ -110,6 +110,7 @@ export interface LogData {
 
 /** TransactionReceipt as returned by eth_getTransactionReceipt */
 export interface ReceiptData {
+  transactionHash?: string
   transactionIndex?: number
   blockNumber?: string | number
   blockHash?: string
@@ -262,7 +263,7 @@ export class Block {
 
   /** the blockhash as buffer without the seal fields*/
   bareHash(): Buffer {
-    return hash(this.raw.slice(0,13))
+    return hash(this.raw.slice(0, 13))
   }
 
   /** the serialized header as buffer */

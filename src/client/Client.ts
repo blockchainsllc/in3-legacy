@@ -379,7 +379,8 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 /**
  * executes a one single request for one node and updates the stats
  */
-async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, ctx: ChainContext, excludes?: string[], retryCount = 2): Promise<RPCResponse[]> {
+async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, ctx: ChainContext, excludes?: string[], retryCount = 0): Promise<RPCResponse[]> {
+  if (!retryCount) retryCount = (conf.maxAttempts || 2) - 1
   // keep the timestamp in order to calc the avgResponseTime
   const start = Date.now()
   // get the existing weights
@@ -575,8 +576,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
 
     if (!otherNodes.length)
       throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
+    else if (!retryCount)
+      throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but we reached the max number of attempts!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
-    return handleRequest(request, otherNodes[0], conf, transport, ctx, [...excludes, node.address, otherNodes[0].address])
+    return handleRequest(request, otherNodes[0], conf, transport, ctx, [...excludes, node.address, otherNodes[0].address], retryCount - 1)
   }
 }
 
