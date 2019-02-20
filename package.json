@@ -80,8 +80,7 @@
     "ethjs-util": "0.1.4",
     "merkle-patricia-tree": "^2.3.1",
     "multihashing-async": "^0.5.1",
-    "protons": "^1.0.1",
-    "slockit-generator": "^1.0.3"
+    "protons": "^1.0.1"
   },
   "optionalDependencies": {
     "koa": "^2.5.3",
