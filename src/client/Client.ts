@@ -515,8 +515,11 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     }))
 
     // assign the used node to each response
-    allResponses.forEach(_ => _.in3Node = node)
-
+    allResponses.forEach(_ => {
+      if (_.error && JSON.stringify(_.error).indexOf('One of the blocks specified in filter (fromBlock, toBlock or blockHash) cannot be found') >= 0)
+        throw new Error(JSON.stringify(_.error))
+      _.in3Node = node
+    })
 
     return allResponses
   }
