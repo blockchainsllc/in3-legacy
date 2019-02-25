@@ -11,7 +11,7 @@ stages:
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
-  - node_modules/
+    - node_modules/
 
 build-in3:
   stage: build
@@ -30,28 +30,28 @@ test-in3:
   tags:
     - short-jobs
   variables:
-      RPCURL: http://parity:8545
-      IPFS_URL: http://ipfs:5001
+    RPCURL: http://parity:8545
+    IPFS_URL: http://ipfs:5001
   services:
-      - name: jbenet/go-ipfs:latest
-        command:
-          - daemon
-          - --offline
-        alias: ipfs
-      - name: slockit/parity-in3:v2.3
-        command:
-          - --jsonrpc-experimental            
-          - --jsonrpc-apis=all
-          - --logging=3
-          - --jsonrpc-interface=all
-          - --ws-interface=all
-          - --chain=dev
-          - --gas-cap=8000000
-          - --gasprice=0
-          - --reseal-min-period=0
-          - --gas-floor-target=8700000
-          - --tracing=on
-        alias: parity
+    - name: jbenet/go-ipfs:latest
+      command:
+        - daemon
+        - --offline
+      alias: ipfs
+    - name: slockit/parity-in3:v2.3
+      command:
+        - --jsonrpc-experimental
+        - --jsonrpc-apis=all
+        - --logging=3
+        - --jsonrpc-interface=all
+        - --ws-interface=all
+        - --chain=dev
+        - --gas-cap=8000000
+        - --gasprice=0
+        - --reseal-min-period=0
+        - --gas-floor-target=8700000
+        - --tracing=on
+      alias: parity
   script:
     - sh /prepare.sh
     - npm install
@@ -118,17 +118,16 @@ deploy-to-slockit-public_npm:
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish --registry https://registry.npmjs.org
 
-
 deploy-docker:
-    stage: deploy
-    tags:
+  stage: deploy
+  tags:
     - short-jobs
-    services:
-        - docker:dind
-    image: jonaskello/docker-and-compose:latest
-    script:
-        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-        - docker build --build-arg NPM_REGISTRY_TOKEN=${NPM_REGISTRY_TOKEN} -t $COMMIT_IMAGE_TAG .
-        - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
-        - docker push $RELEASE_IMAGE_TAG
-        - docker push $COMMIT_IMAGE_TAG
+  services:
+    - docker:dind
+  image: jonaskello/docker-and-compose:latest
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t $COMMIT_IMAGE_TAG .
+    - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
+    - docker push $RELEASE_IMAGE_TAG
+    - docker push $COMMIT_IMAGE_TAG
