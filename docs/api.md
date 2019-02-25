@@ -1,6 +1,6 @@
 # Data Structures
 
-This page contains a list of all Datastructures and Classes used within the IN3 Client.
+This page contains a list of all Data structures and Classes used within the IN3 Client.
 
 
 * [**AccountProof**](#type-accountproof) : `interface`  - the Proof-for a single Account
@@ -323,7 +323,7 @@ Source: [modules/eth/serialize.ts](https://github.com/slockit/in3/blob/master/sr
 ## Type ChainSpec
 
 
-describes the chainspecific consensus params
+describes the chain-specific consensus params
 
 
 Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L56)
@@ -408,7 +408,7 @@ Source: [client/Client.ts](https://github.com/slockit/in3/blob/master/src/client
 ## Type IN3Config
 
 
-the iguration of the IN3-Client. This can be paritally overriden for every request.
+the iguration of the IN3-Client. This can be partially overriden for every request.
 
 
 Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L73)
@@ -485,7 +485,7 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 ## Type IN3NodeConfig
 
 
-a configuration of a in3-server.
+a configuration of an in3-server.
 
 
 Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L248)
@@ -517,7 +517,7 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 ## Type IN3NodeWeight
 
 
-a local weight of a n3-node. (This is used internally to weight the requests)
+a local weight of an n3-node. (This is used internally to weigh the requests)
 
 
 Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L288)
@@ -661,7 +661,7 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 ## Type IN3RPCRequestConfig
 
 
-additional config for a IN3 RPC-Request
+additional config for an IN3 RPC-Request
 
 
 Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L515)
@@ -699,7 +699,7 @@ Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/ty
 ## Type IN3ResponseConfig
 
 
-additional data returned from a IN3 Server
+additional data returned from an IN3 Server
 
 
 Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L569)
@@ -749,7 +749,7 @@ Source: [modules/eth/serialize.ts](https://github.com/slockit/in3/blob/master/sr
 ## Type LogProof
 
 
-a Object holding proofs for event logs. The key is the blockNumber as hex
+an Object holding proofs for event logs. The key is the blockNumber as hex
 
 
 Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L592)
@@ -879,7 +879,7 @@ Source: [modules/eth/serialize.ts](https://github.com/slockit/in3/blob/master/sr
 ## Type ServerList
 
 
-a List of nodes
+a list of nodes
 
 
 Source: [types/types.ts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L747)
