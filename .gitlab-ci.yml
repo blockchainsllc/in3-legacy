@@ -72,6 +72,24 @@ test-in3:
     paths:
       - test/report
 
+test-implementation:
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - sh /prepare.sh
+    - npm install
+    - npm run build
+    - npm test
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-implementation-tests.git
+    - cd in3-implementation-tests
+    - npm install
+    - cd node_modules
+    - ln -s ../../ in3
+    - cd ..
+    - npm run build-ts
+    - npm test
+
 pages:
   stage: deploy
   tags:

@@ -29,6 +29,7 @@ import { EventEmitter } from 'events'
 import ChainContext from './ChainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
+import { EthereumProvider } from './provider'
 
 import EthAPI from '../modules/eth/api'
 
@@ -47,7 +48,7 @@ export class BlackListError extends Error {
 }
 /**
  * Client for N3.
- * 
+ *
  */
 export default class Client extends EventEmitter {
 
@@ -84,6 +85,14 @@ export default class Client extends EventEmitter {
     this.eth = new EthAPI(this)
     this.chains = {}
   }
+
+  //create a web3 Provider
+  createWeb3Provider() {
+    const provider = new EthereumProvider(this, 'EthProvider')
+    return provider
+  }
+
+
 
   getChainContext(chainId: string) {
     if (this.chains[chainId])
@@ -126,7 +135,7 @@ export default class Client extends EventEmitter {
       // fetch the chain-definition
       const chainData = await getChainData(this, chain, config)
 
-      // fill the data 
+      // fill the data
       servers.contract = chainData.registryContract
       servers.contractChain = chainData.contractChain
 
@@ -197,7 +206,7 @@ export default class Client extends EventEmitter {
    * If the callback is given it will be called with the response, if not a Promise will be returned.
    * This function supports callback so it can be used as a Provider for the web3.
    */
-  public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): void | Promise<RPCResponse | RPCResponse[]> {
+  public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): Promise<RPCResponse | RPCResponse[]> {
     const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : { ...this.defConfig })
     if (callback)
       p.then(_ => {
@@ -244,7 +253,7 @@ export default class Client extends EventEmitter {
    * executes the requests
    * @param requests requests
    * @param conf full configuration
-   * @param prevExcludes list of nodes to exclude 
+   * @param prevExcludes list of nodes to exclude
    */
   private async sendIntern(requests: RPCRequest[], conf: IN3Config, prevExcludes?: string[]): Promise<RPCResponse[]> {
 
@@ -287,7 +296,7 @@ export default class Client extends EventEmitter {
         throw ex
     }
 
-    // merge the result 
+    // merge the result
     const result: RPCResponse[] = await Promise.all(
       externRequests.map((req, i) => mergeResults(req, responses.map(_ => _[i]), conf, this.transport, this.getChainContext(conf.chainId)))
     )
@@ -337,7 +346,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   // TODO maybe we should handle this differently by aquirung different nodes then.
   if (responses.length === 0) throw new Error('There are no valid responses left')
 
-  // for blocknumbers, we simply ake the highest! 
+  // for blocknumbers, we simply ake the highest!
   // TODO check error and maybe even blocknumbers in the future
   if (request.method === 'eth_blockNumber')
     return { ...responses[0], result: '0x' + Math.max(...responses.map(_ => parseInt(_.result))).toString(16) }
@@ -382,6 +391,7 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: IN3Config, transport: Transport, ctx: ChainContext, excludes?: string[], retryCount = 0): Promise<RPCResponse[]> {
   if (!retryCount) retryCount = (conf.maxAttempts || 2) - 1
   // keep the timestamp in order to calc the avgResponseTime
+
   const start = Date.now()
   // get the existing weights
   const weights = conf.servers[conf.chainId].weights || (conf.servers[conf.chainId].weights = {})
@@ -520,7 +530,6 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     return allResponses
   }
   catch (err) {
-
     // log errors
     if (conf.loggerUrl)
       axios.post(conf.loggerUrl, { level: 'error', message: 'error handling request for ' + node.url + ' : ' + err.message + ' (' + err.stack + ') ', meta: request })
@@ -583,7 +592,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
 }
 
 /**
- * calculates the weight of a node 
+ * calculates the weight of a node
  * weight = customWeight * (1 + deposit) * 500/avgResponseTime
  */
 function getWeight(weight: IN3NodeWeight, node: IN3NodeConfig) {
