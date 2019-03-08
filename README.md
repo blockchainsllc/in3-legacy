@@ -37,6 +37,8 @@ const block = await web.eth.getBlockByNumber('latest')
 
 Incubed includes a light API, allowinng not only to use all RPC-Methods in a typesafe way, but also to sign transactions and call funnctions of a contract without the web3-library.
 
+For more details see the [API-Doc](https://github.com/slockit/in3/blob/master/docs/api.md#type-api)
+
 ```js
 
 // import in3-Module

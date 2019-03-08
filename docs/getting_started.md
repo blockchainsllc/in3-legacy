@@ -8,7 +8,7 @@ INCUBED can be used in different ways. For mobile or web-applications, the Type-
 npm install --save in3
 ```
 
-### Direct API
+### As Provider in Web3
 
 You can use incubed as a standalone-library:
 
@@ -31,7 +31,7 @@ const block = await web.eth.getBlockByNumber('latest')
 
 ```
 
-### As Provider in Web3
+### Direct API
 
 The Incubed Client also implements the Provider-Interface used in the web3-Library and can be used directly.
 
