@@ -10,7 +10,7 @@ npm install --save in3
 
 ### As Provider in Web3
 
-You can use incubed as a standalone-library:
+The Incubed Client also implements the Provider-Interface used in the web3-Library and can be used directly.
 
 ```js
 // import in3-Module
@@ -33,7 +33,10 @@ const block = await web.eth.getBlockByNumber('latest')
 
 ### Direct API
 
-The Incubed Client also implements the Provider-Interface used in the web3-Library and can be used directly.
+Incubed includes a light API, allowinng not only to use all RPC-Methods in a typesafe way, but also to sign transactions and call funnctions of a contract without the web3-library.
+
+For more details see the [API-Doc](https://github.com/slockit/in3/blob/master/docs/api.md#type-api)
+
 
 ```js
 
