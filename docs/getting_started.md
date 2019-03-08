@@ -13,28 +13,6 @@ npm install --save in3
 You can use incubed as a standalone-library:
 
 ```js
-
-// import in3-Module
-import In3Client from 'in3'
-
-// use the In3Client as Http-Provider
-const c = new In3Client({
-    proof: 'standard',
-    signatureCount: 1,
-    requestCount : 2,
-    chainId: 'mainnet'
-})
-
-// use the incubed eth api 
-const block = await c.eth.getBlockByNumber('latest')
-```
-
-### As Provider in Web3
-
-The Incubed Client also implements the Provider-Interface used in the web3-Library and can be used directly.
-
-```js
-
 // import in3-Module
 import In3Client from 'in3'
 import * as web3 from 'web3'
@@ -45,10 +23,44 @@ const web3 = new Web3(new In3Client({
     signatureCount: 1,
     requestCount : 2,
     chainId: 'mainnet'
-}))
+}).createWeb3Provider())
 
-// use the web3 
+// use the web3
 const block = await web.eth.getBlockByNumber('latest')
+...
+
+```
+
+### As Provider in Web3
+
+The Incubed Client also implements the Provider-Interface used in the web3-Library and can be used directly.
+
+```js
+
+
+// import in3-Module
+import In3Client from 'in3'
+
+// use the In3Client
+const in3 = new In3Client({
+    proof: 'standard',
+    signatureCount: 1,
+    requestCount : 2,
+    chainId: 'mainnet'
+})
+
+// use the api to call a funnction..
+const myBalance = await in3.eth.callFn(myTokenContract, 'balanceOf(address):uint', myAccount)
+
+// ot to send a transaction..
+const receipt = await in3.eth.sendTransaction({ 
+  to: myTokenContract, 
+  method:'transfer(address,uint256)',
+  args:[target,amount],
+  confirmations:2,
+  pk: myKey
+})
+
 ...
 ```
 
@@ -134,24 +146,33 @@ Currently incubed is deployed on the following chains:
 ### Mainnet
 
 Registry : [0x2736D225f85740f42D17987100dc8d58e9e16252](https://eth.slock.it/#/main/0x2736D225f85740f42D17987100dc8d58e9e16252)    
-ChainId : 0x1 (alias `mainnet`)    
+
+ChainId : 0x1 (alias `mainnet`)        
+
 Status : [https://in3.slock.it?n=mainnet](https://in3.slock.it?n=mainnet)    
+
 NodeList: [https://in3.slock.it/mainnet/nd-3](https://in3.slock.it/mainnet/nd-3/api/in3_nodeList) 
 
 
 ### Kovan
 
 Registry : [0x27a37a1210df14f7e058393d026e2fb53b7cf8c1](https://eth.slock.it/#/kovan/0x27a37a1210df14f7e058393d026e2fb53b7cf8c1)    
+
 ChainId : 0x2a (alias `kovan`)    
+
 Status : [https://in3.slock.it?n=kovan](https://in3.slock.it?n=kovan)    
+
 NodeList: [https://in3.slock.it/kovan/nd-3](https://in3.slock.it/kovan/nd-3/api/in3_nodeList) 
 
 
 ### Tobalaba
 
 Registry : [0x845E484b505443814B992Bf0319A5e8F5e407879](https://eth.slock.it/#/tobalaba/0x845E484b505443814B992Bf0319A5e8F5e407879)    
+
 ChainId : 0x44d (alias `tobalaba`)    
+
 Status : [https://in3.slock.it?n=tobalaba](https://in3.slock.it?n=tobalaba)    
+
 NodeList: [https://in3.slock.it/tobalaba/nd-3](https://in3.slock.it/tobalaba/nd-3/api/in3_nodeList) 
 
 
@@ -159,24 +180,34 @@ NodeList: [https://in3.slock.it/tobalaba/nd-3](https://in3.slock.it/tobalaba/nd-
 ### Evan
 
 Registry : [0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e](https://eth.slock.it/#/evan/0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e)    
+
 ChainId : 0x4b1 (alias `evan`)    
+
 Status : [https://in3.slock.it?n=evan](https://in3.slock.it?n=evan)    
+
 NodeList: [https://in3.slock.it/evan/nd-3](https://in3.slock.it/evan/nd-3/api/in3_nodeList) 
 
 
 ### Görli
 
 Registry : [0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e](https://eth.slock.it/#/goerli/0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e)    
+
 ChainId : 0x5 (alias `goerli`)    
+
+
 Status : [https://in3.slock.it?n=goerli](https://in3.slock.it?n=goerli)    
+
 NodeList: [https://in3.slock.it/goerli/nd-3](https://in3.slock.it/goerli/nd-3/api/in3_nodeList) 
 
 
 ### IPFS
 
 Registry : [0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9](https://eth.slock.it/#/kovan/0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9)    
+
 ChainId : 0x7d0 (alias `ipfs`)    
+
 Status : [https://in3.slock.it?n=ipfs](https://in3.slock.it?n=ipfs)    
+
 NodeList: [https://in3.slock.it/ipfs/nd-3](https://in3.slock.it/ipfs/nd-3/api/in3_nodeList) 
 
 
