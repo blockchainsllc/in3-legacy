@@ -20,10 +20,10 @@ import * as web3 from 'web3'
 
 // use the In3Client as Http-Provider
 const web3 = new Web3(new In3Client({
-    proof: 'standard',
+    proof         : 'standard',
     signatureCount: 1,
-    requestCount : 2,
-    chainId: 'mainnet'
+    requestCount  : 2,
+    chainId       : 'mainnet'
 }).createWeb3Provider())
 
 // use the web3
@@ -44,10 +44,10 @@ import In3Client from 'in3'
 
 // use the In3Client
 const in3 = new In3Client({
-    proof: 'standard',
+    proof         : 'standard',
     signatureCount: 1,
-    requestCount : 2,
-    chainId: 'mainnet'
+    requestCount  : 2,
+    chainId       : 'mainnet'
 })
 
 // use the api to call a funnction..
@@ -55,11 +55,11 @@ const myBalance = await in3.eth.callFn(myTokenContract, 'balanceOf(address):uint
 
 // ot to send a transaction..
 const receipt = await in3.eth.sendTransaction({ 
-  to: myTokenContract, 
-  method:'transfer(address,uint256)',
-  args:[target,amount],
-  confirmations:2,
-  pk: myKey
+  to           : myTokenContract, 
+  method       : 'transfer(address,uint256)',
+  args         : [target,amount],
+  confirmations: 2,
+  pk           : myKey
 })
 
 ...
