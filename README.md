@@ -10,11 +10,11 @@ INCUBED can be used in different ways
 
 | Stack                 | Size | Code Base | Use Case |
 |-----------------------|------|-----------|----------|
-| TS/ JavaScript        | 2.7MB  | https://github.com/slockit/in3 |   WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications |
-| C/C++                 | 200kB| https://github.com/slockit/in3-core | IoT-Devices, can be integrated nicely on many micro controllers (like [zephyr-supported boards] (https://docs.zephyrproject.org/latest/boards/index.html) ) or anny other C/C++ -Application  |
-| Java                  | 205kB| https://github.com/slockit/in3-core | Java-Implementation of a native-wrapper |
-| Docker                | 74MB | https://github.com/slockit/in3 | For replacing existing clients with this docker and connect to incubed via localhost:8545 without the need to change the architecture |
-| bash                  | 200kB | https://github.com/slockit/in3-core | the in3-commandline utils can be used directly as executable within bash-script or on the shell |
+| [TS/ JavaScript](#typescriptjavascript)        | 2.7MB  | https://github.com/slockit/in3 |   WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications |
+| [C/C++](#c---implementation)                 | 200kB| https://github.com/slockit/in3-core | IoT-Devices, can be integrated nicely on many micro controllers (like [zephyr-supported boards] (https://docs.zephyrproject.org/latest/boards/index.html) ) or anny other C/C++ -Application  |
+| [Java](#java)                  | 205kB| https://github.com/slockit/in3-core | Java-Implementation of a native-wrapper |
+| [Docker](#docker)                | 74MB | https://github.com/slockit/in3 | For replacing existing clients with this docker and connect to incubed via localhost:8545 without the need to change the architecture |
+| [bash](#commandline-tool)                  | 200kB | https://github.com/slockit/in3-core | the in3-commandline utils can be used directly as executable within bash-script or on the shell |
 
 other Languages (like C#, Python, Go, Rust) will be supported soon (until then you can simply use the shared library directly).
 
