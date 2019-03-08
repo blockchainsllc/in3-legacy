@@ -1048,25 +1048,25 @@ Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modu
 
 * **[call](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L231)**(tx :[`Transaction`](#type-transaction), block :[`BlockType`](#type-blocktype) = "latest") :`Promise<string>` - Executes a new message call immediately without creating a transaction on the block chain.
 
-* **[callFn](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L238)**(to :[`Address`](#type-address), method :`string`, args :`any`[]) :`Promise<any>` - Executes a new message call immediately without creating a transaction on the block chain.
+* **[callFn](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L238)**(to :[`Address`](#type-address), method :`string`, args :`any`[]) :`Promise<any>` - Executes a function of a contract, by passing a [method-signature](https://github.com/ethereumjs/ethereumjs-abi/blob/master/README.md#simple-encoding-and-decoding) and the arguments, which will then be ABI-encoded and send as eth_call.
 
 * **[chainId](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L246)**() :`Promise<string>` - Returns the EIP155 chain ID used for transaction signing at the current best block. Null is returned if not available.
 
 * **[estimateGas](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L253)**(tx :[`Transaction`](#type-transaction), block :[`BlockType`](#type-blocktype) = "latest") :`Promise<number>` - Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
 
-* **[eth_getCode](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L267)**(address :[`Address`](#type-address), block :[`BlockType`](#type-blocktype) = "latest") :`Promise<string>` - Returns code at a given address.
-
 * **[gasPrice](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L224)**() :`Promise<number>` - Returns the current price per gas in wei. (as number)
 
 * **[getBalance](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L260)**(address :[`Address`](#type-address), block :[`BlockType`](#type-blocktype) = "latest") :`Promise<string>` - Returns the balance of the account of given address in wei (as hex).
 
-* **[getBlockByHash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L283)**(hash :[`Hash`](#type-hash), includeTransactions :`boolean` = false) :`Promise<>` - Returns information about a block by hash.
+* **[getBlockByHash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L283)**(hash :[`Hash`](#type-hash), includeTransactions :`boolean` = false) :[`Promise<Block>`](#type-block) - Returns information about a block by hash.
 
-* **[getBlockByNumber](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L290)**(block :[`BlockType`](#type-blocktype) = "latest", includeTransactions :`boolean` = false) :`Promise<>` - Returns information about a block by block number.
+* **[getBlockByNumber](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L290)**(block :[`BlockType`](#type-blocktype) = "latest", includeTransactions :`boolean` = false) :[`Promise<Block>`](#type-block) - Returns information about a block by block number.
 
 * **[getBlockTransactionCountByHash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L298)**(block :[`Hash`](#type-hash)) :`Promise<number>` - Returns the number of transactions in a block from a block matching the given block hash.
 
 * **[getBlockTransactionCountByNumber](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L306)**(block :[`Hash`](#type-hash)) :`Promise<number>` - Returns the number of transactions in a block from a block matching the given block number.
+
+* **[getCode](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L267)**(address :[`Address`](#type-address), block :[`BlockType`](#type-blocktype) = "latest") :`Promise<string>` - Returns code at a given address.
 
 * **[getFilterChanges](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L313)**(id :[`Quantity`](#type-quantity)) :`Promise<>` - Polling method for a filter, which returns an array of logs which occurred since last poll.
 
@@ -1076,21 +1076,21 @@ Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modu
 
 * **[getStorageAt](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L275)**(address :[`Address`](#type-address), pos :[`Quantity`](#type-quantity), block :[`BlockType`](#type-blocktype) = "latest") :`Promise<string>` - Returns the value from a storage position at a given address.
 
-* **[getTransactionByBlockHashAndIndex](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L337)**(hash :[`Hash`](#type-hash), pos :[`Quantity`](#type-quantity)) :`Promise<>` - Returns information about a transaction by block hash and transaction index position.
+* **[getTransactionByBlockHashAndIndex](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L337)**(hash :[`Hash`](#type-hash), pos :[`Quantity`](#type-quantity)) :[`Promise<TransactionDetail>`](#type-transactiondetail) - Returns information about a transaction by block hash and transaction index position.
 
-* **[getTransactionByBlockNumberAndIndex](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L345)**(block :[`BlockType`](#type-blocktype), pos :[`Quantity`](#type-quantity)) :`Promise<>` - Returns information about a transaction by block number and transaction index position.
+* **[getTransactionByBlockNumberAndIndex](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L345)**(block :[`BlockType`](#type-blocktype), pos :[`Quantity`](#type-quantity)) :[`Promise<TransactionDetail>`](#type-transactiondetail) - Returns information about a transaction by block number and transaction index position.
 
-* **[getTransactionByHash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L352)**(hash :[`Hash`](#type-hash)) :`Promise<>` - Returns the information about a transaction requested by transaction hash.
+* **[getTransactionByHash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L352)**(hash :[`Hash`](#type-hash)) :[`Promise<TransactionDetail>`](#type-transactiondetail) - Returns the information about a transaction requested by transaction hash.
 
 * **[getTransactionCount](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L359)**(address :[`Address`](#type-address), block :[`BlockType`](#type-blocktype) = "latest") :`Promise<number>` - Returns the number of transactions sent from an address. (as number)
 
-* **[getTransactionReceipt](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L367)**(hash :[`Hash`](#type-hash)) :`Promise<>` - Returns the receipt of a transaction by transaction hash.
+* **[getTransactionReceipt](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L367)**(hash :[`Hash`](#type-hash)) :[`Promise<TransactionReceipt>`](#type-transactionreceipt) - Returns the receipt of a transaction by transaction hash.
     Note That the receipt is available even for pending transactions.
 
-* **[getUncleByBlockHashAndIndex](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L375)**(hash :[`Hash`](#type-hash), pos :[`Quantity`](#type-quantity)) :`Promise<>` - Returns information about a uncle of a block by hash and uncle index position.
+* **[getUncleByBlockHashAndIndex](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L375)**(hash :[`Hash`](#type-hash), pos :[`Quantity`](#type-quantity)) :[`Promise<Block>`](#type-block) - Returns information about a uncle of a block by hash and uncle index position.
     Note: An uncle doesn’t contain individual transactions.
 
-* **[getUncleByBlockNumberAndIndex](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L384)**(block :[`BlockType`](#type-blocktype), pos :[`Quantity`](#type-quantity)) :`Promise<>` - Returns information about a uncle of a block number and uncle index position.
+* **[getUncleByBlockNumberAndIndex](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L384)**(block :[`BlockType`](#type-blocktype), pos :[`Quantity`](#type-quantity)) :[`Promise<Block>`](#type-block) - Returns information about a uncle of a block number and uncle index position.
     Note: An uncle doesn’t contain individual transactions.
 
 * **[getUncleCountByBlockHash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L391)**(hash :[`Hash`](#type-hash)) :`Promise<number>` - Returns the number of uncles in a block from a block matching the given block hash.
@@ -1105,64 +1105,65 @@ Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modu
 
 * **[protocolVersion](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L447)**() :`Promise<string>` - Returns the current ethereum protocol version.
 
-* **[sendRawTransaction](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L469)**(data :[`Data`](#type-data)) :`Promise<string>` - Creates new message call transaction or a contract creation for signed transactions.
+* **[sendRawTransaction](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L476)**(data :[`Data`](#type-data)) :`Promise<string>` - Creates new message call transaction or a contract creation for signed transactions.
 
-* **[sendTransaction](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L474)**(args :[`TxRequest`](#type-txrequest)) :`Promise<>` - sends a Transaction
+* **[sendTransaction](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L481)**(args :[`TxRequest`](#type-txrequest)) :`Promise<>` - sends a Transaction
 
 * **[syncing](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L454)**() :`Promise<>` - Returns the current ethereum protocol version.
 
-* **[uninstallFilter](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L440)**(id :[`Quantity`](#type-quantity)) :`Promise<>` - Uninstalls a filter with given id. Should always be called when watch is no longer needed. Additonally Filters timeout when they aren’t requested with eth_getFilterChanges for a period of time.
+* **[uninstallFilter](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L440)**(id :[`Quantity`](#type-quantity)) :[`Promise<Quantity>`](#type-quantity) - Uninstalls a filter with given id. Should always be called when watch is no longer needed. Additonally Filters timeout when they aren’t requested with eth_getFilterChanges for a period of time.
 
 
 ## Type Block
 
 
-encodes and decodes the blockheader
-
-
-Source: [modules/eth/serialize.ts](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L221)
+Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L95)
 
 
 
-* `constructor` **[constructor](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L242)**(data :[`Buffer`](#type-buffer)|`string`|[`BlockData`](#type-blockdata)) :[`Block`](#type-block) - creates a Block-Onject from either the block-data as returned from rpc, a buffer or a hex-string of the encoded blockheader
+* **[Block](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L95)**
 
-* **[raw](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L224)** :[`BlockHeader`](#type-blockheader) - the raw Buffer fields of the BlockHeader
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
 
-* **[transactions](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L227)** :[`Tx`](#type-tx)[] - the transaction-Object (if given)
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
-*  **bloom()** 
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
 
-*  **coinbase()** 
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
-*  **difficulty()** 
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
-*  **extra()** 
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
 
-*  **gasLimit()** 
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
 
-*  **gasUsed()** 
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
 
-*  **number()** 
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
 
-*  **parentHash()** 
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
-*  **receiptTrie()** 
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
 
-*  **sealedFields()** 
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
 
-*  **stateRoot()** 
+    * **[sealFields](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L137)** :[`Data`](#type-data)[] - PoA-Fields
 
-*  **timestamp()** 
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
 
-*  **transactionsTrie()** 
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
-*  **uncleHash()** 
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
 
-* **[bareHash](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L265)**() :[`Buffer`](#type-buffer) - the blockhash as buffer without the seal fields
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
-* **[hash](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L260)**() :[`Buffer`](#type-buffer) - the blockhash as buffer
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
-* **[serializeHeader](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L270)**() :[`Buffer`](#type-buffer) - the serialized header as buffer
+    * **[transactions](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L133)** :`string`|[] - Array of transaction objects, or 32 Bytes transaction hashes depending on the last given parameter
+
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
+
+    * **[uncles](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L135)** :[`Hash`](#type-hash)[] - Array of uncle hashes
 
 
 ## Type ChainContext
@@ -1363,6 +1364,90 @@ Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modu
     * **[topics](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L168)** :`string`|`string`[][] - (optional) Array of 32 Bytes Data topics. Topics are order-dependent. It’s possible to pass in null to match any topic, or a subarray of multiple topics of which one should be matching.
 
 
+## Type TransactionDetail
+
+
+Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L54)
+
+
+
+* **[TransactionDetail](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L54)**
+
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
+
+    * **[BlockType](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L7)** :`number`|`'latest'`|`'earliest'`|`'pending'` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[condition](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L92)** :`any` - (optional) conditional submission, Block number in block or timestamp in time or null. (parity-feature)
+
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
+
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
+
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+
+## Type TransactionReceipt
+
+
+Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L26)
+
+
+
+* **[TransactionReceipt](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L26)**
+
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
+
+    * **[BlockType](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L7)** :`number`|`'latest'`|`'earliest'`|`'pending'` 
+
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[logs](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L42)** :[`Log`](#type-log)[] - Array of log objects, which this transaction generated.
+
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
+
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
+
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+
 ## Type Data
 
 
@@ -1401,19 +1486,6 @@ Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modu
     * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
 
-## Type BlockHeader
-
-
-Buffer[] of the header
-
-
-Source: [modules/eth/serialize.ts](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L27)
-
-
-
-* **[BlockHeader](https://github.com/slockit/in3/blob/master/src/modules/eth/serialize.ts#L27)** :[`Buffer`](#type-buffer)[] - Buffer[] of the header
-
-
 ## Type Module
 
 
@@ -1426,4 +1498,32 @@ Source: [client/modules.ts](https://github.com/slockit/in3/blob/master/src/clien
 * **[createChainContext](https://github.com/slockit/in3/blob/master/src/client/modules.ts#L10)**(client :[`Client`](#type-client), chainId :`string`, spec :[`ChainSpec`](#type-chainspec)) :[`ChainContext`](#type-chaincontext) 
 
 * **[verifyProof](https://github.com/slockit/in3/blob/master/src/client/modules.ts#L12)**(request :[`RPCRequest`](#type-rpcrequest), response :[`RPCResponse`](#type-rpcresponse), allowWithoutProof :`boolean`, ctx :[`ChainContext`](#type-chaincontext)) :`Promise<boolean>` - general verification-function which handles it according to its given type.
+
+
+## Type Log
+
+
+Source: [modules/eth/api.ts](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L139)
+
+
+
+* **[Log](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L139)**
+
+    * **[Address](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L10)** :`string` 
+
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[Data](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L11)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
+
+    * **[removed](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L141)** :`boolean` - true when the log was removed, due to a chain reorganization. false if its a valid log.
+
+    * **[topics](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L157)** :[`Data`](#type-data)[] - - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.)
+
+    * **[Hash](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L9)** :`string` 
+
+    * **[Quantity](https://github.com/slockit/in3/blob/master/src/modules/eth/api.ts#L8)** :`number`|`string` 
 
