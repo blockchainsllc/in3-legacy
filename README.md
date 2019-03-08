@@ -6,6 +6,22 @@ INCUBED = A trustless INcentivized remote Node Network = IN3
 
 # Getting started
 
+INCUBED can be used in different ways
+
+| Stack                 | Size | Code Base | Use Case |
+|-----------------------|------|-----------|----------|
+| TypeScript/JavaScript | 2.7MB (browserified) | https://github.com/slockit/in3 |   WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications |
+| C/C++                 | 200kB| https://github.com/slockit/in3-core | IoT-Devices, can be integrated nicely on many micro controllers (like [zephyr-supported boards] (https://docs.zephyrproject.org/latest/boards/index.html) ) or anny other C/C++ -Application  |
+| Java                  | 205kB| https://github.com/slockit/in3-core | Java-Implementation of a native-wrapper |
+| Docker                | 74MB | https://github.com/slockit/in3 | For replacing existing clients with this docker and connect to incubed via localhost:8545 without the need to change the architecture |
+| bash                  | 200kB | https://github.com/slockit/in3-core | the in3-commandline utils can be used directly as executable within bash-script or on the shell |
+
+other Languages (like C#, Python, Go, Rust) will be supported soon (until then you can simply use the shared library directly).
+
+## TypeScript/JavaScript
+
+Installing incubes is as easy as installing any other module:
+
 ```
 npm install --save in3
 ```
@@ -34,6 +50,7 @@ const block = await web.eth.getBlockByNumber('latest')
 ```
 
 ### Without web3 (Direct API)
+
 
 Incubed includes a light API, allowinng not only to use all RPC-Methods in a typesafe way, but also to sign transactions and call funnctions of a contract without the web3-library.
 
@@ -66,6 +83,80 @@ const receipt = await in3.eth.sendTransaction({
 
 ...
 
+
+```
+
+## C - Implementation
+
+*The C-Implemetation will be released soon!*
+
+```c
+#include <stdio.h>
+#include <in3/client.h>  // the core client
+#include <eth_full.h>    // the full ethereum verifier containing the EVM
+#include <in3/eth_api.h> // wrapper for easier use
+#include <in3_curl.h>    // transport implementation
+
+int main(int argc, char* argv[]) {
+
+  // register a chain-verifier for full Ethereum-Support
+  in3_register_eth_full();
+
+  // create new incubed client
+  in3_t* c        = in3_new();
+
+  // set your config
+  c->transport    = send_curl; // use curl to handle the requests
+  c->requestCount = 1;         // number of requests to send
+  c->chainId      = 0x1;       // use main chain
+
+  // use a ethereum-api instead of pure JSON-RPC-Requests
+  eth_block_t* block = eth_getBlockByNumber(c, atoi(argv[1]), true);
+  if (!block)
+    printf("Could not find the Block: %s", eth_last_error());
+  else {
+    printf("Number of verified transactions in block: %i", block->tx_count);
+    free(block);
+  }
+
+  ...
+}
+
+```
+
+More Details are comming soon...
+
+## Java
+
+The Java-Implementation uses a wrapper of the C-Implemenation. That's why you need to make sure the libin3.so or in3.dll or libin3.dylib can be found in the java.library.path, like
+
+java -Djava.library.path="path_to_in3;${env_var:PATH}" HelloIN3.class
+
+```java
+import org.json.*;
+import in3.IN3;
+
+public class HelloIN3 {  
+   // 
+   public static void main(String[] args) {
+       String blockNumber = args[0]; 
+       IN3 in3 = new IN3();
+       JSONObject result = new JSONObject(in3.sendRPC("eth_getBlockByNumber",{ blockNumberm ,true})));
+       ....
+   }
+}
+```
+
+## Commandline Tool
+
+Based on the C-Implementation a Commandline-Util is build, which executes a JSON-RPC-Request and only delivers the result. This can be used within bash-scripts:
+
+```
+CURRENT_BLOCK = `in3 -c kovan eth_blockNumber`
+
+#or to send a transaction
+
+IN3_PK=`cat mysecret_key.txt` in3 eth_sendTransaction '{"from":"0x5338d77B5905CdEEa7c55a1F3A88d03559c36D73", "to":"0xb5049E77a70c4ea06355E3bcbfcF8fDADa912481", "value":"0x10000"}'
 
 ```
 
