@@ -140,6 +140,36 @@ export async function verifyTransactionProof(txHash: Buffer, headerProof: BlockH
   )
 }
 
+/** verifies a TransactionProof */
+export async function verifyTransactionFromBlockProof(blockHash: Buffer, headerProof: BlockHeaderProof, txData: TransactionData, ctx: ChainContext) {
+
+  if (!txData) throw new Error('No TransactionData!')
+
+  // decode the blockheader
+  const block = blockFromHex(headerProof.proof.block)
+
+  // verify the blockhash and the signatures
+  await verifyBlock(block, { ...headerProof, expectedBlockHash: blockHash }, ctx)
+
+  verifyTransaction(txData)
+
+  const tx = toTransaction(txData)
+  const txHashofData = hash(tx)
+
+  if (toNumber(block.number) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber')
+  if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
+  if (headerProof.proof.txIndex != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex')
+
+  // verifiy the proof
+  await verifyMerkleProof(
+    block.transactionsTrie, // expected merkle root
+    util.rlp.encode(toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
+    headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
+    serialize(tx),
+    'The Transaction can not be verified'
+  )
+}
+
 function verifyLog(l: LogData, block: Block, blockHash: string, index: number, txIndex: number, txHash: string) {
   if (l.blockHash !== blockHash) throw new Error('invalid blockhash')
   if (toNumber(l.blockNumber) !== toNumber(block.number)) throw new Error('invalid blocknumber')
@@ -376,7 +406,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 export function verifyTransaction(t: TransactionData) {
   const raw = toTransaction(t)
   let rawHash: Buffer, v = ethUtil.bufferToInt(t.v)
-  if (t.chainId) {  // use  EIP155 spec 
+  if (t.chainId) {  // use  EIP155 spec
     rawHash = hash([...raw.slice(0, 6), uint(t.chainId), Buffer.allocUnsafe(0), Buffer.allocUnsafe(0)])
     v -= toNumber(t.chainId) * 2 + 8
   }
@@ -465,7 +495,7 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
     // create the index the same way the server should
     createRandomIndexes(nl.totalServers, limit, bytes32(request.params[1]), idxs)
 
-    // veryfy the index is in the same order 
+    // veryfy the index is in the same order
     if (idxs.length !== limit)
       throw new Error('wrong number of index')
     idxs.forEach((index, i) => {
@@ -490,7 +520,7 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
   // verify the values of the proof
   for (const n of nl.nodes) {
     checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 1), bytes32(n.address), 'wrong owner ')
-    // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals 
+    // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals
     const deposit = getStorageValue(accountProof, getStorageArrayKey(0, n.index, 6, 2))
     if (parseInt(toBN(deposit).toString()) != parseInt(n.deposit as any))
       throw new Error('wrong deposit ')
@@ -655,7 +685,10 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
 
   switch (proof.type) {
     case 'transactionProof':
-      await verifyTransactionProof(bytes32(request.params[0]), headerProof, response.result, ctx)
+      if(request.method == "eth_getTransactionByBlockHashAndIndex")
+        await verifyTransactionFromBlockProof(bytes32(request.params[0]), headerProof, response.result, ctx)
+      else
+        await verifyTransactionProof(bytes32(request.params[0]), headerProof, response.result, ctx)
       break
     case 'logProof':
       await verifyLogProof(headerProof, response.result && response.result as LogData[], ctx)
