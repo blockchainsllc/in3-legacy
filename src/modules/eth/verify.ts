@@ -143,64 +143,84 @@ export async function verifyTransactionProof(txHash: Buffer, headerProof: BlockH
 /** verifies a TransactionProof */
 export async function verifyTransactionByBlockHashProof(blockHash: Buffer, txIndex: Buffer, headerProof: BlockHeaderProof, txData: TransactionData, ctx: ChainContext) {
 
-  if (!txData) throw new Error('No TransactionData!')
-
   // decode the blockheader
   const block = blockFromHex(headerProof.proof.block)
 
-  // verify the blockhash and the signatures
-  await verifyBlock(block, { ...headerProof, expectedBlockHash: blockHash }, ctx)
+  if (!txData){
+    await verifyMerkleProof(
+      block.transactionsTrie, // expected merkle root
+      util.rlp.encode(toNumber(txIndex)), // path, which is the transsactionIndex
+      headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
+      null,
+      'The Transaction can not be verified'
+    )
+  }
+  else {
+    // verify the blockhash and the signatures
+    await verifyBlock(block, { ...headerProof, expectedBlockHash: blockHash }, ctx)
 
-  verifyTransaction(txData)
+    verifyTransaction(txData)
 
-  const tx = toTransaction(txData)
-  const txHashofData = hash(tx)
+    const tx = toTransaction(txData)
+    const txHashofData = hash(tx)
 
-  if (!bytes32(txData.blockHash).equals(blockHash)) throw new Error('invalid blockHash in transaction data')
-  if (toNumber(block.number) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber')
-  if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
-  if (toNumber(txIndex) != toNumber(headerProof.proof.txIndex)) throw new Error('invalid txIndex in request')
-  if (toNumber(txIndex) != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
+    if (!bytes32(txData.blockHash).equals(blockHash)) throw new Error('invalid blockHash in transaction data')
+    if (toNumber(block.number) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber')
+    if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
+    if (toNumber(txIndex) != toNumber(headerProof.proof.txIndex)) throw new Error('invalid txIndex in request')
+    if (toNumber(txIndex) != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
 
-  // verifiy the proof
-  await verifyMerkleProof(
-    block.transactionsTrie, // expected merkle root
-    util.rlp.encode(toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
-    headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-    serialize(tx),
-    'The Transaction can not be verified'
-  )
+    // verifiy the proof
+    await verifyMerkleProof(
+      block.transactionsTrie, // expected merkle root
+      util.rlp.encode(toNumber(txIndex)), // path, which is the transsactionIndex
+      headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
+      serialize(tx),
+      'The Transaction can not be verified'
+    )
+  }
+
 }
 
 export async function verifyTransactionByBlockNumberProof(blockNumber: Buffer, txIndex: Buffer, headerProof: BlockHeaderProof, txData: TransactionData, ctx: ChainContext) {
 
-  if (!txData) throw new Error('No TransactionData!')
-
   // decode the blockheader
   const block = blockFromHex(headerProof.proof.block)
 
-  // verify the blockhash and the signatures
-  await verifyBlock(block, { ...headerProof, expectedBlockHash: bytes32(txData.blockHash) }, ctx)
+  if (!txData) {
+    await verifyMerkleProof(
+      block.transactionsTrie, // expected merkle root
+      util.rlp.encode(toNumber(txIndex)), // path, which is the transsactionIndex
+      headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
+      null,
+      'The Transaction can not be verified'
+    )
+  }
+  else{
+    //verify the blockhash and the signatures
+    await verifyBlock(block, { ...headerProof, expectedBlockHash: bytes32(txData.blockHash) }, ctx)
 
-  verifyTransaction(txData)
+    verifyTransaction(txData)
 
-  const tx = toTransaction(txData)
-  const txHashofData = hash(tx)
+    const tx = toTransaction(txData)
+    const txHashofData = hash(tx)
 
-  if (toNumber(blockNumber) != toNumber(block.number)) throw new Error('invalid blockNumber in request')
-  if (toNumber(blockNumber) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber in transaction data')
-  if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
-  if (toNumber(txIndex) != toNumber(headerProof.proof.txIndex)) throw new Error('invalid txIndex in request')
-  if (toNumber(txIndex) != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
+    if (toNumber(blockNumber) != toNumber(block.number)) throw new Error('invalid blockNumber in request')
+    if (toNumber(blockNumber) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber in transaction data')
+    if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
+    if (toNumber(txIndex) != toNumber(headerProof.proof.txIndex)) throw new Error('invalid txIndex in request')
+    if (toNumber(txIndex) != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
 
-  // verifiy the proof
-  await verifyMerkleProof(
-    block.transactionsTrie, // expected merkle root
-    util.rlp.encode(toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
-    headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-    serialize(tx),
-    'The Transaction can not be verified'
-  )
+    // verifiy the proof
+    await verifyMerkleProof(
+      block.transactionsTrie, // expected merkle root
+      util.rlp.encode(toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
+      headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
+      serialize(tx),
+      'The Transaction can not be verified'
+    )
+  }
+
 }
 
 function verifyLog(l: LogData, block: Block, blockHash: string, index: number, txIndex: number, txHash: string) {
