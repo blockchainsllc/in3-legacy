@@ -147,6 +147,7 @@ export async function verifyTransactionByBlockHashProof(blockHash: Buffer, txInd
 
   // decode the blockheader
   const block = blockFromHex(headerProof.proof.block)
+  console.log(block)
 
   // verify the blockhash and the signatures
   await verifyBlock(block, { ...headerProof, expectedBlockHash: blockHash }, ctx)
@@ -156,10 +157,11 @@ export async function verifyTransactionByBlockHashProof(blockHash: Buffer, txInd
   const tx = toTransaction(txData)
   const txHashofData = hash(tx)
 
+  if (!bytes32(txData.blockHash).equals(blockHash)) throw new Error('invalid blockHash in transaction data')
   if (toNumber(block.number) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber')
   if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
-  if (headerProof.proof.txIndex != toNumber(txIndex)) throw new Error('invalid txIndex in request')
-  if (headerProof.proof.txIndex != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex')
+  if (toNumber(txIndex) != toNumber(headerProof.proof.txIndex)) throw new Error('invalid txIndex in request')
+  if (toNumber(txIndex) != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
 
   // verifiy the proof
   await verifyMerkleProof(
@@ -189,8 +191,8 @@ export async function verifyTransactionByBlockNumberProof(blockNumber: Buffer, t
   if (toNumber(blockNumber) != toNumber(block.number)) throw new Error('invalid blockNumber in request')
   if (toNumber(blockNumber) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber in transaction data')
   if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
-  if (headerProof.proof.txIndex != toNumber(txIndex)) throw new Error('invalid txIndex in request')
-  if (headerProof.proof.txIndex != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
+  if (toNumber(txIndex) != toNumber(headerProof.proof.txIndex)) throw new Error('invalid txIndex in request')
+  if (toNumber(txIndex) != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
 
   // verifiy the proof
   await verifyMerkleProof(
