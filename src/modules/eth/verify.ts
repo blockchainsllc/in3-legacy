@@ -146,6 +146,8 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
   // decode the blockheader
   const block = blockFromHex(headerProof.proof.block)
 
+  const txIndex = bytes32(request.params[1])
+
   if (!txData){
     await verifyMerkleProof(
       block.transactionsTrie, // expected merkle root
@@ -161,16 +163,14 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
 
     const tx = toTransaction(txData)
     const txHashofData = hash(tx)
-    const blockHash = bytes32(request.params[0])
-    const txIndex = bytes32(reuest.params[1])
 
     if(request.method == "eth_getTransactionByBlockHashAndIndex") {
-      if (!bytes32(txData.blockHash).equals(blockHash))
+      if (!bytes32(txData.blockHash).equals(bytes32(request.params[0])))
         throw new Error('invalid blockHash in transaction data')
-      await verifyBlock(block, { ...headerProof, expectedBlockHash: blockHash }, ctx)
+      await verifyBlock(block, { ...headerProof, expectedBlockHash: bytes32(request.params[0]) }, ctx)
     }
     else if (request.method == "eth_getTransactionByBlockNumberAndIndex") {
-      if (toNumber(blockNumber) != toNumber(block.number))
+      if (toNumber(bytes32(request.params[0])) != toNumber(block.number))
         throw new Error('invalid blockNumber in request')
       await verifyBlock(block, { ...headerProof, expectedBlockHash: bytes32(txData.blockHash) }, ctx)
     }
