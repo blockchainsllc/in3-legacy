@@ -147,7 +147,6 @@ export async function verifyTransactionByBlockHashProof(blockHash: Buffer, txInd
 
   // decode the blockheader
   const block = blockFromHex(headerProof.proof.block)
-  console.log(block)
 
   // verify the blockhash and the signatures
   await verifyBlock(block, { ...headerProof, expectedBlockHash: blockHash }, ctx)
