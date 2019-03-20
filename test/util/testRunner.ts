@@ -2,7 +2,7 @@ import Client from '../../src/client/Client'
 import { readFileSync } from 'fs'
 import { Transport, RPCRequest, RPCResponse } from '../../src'
 
-const ignoreFuxxProps = ['id', 'error', 'currentBlock', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex']
+const ignoreFuxxProps = ['id', 'error', 'currentBlock', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
 const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', 'standardV', 'transactionIndex']
 const defaultConfig = require('../../src/client/defaultConfig.json')
 

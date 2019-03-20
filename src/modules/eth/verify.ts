@@ -232,6 +232,8 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
     const block = blockFromHex(blockProof.block)
     blockHashes[bn] = block.hash()
 
+    if (toHex(blockProof.number) !== bn) throw new Error('wrong blocknumber')
+
     // verify the blockhash and the signatures
     await verifyBlock(block, headerProof, ctx)
 
@@ -251,7 +253,7 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
           util.rlp.encode(blockProof.receipts[txHash].txIndex), // path, which is the transsactionIndex
           blockProof.receipts[txHash].txProof.map(bytes), // array of Buffer with the merkle-proof-data
           undefined // we don't want to check, but use the found value in the next step
-        ).then(value => bytes32(txHash).equals(hash(value)) || Promise.reject(new Error('wrong txhash')))
+        ).then(value => bytes32(txHash).equals(hash(value)) && bytes32(txHash).equals(bytes32(blockProof.receipts[txHash].txHash)) || Promise.reject(new Error('wrong txhash')))
       ))
   }))
 
@@ -260,7 +262,7 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
     const receipt = receiptData[l.transactionHash]
     if (!receipt) throw new Error('The receipt ' + l.transactionHash + 'is missing in the proof')
 
-    const logData = receipt[3][toNumber(l.logIndex)]
+    const logData = receipt[3][toNumber(l.transactionLogIndex)]
     if (!logData) throw new Error('Log not found in Transaction')
 
     if (!logData[0].equals(address(l.address)))

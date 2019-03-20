@@ -99,6 +99,7 @@ export interface AccountData {
 export interface LogData {
   removed: boolean // true when the log was removed, due to a chain reorganization. false if its a valid log.
   logIndex: string //  integer of the log index position in the block. null when its pending log.
+  transactionLogIndex: string //  integer of the log index position in the transaction. null when its pending log.
   transactionIndex: string // of the transactions index position log was created from. null when its pending log.
   transactionHash: string // 32 Bytes - hash of the transactions this log was created from. null when its pending log.
   blockHash: string // 32 Bytes - hash of the block where this log was in. null when its pending. null when its pending log.
