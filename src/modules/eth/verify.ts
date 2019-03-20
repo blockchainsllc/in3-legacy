@@ -20,7 +20,7 @@
 import EthChainContext from './EthChainContext'
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../../types/types';
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp } from './serialize';
+import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64 } from './serialize';
 import { toHex, toNumber, promisify, toMinHex, toBN, toBuffer } from '../../util/util'
 import { executeCall } from './call'
 import { createRandomIndexes } from '../../client/serverList'
@@ -148,7 +148,7 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
 
   const txIndex = bytes32(request.params[1])
 
-  if (!txData){
+  if (!txData) {
     await verifyMerkleProof(
       block.transactionsTrie, // expected merkle root
       util.rlp.encode(toNumber(txIndex)), // path, which is the transsactionIndex
@@ -164,7 +164,7 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
     const tx = toTransaction(txData)
     const txHashofData = hash(tx)
 
-    if(request.method == "eth_getTransactionByBlockHashAndIndex") {
+    if (request.method == "eth_getTransactionByBlockHashAndIndex") {
       if (!bytes32(txData.blockHash).equals(bytes32(request.params[0])))
         throw new Error('invalid blockHash in transaction data')
       await verifyBlock(block, { ...headerProof, expectedBlockHash: bytes32(request.params[0]) }, ctx)
@@ -543,7 +543,7 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // verify the values of the proof
   for (const n of nl.nodes) {
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 1), bytes32(n.address), 'wrong owner ')
+    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 1), bytes32(Buffer.concat([uint64(n.timeout ? n.timeout : 0), address(n.address)])), 'wrong owner ')
     // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals
     const deposit = getStorageValue(accountProof, getStorageArrayKey(0, n.index, 6, 2))
     if (parseInt(toBN(deposit).toString()) != parseInt(n.deposit as any))
@@ -709,7 +709,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
 
   switch (proof.type) {
     case 'transactionProof':
-      if(request.method == "eth_getTransactionByBlockHashAndIndex" || request.method == "eth_getTransactionByBlockNumberAndIndex")
+      if (request.method == "eth_getTransactionByBlockHashAndIndex" || request.method == "eth_getTransactionByBlockNumberAndIndex")
         await verifyTransactionByBlockProof(request, headerProof, response.result, ctx)
       else
         await verifyTransactionProof(bytes32(request.params[0]), headerProof, response.result, ctx)

@@ -61,6 +61,10 @@ definitions:
                 type: string
                 format: address
                 example: "0x6C1a01C2aB554930A937B0a2E8105fB47946c679"
+            timeout: 
+                description: the time (in seconds) until an owner is able to receive his deposit back after he unregisters himself
+                type: integer
+                example: 3600
             url:
                 description: the endpoint to post to
                 type: string

@@ -59,6 +59,7 @@ import {types} from 'in3'
 const iN3NodeConfig:types.IN3NodeConfig = {
   index: 13,
   address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+  timeout: 3600,
   url: 'https://in3.slock.it',
   chainIds: [
     '0x1'
@@ -72,6 +73,7 @@ const iN3NodeConfig:types.IN3NodeConfig = {
 
 *  **index** `integer` - the index within the contract   
 *  **address** `string<address>` (required)  - the address of the node, which is the public address it iis signing with.   
+*  **timeout** `integer` - the time (in seconds) until an owner is able to receive his deposit back after he unregisters himself   
 *  **url** `string` (required)  - the endpoint to post to   
 *  **chainIds** `string<hex>[]` (required)  - the list of supported chains   
 *  **deposit** `integer` (required)  - the deposit of the node in wei   
@@ -361,6 +363,7 @@ const rPCResponse:types.RPCResponse = {
   in3Node: {
     index: 13,
     address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+    timeout: 3600,
     url: 'https://in3.slock.it',
     chainIds: [
       '0x1'
@@ -491,6 +494,7 @@ const serverList:types.ServerList = {
     {
       index: 13,
       address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+      timeout: 3600,
       url: 'https://in3.slock.it',
       chainIds: [
         '0x1'
