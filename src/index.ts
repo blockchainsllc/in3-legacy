@@ -18,9 +18,11 @@
 ***********************************************************/
 
 import Client, { aliases } from './client/Client'
+import EthAPI from './modules/eth/api'
 import * as validateOb from './util/validate'
 export default Client
 
+export const eth = EthAPI
 
 import * as _util from './util/util'
 export const util = _util

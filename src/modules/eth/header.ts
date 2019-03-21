@@ -47,7 +47,7 @@ export async function checkBlockSignatures(blockHeaders: (Buffer | string | Bloc
     }
     else {
       // author needs to be a authority
-      if ((chain.proposer && !chain.proposer.equals(data.coinbase)) || !chain.authorities.find(_ => data.coinbase.equals(_)))
+      if (/*(chain.proposer && !chain.proposer.equals(data.coinbase)) || */!chain.authorities.find(_ => data.coinbase.equals(_)))
         throw new Error('the author is not part of the authorities')
 
       // check signature

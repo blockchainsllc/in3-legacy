@@ -2,15 +2,15 @@
 
 ## Ethereum Verification
 
-The Incubed is also often called Minimal Verifying Client, because he may not be syncing, but still is able to verify all incomming data. This is possible because the ethereum is based a technology allowing to verify almost any value.
+The Incubed is also often called Minimal Verifying Client because it may not sync, but still is able to verify all incoming data. This is possible since ethereum is based on a technology allowing to verify almost any value.
 
-Our goal was to verify at least all standard `eth_...` rpc methods as desribed in the [Specification](https://github.com/ethereum/wiki/wiki/JSON-RPC).
+Our goal was to verify at least all standard `eth_...` rpc methods as described in the [Specification](https://github.com/ethereum/wiki/wiki/JSON-RPC).
 
-In order to proof anything, you always need a starting value. In our case this is the BlockHash. Why do we use the BlockHash? If you know the BlockHash of a block, you can easily verify the full BlockHeader. And since the BlockHeader contains the stateRoot, transationRoot and receiptRoot, these can be verified as well. And the rest will simply depend on them.
+In order to prove something, you always need a starting value. In our case this is the BlockHash. Why do we use the BlockHash? If you know the BlockHash of a block, you can easily verify the full BlockHeader. And since the BlockHeader contains the stateRoot, transationRoot and receiptRoot, these can be verified as well. And the rest will simply depend on them.
 
-And there is another reason the BlockHash is so important. This is the only Value you are able to access from within a SmartContract, because the evm supports a OpCode (`BLOCKHASH`), which allows you to read the last 256 Blockhashes, which gives us the chance to even verify the blockhash onchain.
+There is also another reason why the BlockHash is so important. This is the only value you are able to access from within a SmartContract, because the evm supports a OpCode (`BLOCKHASH`), which allows you to read the last 256 Blockhashes, which gives us the chance to even verify the blockhash onchain.
 
-Depending on the Method different Proofs would be needed, which are described in this document.
+Depending on the method, different proofs are needed, which are described in this document.
 
 - **[Block Proof](#blockproof)** - verifies the content of the BlockHeader
 - **[Transaction Proof](#transaction-proof)** - verifies the input data of a transaction

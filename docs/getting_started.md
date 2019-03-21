@@ -1,32 +1,36 @@
 # Getting Started 
 
-INCUBED can be used in different ways. For mobile or web-applications, the Type-Script implementation will be the easiest to use.
+INCUBED can be used in different ways.
+```eval_rst
 
-## npm
+table
+
++-----------------------+----------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
+| Stack                 | Size                 | Code Base                           | Use Case                                                                                    |
++=======================+======================+=====================================+=============================================================================================+
+| TS/JS                 | 2.7MB (browserified) | TypeScript                          | WebApplication (Client in the Browser) or Mobile Applications                               |
++-----------------------+----------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
+| C/C++                 | 200kB                | C                                   | IoT-Devices, can be integrated nicely on many micro controllers                             |
+|                       |                      |                                     | (like [zephyr-supported boards] (https://docs.zephyrproject.org/latest/boards/index.html) ) |
+|                       |                      |                                     | or anny other C/C++ -Application                                                            |
++-----------------------+----------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
+| Java                  | 205kB                | C                                   | Java-Implementation of a native-wrapper                                                     |
++-----------------------+----------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
+| Docker                | 74MB                 | TypeScript                          | For replacing existing clients with this docker and connect to incubed via localhost:8545   |
+|                       |                      |                                     | without the need to change the architecture                                                 |
++-----------------------+----------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
+| bash                  | 200kB                | C                                   | the commandline utils can be used directly as executable within bash-script or on the shell |
++-----------------------+----------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
+```
+
+other Languages will be supported soon (or can simply use the shared library directly).
+
+## TypeScript/JavaScript
+
+Installing incubes is as easy as installing any other module:
 
 ```
 npm install --save in3
-```
-
-### Direct API
-
-You can use incubed as a standalone-library:
-
-```js
-
-// import in3-Module
-import In3Client from 'in3'
-
-// use the In3Client as Http-Provider
-const c = new In3Client({
-    proof: 'standard',
-    signatureCount: 1,
-    requestCount : 2,
-    chainId: 'mainnet'
-})
-
-// use the incubed eth api 
-const block = await c.eth.getBlockByNumber('latest')
 ```
 
 ### As Provider in Web3
@@ -34,21 +38,57 @@ const block = await c.eth.getBlockByNumber('latest')
 The Incubed Client also implements the Provider-Interface used in the web3-Library and can be used directly.
 
 ```js
-
 // import in3-Module
 import In3Client from 'in3'
 import * as web3 from 'web3'
 
 // use the In3Client as Http-Provider
 const web3 = new Web3(new In3Client({
-    proof: 'standard',
+    proof         : 'standard',
     signatureCount: 1,
-    requestCount : 2,
-    chainId: 'mainnet'
-}))
+    requestCount  : 2,
+    chainId       : 'mainnet'
+}).createWeb3Provider())
 
-// use the web3 
+// use the web3
 const block = await web.eth.getBlockByNumber('latest')
+...
+
+```
+
+### Direct API
+
+Incubed includes a light API, allowinng not only to use all RPC-Methods in a typesafe way, but also to sign transactions and call funnctions of a contract without the web3-library.
+
+For more details see the [API-Doc](https://github.com/slockit/in3/blob/master/docs/api.md#type-api)
+
+
+```js
+
+
+// import in3-Module
+import In3Client from 'in3'
+
+// use the In3Client
+const in3 = new In3Client({
+    proof         : 'standard',
+    signatureCount: 1,
+    requestCount  : 2,
+    chainId       : 'mainnet'
+})
+
+// use the api to call a funnction..
+const myBalance = await in3.eth.callFn(myTokenContract, 'balanceOf(address):uint', myAccount)
+
+// ot to send a transaction..
+const receipt = await in3.eth.sendTransaction({ 
+  to           : myTokenContract, 
+  method       : 'transfer(address,uint256)',
+  args         : [target,amount],
+  confirmations: 2,
+  pk           : myKey
+})
+
 ...
 ```
 
@@ -127,31 +167,115 @@ The application would then accept the following arguments:
         a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }
 
 ```
-## Chains
+
+## C - Implementation
+
+*The C-Implemetation will be released soon!*
+
+```c
+#include <stdio.h>
+#include <in3/client.h>  // the core client
+#include <eth_full.h>    // the full ethereum verifier containing the EVM
+#include <in3/eth_api.h> // wrapper for easier use
+#include <in3_curl.h>    // transport implementation
+
+int main(int argc, char* argv[]) {
+
+  // register a chain-verifier for full Ethereum-Support
+  in3_register_eth_full();
+
+  // create new incubed client
+  in3_t* c        = in3_new();
+
+  // set your config
+  c->transport    = send_curl; // use curl to handle the requests
+  c->requestCount = 1;         // number of requests to send
+  c->chainId      = 0x1;       // use main chain
+
+  // use a ethereum-api instead of pure JSON-RPC-Requests
+  eth_block_t* block = eth_getBlockByNumber(c, atoi(argv[1]), true);
+  if (!block)
+    printf("Could not find the Block: %s", eth_last_error());
+  else {
+    printf("Number of verified transactions in block: %i", block->tx_count);
+    free(block);
+  }
+
+  ...
+}
+
+```
+
+More Details are comming soon...
+
+## Java
+
+The Java-Implementation uses a wrapper of the C-Implemenation. That's why you need to make sure the libin3.so or in3.dll or libin3.dylib can be found in the java.library.path, like
+
+java -Djava.library.path="path_to_in3;${env_var:PATH}" HelloIN3.class
+
+```java
+import org.json.*;
+import in3.IN3;
+
+public class HelloIN3 {  
+   // 
+   public static void main(String[] args) {
+       String blockNumber = args[0]; 
+       IN3 in3 = new IN3();
+       JSONObject result = new JSONObject(in3.sendRPC("eth_getBlockByNumber",{ blockNumberm ,true})));
+       ....
+   }
+}
+```
+
+## Commandline Tool
+
+Based on the C-Implementation a Commandline-Util is build, which executes a JSON-RPC-Request and only delivers the result. This can be used within bash-scripts:
+
+```
+CURRENT_BLOCK = `in3 -c kovan eth_blockNumber`
+
+#or to send a transaction
+
+IN3_PK=`cat mysecret_key.txt` in3 eth_sendTransaction '{"from":"0x5338d77B5905CdEEa7c55a1F3A88d03559c36D73", "to":"0xb5049E77a70c4ea06355E3bcbfcF8fDADa912481", "value":"0x10000"}'
+
+```
+
+## Supported Chains
 
 Currently incubed is deployed on the following chains:
 
 ### Mainnet
 
 Registry : [0x2736D225f85740f42D17987100dc8d58e9e16252](https://eth.slock.it/#/main/0x2736D225f85740f42D17987100dc8d58e9e16252)    
-ChainId : 0x1 (alias `mainnet`)    
+
+ChainId : 0x1 (alias `mainnet`)        
+
 Status : [https://in3.slock.it?n=mainnet](https://in3.slock.it?n=mainnet)    
+
 NodeList: [https://in3.slock.it/mainnet/nd-3](https://in3.slock.it/mainnet/nd-3/api/in3_nodeList) 
 
 
 ### Kovan
 
 Registry : [0x27a37a1210df14f7e058393d026e2fb53b7cf8c1](https://eth.slock.it/#/kovan/0x27a37a1210df14f7e058393d026e2fb53b7cf8c1)    
+
 ChainId : 0x2a (alias `kovan`)    
+
 Status : [https://in3.slock.it?n=kovan](https://in3.slock.it?n=kovan)    
+
 NodeList: [https://in3.slock.it/kovan/nd-3](https://in3.slock.it/kovan/nd-3/api/in3_nodeList) 
 
 
 ### Tobalaba
 
 Registry : [0x845E484b505443814B992Bf0319A5e8F5e407879](https://eth.slock.it/#/tobalaba/0x845E484b505443814B992Bf0319A5e8F5e407879)    
+
 ChainId : 0x44d (alias `tobalaba`)    
+
 Status : [https://in3.slock.it?n=tobalaba](https://in3.slock.it?n=tobalaba)    
+
 NodeList: [https://in3.slock.it/tobalaba/nd-3](https://in3.slock.it/tobalaba/nd-3/api/in3_nodeList) 
 
 
@@ -159,24 +283,34 @@ NodeList: [https://in3.slock.it/tobalaba/nd-3](https://in3.slock.it/tobalaba/nd-
 ### Evan
 
 Registry : [0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e](https://eth.slock.it/#/evan/0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e)    
+
 ChainId : 0x4b1 (alias `evan`)    
+
 Status : [https://in3.slock.it?n=evan](https://in3.slock.it?n=evan)    
+
 NodeList: [https://in3.slock.it/evan/nd-3](https://in3.slock.it/evan/nd-3/api/in3_nodeList) 
 
 
 ### Görli
 
 Registry : [0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e](https://eth.slock.it/#/goerli/0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e)    
+
 ChainId : 0x5 (alias `goerli`)    
+
+
 Status : [https://in3.slock.it?n=goerli](https://in3.slock.it?n=goerli)    
+
 NodeList: [https://in3.slock.it/goerli/nd-3](https://in3.slock.it/goerli/nd-3/api/in3_nodeList) 
 
 
 ### IPFS
 
 Registry : [0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9](https://eth.slock.it/#/kovan/0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9)    
+
 ChainId : 0x7d0 (alias `ipfs`)    
+
 Status : [https://in3.slock.it?n=ipfs](https://in3.slock.it?n=ipfs)    
+
 NodeList: [https://in3.slock.it/ipfs/nd-3](https://in3.slock.it/ipfs/nd-3/api/in3_nodeList) 
 
 

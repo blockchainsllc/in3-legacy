@@ -59,6 +59,7 @@ import {types} from 'in3'
 const iN3NodeConfig:types.IN3NodeConfig = {
   index: 13,
   address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+  timeout: 3600,
   url: 'https://in3.slock.it',
   chainIds: [
     '0x1'
@@ -72,6 +73,7 @@ const iN3NodeConfig:types.IN3NodeConfig = {
 
 *  **index** `integer` - the index within the contract   
 *  **address** `string<address>` (required)  - the address of the node, which is the public address it iis signing with.   
+*  **timeout** `integer` - the time (in seconds) until an owner is able to receive his deposit back after he unregisters himself   
 *  **url** `string` (required)  - the endpoint to post to   
 *  **chainIds** `string<hex>[]` (required)  - the list of supported chains   
 *  **deposit** `integer` (required)  - the deposit of the node in wei   
@@ -213,6 +215,7 @@ const iN3Config:types.IN3Config = {
   key: '0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7',
   autoConfig: false,
   retryWithoutProof: false,
+  maxAttempts: 10,
   includeCode: true,
   maxCodeCache: 100000,
   maxBlockCache: 100,
@@ -242,6 +245,7 @@ const iN3Config:types.IN3Config = {
 *  **key** [{"description":"the client key to sign requests","example":"0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7"}](#{"description":"the client key to sign requests","example":"0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7"}) - the client key to sign requests   
 *  **autoConfig** `boolean` - if true the config will be adjusted depending on the request   
 *  **retryWithoutProof** `boolean` - if true the the request may be handled without proof in case of an error. (use with care!)   
+*  **maxAttempts** `number` - max number of attempts in case a response is rejected   
 *  **includeCode** `boolean` - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards   
 *  **maxCodeCache** `integer` - number of max bytes used to cache the code in memory   
 *  **maxBlockCache** `integer` - number of number of blocks cached  in memory   
@@ -359,6 +363,7 @@ const rPCResponse:types.RPCResponse = {
   in3Node: {
     index: 13,
     address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+    timeout: 3600,
     url: 'https://in3.slock.it',
     chainIds: [
       '0x1'
@@ -489,6 +494,7 @@ const serverList:types.ServerList = {
     {
       index: 13,
       address: '0x6C1a01C2aB554930A937B0a2E8105fB47946c679',
+      timeout: 3600,
       url: 'https://in3.slock.it',
       chainIds: [
         '0x1'

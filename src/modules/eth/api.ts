@@ -1,27 +1,27 @@
 import Client from '../../client/Client'
-import {simpleDecode,simpleEncode, methodID} from 'ethereumjs-abi' 
-import {toBuffer,toChecksumAddress,privateToAddress} from 'ethereumjs-util' 
-import * as ETx from 'ethereumjs-tx' 
-import { toHex} from '../../util/util'
+import { simpleDecode, simpleEncode, methodID } from 'ethereumjs-abi'
+import { toBuffer, toChecksumAddress, privateToAddress } from 'ethereumjs-util'
+import * as ETx from 'ethereumjs-tx'
+import { toHex } from '../../util/util'
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
 export type Quantity = number | string
-export type Hash = string 
+export type Hash = string
 export type Address = string
 export type Data = string
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
-    from : Address
+    from: Address
     /** (optional when creating new contract) 20 Bytes - The address the transaction is directed to.*/
-    to : Address
+    to: Address
     /** Integer of the gas provided for the transaction execution. eth_call consumes zero gas, but this parameter may be needed by some executions. */
-    gas : Quantity
+    gas: Quantity
     /** Integer of the gas price used for each paid gas.  */
-    gasPrice : Quantity
+    gasPrice: Quantity
     /** Integer of the value sent with this transaction. */
     value: Quantity
     /** 4 byte hash of the method signature followed by encoded parameters. For details see Ethereum Contract ABI.*/
-    data : string
+    data: string
 }
 export type TransactionReceipt = {
     /** 32 Bytes - hash of the block where this transaction was in. */
@@ -29,11 +29,11 @@ export type TransactionReceipt = {
     /** block number where this transaction was in.*/
     blockNumber: BlockType
     /** 20 Bytes - The contract address created, if the transaction was a contract creation, otherwise null.*/
-    contractAddress: Address 
+    contractAddress: Address
     /** The total amount of gas used when this transaction was executed in the block. */
-    cumulativeGasUsed: Quantity 
+    cumulativeGasUsed: Quantity
     /** 20 Bytes - The address of the sender. */
-    from: Address 
+    from: Address
     /** 20 Bytes - The address of the receiver. null when it’s a contract creation transaction.*/
     to: Address
     /** The amount of gas used by this specific transaction alone. */
@@ -45,7 +45,7 @@ export type TransactionReceipt = {
     /** 32 Bytes - Merkle root of the state trie after the transaction has been executed (optional after Byzantium hard fork EIP609)*/
     root: Hash
     /** 0x0 indicates transaction failure , 0x1 indicates transaction success. Set for blocks mined after Byzantium hard fork EIP609, null before. */
-    status: Quantity 
+    status: Quantity
     /** 32 Bytes - hash of the transaction. */
     transactionHash: Hash
     /** Integer of the transactions index position in the block. */
@@ -53,19 +53,19 @@ export type TransactionReceipt = {
 }
 export type TransactionDetail = {
     /**  32 Bytes - hash of the transaction. */
-    hash: Hash 
+    hash: Hash
     /** the number of transactions made by the sender prior to this one.*/
-    nonce: Quantity 
+    nonce: Quantity
     /** 32 Bytes - hash of the block where this transaction was in. null when its pending.*/
     blockHash: Hash
     /** block number where this transaction was in. null when its pending.*/
     blockNumber: BlockType
     /** integer of the transactions index position in the block. null when its pending.*/
-    transactionIndex: Quantity 
+    transactionIndex: Quantity
     /** 20 Bytes - address of the sender.*/
-    from: Address 
+    from: Address
     /** 20 Bytes - address of the receiver. null when its a contract creation transaction. */
-    to: Address 
+    to: Address
     /**  value transferred in Wei.*/
     value: Quantity
     /** gas price provided by the sender in Wei.*/
@@ -74,7 +74,7 @@ export type TransactionDetail = {
     gas: Quantity
     /** the data send along with the transaction. */
     input: Data
-    /** the standardised V field of the signature.*/ 
+    /** the standardised V field of the signature.*/
     v: Quantity
     /** the standardised V field of the signature (0 or 1).*/
     standardV: Quantity
@@ -89,11 +89,11 @@ export type TransactionDetail = {
     /** creates contract address */
     creates: Address
     /** (optional) conditional submission, Block number in block or timestamp in time or null. (parity-feature)    */
-    condition: any 
- }
+    condition: any
+}
 
 export type Block = {
-     /**  The block number. null when its pending block */
+    /**  The block number. null when its pending block */
     number: Quantity
     /** hash of the block. null when its pending block */
     hash: Hash
@@ -112,15 +112,15 @@ export type Block = {
     /** 32 Bytes - the root of the receipts trie of the block */
     receiptsRoot: Data
     /** 20 Bytes - the address of the author of the block (the beneficiary to whom the mining rewards were given)*/
-    author: Address     
+    author: Address
     /** 20 Bytes - alias of ‘author’*/
-    miner: Address 
+    miner: Address
     /** integer of the difficulty for this block */
     difficulty: Quantity
     /** integer of the total difficulty of the chain until this block */
     totalDifficulty: Quantity
     /** the ‘extra data’ field of this block */
-    extraData: Data 
+    extraData: Data
     /** integer the size of this block in bytes */
     size: Quantity
     /** the maximum gas allowed in this block */
@@ -130,7 +130,7 @@ export type Block = {
     /** the unix timestamp for when the block was collated */
     timestamp: Quantity
     /** Array of transaction objects, or 32 Bytes transaction hashes depending on the last given parameter */
-    transactions: (Hash|Transaction)[]
+    transactions: (Hash | Transaction)[]
     /** Array of uncle hashes */
     uncles: Hash[]
     /** PoA-Fields */
@@ -146,15 +146,15 @@ export type Log = {
     /** Hash, 32 Bytes - hash of the transactions this log was created from. null when its pending log. */
     transactionHash: Hash
     /** Hash, 32 Bytes - hash of the block where this log was in. null when its pending. null when its pending log. */
-    blockHash: Hash, 
+    blockHash: Hash,
     /** the block number where this log was in. null when its pending. null when its pending log. */
     blockNumber: Quantity
     /** 20 Bytes - address from which this log originated. */
-    address: Address, 
+    address: Address,
     /**  contains the non-indexed arguments of the log. */
     data: Data
     /** - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.) */
-    topics: Data[] 
+    topics: Data[]
 }
 
 export type LogFilter = {
@@ -165,14 +165,14 @@ export type LogFilter = {
     /** (optional) 20 Bytes - Contract address or a list of addresses from which logs should originate.*/
     address: Address
     /** (optional) Array of 32 Bytes Data topics. Topics are order-dependent. It’s possible to pass in null to match any topic, or a subarray of multiple topics of which one should be matching. */
-    topics: (string|string[])[]
+    topics: (string | string[])[]
     /** å(optional) The maximum number of entries to retrieve (latest first). */
     limit: Quantity
 }
 
 export type TxRequest = {
     /** contract */
-    to:Address
+    to: Address
 
     /** the gas needed */
     gas: number
@@ -193,139 +193,139 @@ export type TxRequest = {
     args: any[]
 
     /**raw private key in order to sign */
-    pk:Hash
+    pk: Hash
 
     /**  number of block to wait before confirming*/
-    confirmations:number
+    confirmations: number
 }
 
 
 export default class API {
     client: Client
-    constructor(client:Client) {this.client=client}
+    constructor(client: Client) { this.client = client }
 
-    private send<T>(name:string, ...params:any[]):Promise<T> {
-        return this.client.sendRPC(name,params||[])
-        .then(r=>{
-            if (r.error) throw new Error((r.error as any).message || r.error)
-            return r.result as T
-        })
+    private send<T>(name: string, ...params: any[]): Promise<T> {
+        return this.client.sendRPC(name, params || [])
+            .then(r => {
+                if (r.error) throw new Error((r.error as any).message || r.error)
+                return r.result as T
+            })
     }
 
     /**
      * Returns the number of most recent block. (as number)
      */
-    blockNumber() { 
-        return this.send<string>('eth_blockNumber').then(parseInt) 
+    blockNumber(): Promise<number> {
+        return this.send<string>('eth_blockNumber').then(parseInt)
     }
     /**
      * Returns the current price per gas in wei. (as number)
      */
-    gasPrice() { 
-        return this.send<string>('eth_gasPrice').then(parseInt) 
+    gasPrice(): Promise<number> {
+        return this.send<string>('eth_gasPrice').then(parseInt)
     }
 
     /**
      * Executes a new message call immediately without creating a transaction on the block chain.
      */
-    call(tx:Transaction, block:BlockType='latest') {
-        return this.send<string>('eth_call',tx,block)
+    call(tx: Transaction, block: BlockType = 'latest'): Promise<string> {
+        return this.send<string>('eth_call', tx, block)
     }
 
     /**
-     * Executes a new message call immediately without creating a transaction on the block chain.
+     * Executes a function of a contract, by passing a [method-signature](https://github.com/ethereumjs/ethereumjs-abi/blob/master/README.md#simple-encoding-and-decoding) and the arguments, which will then be ABI-encoded and send as eth_call. 
      */
-    callFn(to:Address, method:string, ...args:any[]) {
-        const t = createCallParams(method,args||[])
-        return this.send('eth_call',{to,data:t.txdata},'latest').then(t.convert)
+    callFn(to: Address, method: string, ...args: any[]): Promise<any> {
+        const t = createCallParams(method, args || [])
+        return this.send('eth_call', { to, data: t.txdata }, 'latest').then(t.convert)
     }
 
     /**
      * Returns the EIP155 chain ID used for transaction signing at the current best block. Null is returned if not available.
      */
-    chainId() {
-        return this.send<string>('eth_chainId') 
+    chainId(): Promise<string> {
+        return this.send<string>('eth_chainId')
     }
 
     /**
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
      */
-    estimateGas(tx:Transaction, block:BlockType='latest') {
-        return this.send<string>('eth_estimateGas',tx,block).then(parseInt)
+    estimateGas(tx: Transaction, block: BlockType = 'latest'): Promise<number> {
+        return this.send<string>('eth_estimateGas', tx, block).then(parseInt)
     }
 
     /**
      * Returns the balance of the account of given address in wei (as hex).
      */
-    getBalance(address:Address, block:BlockType='latest') {
-        return this.send<string>('eth_getBalance',address,block)
+    getBalance(address: Address, block: BlockType = 'latest'): Promise<string> {
+        return this.send<string>('eth_getBalance', address, block)
     }
 
     /**
      * Returns code at a given address.
      */
-    eth_getCode(address:Address, block:BlockType='latest') {
-        return this.send<string>('eth_getCode',address,block)
+    getCode(address: Address, block: BlockType = 'latest'): Promise<string> {
+        return this.send<string>('eth_getCode', address, block)
     }
 
 
     /**
      * Returns the value from a storage position at a given address.
      */
-    getStorageAt(address:Address, pos:Quantity, block:BlockType='latest') {
-        return this.send<string>('eth_getStorageAt',address,pos, block)
+    getStorageAt(address: Address, pos: Quantity, block: BlockType = 'latest'): Promise<string> {
+        return this.send<string>('eth_getStorageAt', address, pos, block)
     }
 
 
     /**
      * Returns information about a block by hash.
      */
-    getBlockByHash(hash:Hash, includeTransactions=false) {
-        return this.send<Block>('eth_getBlockByHash',hash, includeTransactions)
+    getBlockByHash(hash: Hash, includeTransactions = false): Promise<Block> {
+        return this.send<Block>('eth_getBlockByHash', hash, includeTransactions)
     }
 
     /**
      * Returns information about a block by block number.
      */
-    getBlockByNumber(block:BlockType='latest',includeTransactions=false) {
-        return this.send<Block>('eth_getBlockByNumber',block, includeTransactions)
+    getBlockByNumber(block: BlockType = 'latest', includeTransactions = false): Promise<Block> {
+        return this.send<Block>('eth_getBlockByNumber', block, includeTransactions)
     }
 
 
     /**
      * Returns the number of transactions in a block from a block matching the given block hash.
      */
-    getBlockTransactionCountByHash(block:Hash) {
-        return this.send<string>('eth_getBlockTransactionCountByHash',block).then(parseInt)
+    getBlockTransactionCountByHash(block: Hash): Promise<number> {
+        return this.send<string>('eth_getBlockTransactionCountByHash', block).then(parseInt)
     }
 
 
     /**
      * Returns the number of transactions in a block from a block matching the given block number.
      */
-    getBlockTransactionCountByNumber(block:Hash) {
-        return this.send<string>('eth_getBlockTransactionCountByNumber',block).then(parseInt)
+    getBlockTransactionCountByNumber(block: Hash): Promise<number> {
+        return this.send<string>('eth_getBlockTransactionCountByNumber', block).then(parseInt)
     }
 
     /**
      * Polling method for a filter, which returns an array of logs which occurred since last poll.
      */
-    getFilterChanges(id:Quantity) {
-        return this.send<Log[]>('eth_getFilterChanges',id)
+    getFilterChanges(id: Quantity): Promise<Log[]> {
+        return this.send<Log[]>('eth_getFilterChanges', id)
     }
 
     /**
      * Returns an array of all logs matching filter with given id.
      */
-    getFilterLogs(id:Quantity) {
-        return this.send<Log[]>('eth_getFilterLogs',id)
+    getFilterLogs(id: Quantity): Promise<Log[]> {
+        return this.send<Log[]>('eth_getFilterLogs', id)
     }
 
     /**
      * Returns an array of all logs matching a given filter object.
      */
-    getLogs(filter:LogFilter) {
-        return this.send<Log[]>('eth_getLogs',filter)
+    getLogs(filter: LogFilter): Promise<Log[]> {
+        return this.send<Log[]>('eth_getLogs', filter)
     }
 
 
@@ -334,46 +334,46 @@ export default class API {
     /**
      * Returns information about a transaction by block hash and transaction index position.
      */
-    getTransactionByBlockHashAndIndex(hash:Hash, pos:Quantity) {
-        return this.send<TransactionDetail>('eth_getTransactionByBlockHashAndIndex',hash, pos)
+    getTransactionByBlockHashAndIndex(hash: Hash, pos: Quantity): Promise<TransactionDetail> {
+        return this.send<TransactionDetail>('eth_getTransactionByBlockHashAndIndex', hash, pos)
     }
 
 
     /**
      * Returns information about a transaction by block number and transaction index position.
      */
-    getTransactionByBlockNumberAndIndex(block:BlockType, pos:Quantity) {
-        return this.send<TransactionDetail>('eth_getTransactionByBlockNumberAndIndex',block, pos)
+    getTransactionByBlockNumberAndIndex(block: BlockType, pos: Quantity): Promise<TransactionDetail> {
+        return this.send<TransactionDetail>('eth_getTransactionByBlockNumberAndIndex', block, pos)
     }
 
     /**
      * Returns the information about a transaction requested by transaction hash.
      */
-    getTransactionByHash(hash:Hash) {
-        return this.send<TransactionDetail>('eth_getTransactionByHash',hash)
+    getTransactionByHash(hash: Hash): Promise<TransactionDetail> {
+        return this.send<TransactionDetail>('eth_getTransactionByHash', hash)
     }
 
     /**
      * Returns the number of transactions sent from an address. (as number)
      */
-    getTransactionCount(address:Address, block:BlockType='latest') {
-        return this.send<string>('eth_getTransactionCount',address,block).then(parseInt)
+    getTransactionCount(address: Address, block: BlockType = 'latest'): Promise<number> {
+        return this.send<string>('eth_getTransactionCount', address, block).then(parseInt)
     }
 
     /**
      * Returns the receipt of a transaction by transaction hash.
      * Note That the receipt is available even for pending transactions.
      */
-    getTransactionReceipt(hash:Hash) {
-        return this.send<TransactionReceipt>('eth_getTransactionReceipt',hash)
+    getTransactionReceipt(hash: Hash): Promise<TransactionReceipt> {
+        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash)
     }
 
     /**
      * Returns information about a uncle of a block by hash and uncle index position.
      * Note: An uncle doesn’t contain individual transactions.
      */
-    getUncleByBlockHashAndIndex(hash:Hash, pos:Quantity) {
-        return this.send<Block>('eth_getUncleByBlockHashAndIndex',hash, pos)
+    getUncleByBlockHashAndIndex(hash: Hash, pos: Quantity): Promise<Block> {
+        return this.send<Block>('eth_getUncleByBlockHashAndIndex', hash, pos)
     }
 
 
@@ -381,29 +381,29 @@ export default class API {
      * Returns information about a uncle of a block number and uncle index position.
      * Note: An uncle doesn’t contain individual transactions.
      */
-    getUncleByBlockNumberAndIndex(block:BlockType, pos:Quantity) {
-        return this.send<Block>('eth_getUncleByBlockNumberAndIndex',block, pos)
+    getUncleByBlockNumberAndIndex(block: BlockType, pos: Quantity): Promise<Block> {
+        return this.send<Block>('eth_getUncleByBlockNumberAndIndex', block, pos)
     }
 
     /**
      * Returns the number of uncles in a block from a block matching the given block hash.
      */
-    getUncleCountByBlockHash(hash:Hash) {
-        return this.send<string>('eth_getUncleCountByBlockHash',hash).then(parseInt)
+    getUncleCountByBlockHash(hash: Hash): Promise<number> {
+        return this.send<string>('eth_getUncleCountByBlockHash', hash).then(parseInt)
     }
 
     /**
      * Returns the number of uncles in a block from a block matching the given block hash.
      */
-    getUncleCountByBlockNumber(block:BlockType) {
-        return this.send<string>('eth_getUncleCountByBlockNumber',block).then(parseInt)
+    getUncleCountByBlockNumber(block: BlockType): Promise<number> {
+        return this.send<string>('eth_getUncleCountByBlockNumber', block).then(parseInt)
     }
 
 
     /**
      * Creates a filter in the node, to notify when a new block arrives. To check if the state has changed, call eth_getFilterChanges.
      */
-    newBlockFilter() {
+    newBlockFilter(): Promise<string> {
         return this.send<string>('eth_newBlockFilter')
     }
 
@@ -420,8 +420,8 @@ export default class API {
      * [A, B] “A in first position AND B in second position (and anything after)”
      * [[A, B], [A, B]] “(A OR B) in first position AND (A OR B) in second position (and anything after)”
      */
-    newFilter(filter:LogFilter) {
-        return this.send<string>('eth_newFilter',filter)
+    newFilter(filter: LogFilter): Promise<string> {
+        return this.send<string>('eth_newFilter', filter)
     }
 
     /**
@@ -429,36 +429,43 @@ export default class API {
      * 
      * To check if the state has changed, call eth_getFilterChanges.
      */
-    newPendingTransactionFilter() {
+    newPendingTransactionFilter(): Promise<string> {
         return this.send<string>('eth_newPendingTransactionFilter')
     }
-    
+
 
     /**
      * Uninstalls a filter with given id. Should always be called when watch is no longer needed. Additonally Filters timeout when they aren’t requested with eth_getFilterChanges for a period of time.
      */
-    uninstallFilter(id:Quantity) {
+    uninstallFilter(id: Quantity): Promise<Quantity> {
         return this.send<Quantity>('eth_uninstallFilter')
     }
-    
+
     /**
      * Returns the current ethereum protocol version.
      */
-    protocolVersion() {
+    protocolVersion(): Promise<string> {
         return this.send<string>('eth_protocolVersion')
     }
 
-   /**
-     * Returns the current ethereum protocol version.
-     */
-    syncing() {
-        return this.send<boolean|{
-            startingBlock:string,
-            currentBlock:string,
-            highestBlock:string
-            blockGap:string[][]
-            warpChunksAmount:string
-            warpChunksProcessed:string
+    /**
+      * Returns the current ethereum protocol version.
+      */
+    syncing(): Promise<boolean | {
+        startingBlock: string,
+        currentBlock: string,
+        highestBlock: string
+        blockGap: string[][]
+        warpChunksAmount: string
+        warpChunksProcessed: string
+    }> {
+        return this.send<boolean | {
+            startingBlock: string,
+            currentBlock: string,
+            highestBlock: string
+            blockGap: string[][]
+            warpChunksAmount: string
+            warpChunksProcessed: string
         }>('eth_syncing')
     }
 
@@ -466,19 +473,19 @@ export default class API {
     /**
      * Creates new message call transaction or a contract creation for signed transactions.
      */
-    sendRawTransaction(data:Data) {
-        return this.send<string>('eth_sendRawTransaction',data)
+    sendRawTransaction(data: Data): Promise<string> {
+        return this.send<string>('eth_sendRawTransaction', data)
     }
 
     /** sends a Transaction */
-    async sendTransaction(args:TxRequest) {
+    async sendTransaction(args: TxRequest): Promise<string | TransactionReceipt> {
         if (!args.pk) throw new Error('missing private key!')
 
         // prepare
-        const tx = await prepareTransaction(args,this)
+        const tx = await prepareTransaction(args, this)
 
         // sign it
-        const etx = new ETx({...tx, gasLimit:tx.gas})
+        const etx = new ETx({ ...tx, gasLimit: tx.gas })
         etx.sign(toBuffer(args.pk))
         const txHash = await this.sendRawTransaction(toHex(etx.serialize()))
 
@@ -489,86 +496,88 @@ export default class API {
 }
 
 
-async function confirm(txHash:string, api:API, gasPaid:number, confirmations:number, timeout = 10) {
+async function confirm(txHash: string, api: API, gasPaid: number, confirmations: number, timeout = 10) {
     let steps = 200
     const start = Date.now()
     while (Date.now() - start < timeout * 1000) {
-      const receipt = await api.getTransactionReceipt(txHash)
-      if (receipt) {
-        if ( receipt.status !== '0x1' && gasPaid && gasPaid === parseInt(receipt.gasUsed as any))
-          throw new Error('Transaction failed and all gas was used up')
-        if (receipt.status && receipt.status == '0x0')
-          throw new Error('The Transaction failed because it returned status=0')
+        const receipt = await api.getTransactionReceipt(txHash)
+        if (receipt) {
+            if (receipt.status !== '0x1' && gasPaid && gasPaid === parseInt(receipt.gasUsed as any))
+                throw new Error('Transaction failed and all gas was used up')
+            if (receipt.status && receipt.status == '0x0')
+                throw new Error('The Transaction failed because it returned status=0')
 
-        if (confirmations>1) {
-            const start = parseInt(receipt.blockNumber as string)
-            while ( start + confirmations -1 > await api.blockNumber())
-               await new Promise(_ => setTimeout(_,10))
+            if (confirmations > 1) {
+                const start = parseInt(receipt.blockNumber as string)
+                while (start + confirmations - 1 > await api.blockNumber())
+                    await new Promise(_ => setTimeout(_, 10))
 
-            return api.getTransactionReceipt(txHash)
+                return api.getTransactionReceipt(txHash)
+            }
+            return receipt
         }
-        return receipt
-      }
-  
-      // wait a second and try again
-      await new Promise(_ => setTimeout(_, Math.min(timeout * 200, steps *= 2)))
+
+        // wait a second and try again
+        await new Promise(_ => setTimeout(_, Math.min(timeout * 200, steps *= 2)))
     }
-  
+
     throw new Error('Error waiting for the transaction to confirm')
 }
 
-async function prepareTransaction(args:TxRequest, api?:API):Promise<Transaction> {
-    const sender =  args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex'))
-    
-    const tx:any ={}
+async function prepareTransaction(args: TxRequest, api?: API): Promise<Transaction> {
+    const sender = args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex'))
+
+    const tx: any = {}
     if (args.to) tx.to = toHex(args.to)
     if (args.method)
-       tx.data = createCallParams(args.method, args.args).txdata
+        tx.data = createCallParams(args.method, args.args).txdata
     if (sender || args.nonce)
-       tx.nonce = toHex( args.nonce || (api && await api.getTransactionCount(sender,'pending'))  ) 
+        tx.nonce = toHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
     if (api)
-    tx.gasPrice = toHex( args.gasPrice || await api.gasPrice())
-    tx.value = toHex( args.value || 0)
+        tx.gasPrice = toHex(args.gasPrice || await api.gasPrice())
+    tx.value = toHex(args.value || 0)
     if (sender) tx.from = sender
     tx.gas = toHex(args.gas || (api && await api.estimateGas(tx) || 3000000))
 
-    
+
     return tx
 }
 
 
-function createCallParams(method:string, values:any[]):{txdata:string, convert:(a:any)=>any} {
+function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
     if (!method) throw new Error('method needs to be a valid contract method signature')
-    if (method.indexOf('(')<0) method+='()'
-    const methodRegex =/^\w+\((.*)\)$/gm
+    if (method.indexOf('(') < 0) method += '()'
+    const methodRegex = /^\w+\((.*)\)$/gm
     let convert = null
 
-    if (method.indexOf(':')>0) {
-      const srcFullMethod=method;
-      const retTypes = method.split(':')[1].substr(1).replace(')',' ').trim().split(',');
-      convert = result=>{
-        if (result)
-          result = simpleDecode(method.replace('()','(uint)')+':('+retTypes.join()+')', Buffer.from(result.substr(2),'hex')).map((v,i)=>{
-            if (Buffer.isBuffer(v)) return '0x'+v.toString('hex')
-            if (v && v.ixor) return v.toString()
-            if (retTypes[i]!=='string' && typeof v==='string' && v[1]!=='x')
-               return '0x'+v
-            return v
-          })
-        if (Array.isArray(result) && !srcFullMethod.endsWith(')'))
-          result = result[0]
-        return result
-      }
-      method = method.substr(0,method.indexOf(':'))
+    if (method.indexOf(':') > 0) {
+        const srcFullMethod = method;
+        const retTypes = method.split(':')[1].substr(1).replace(')', ' ').trim().split(',');
+        convert = result => {
+            if (result)
+                result = simpleDecode(method.replace('()', '(uint)') + ':(' + retTypes.join() + ')', Buffer.from(result.substr(2), 'hex')).map((v, i) => {
+                    if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
+                    if (v && v.ixor) return v.toString()
+                    if (retTypes[i] !== 'string' && typeof v === 'string' && v[1] !== 'x')
+                        return '0x' + v
+                    return v
+                })
+            if (Array.isArray(result) && !srcFullMethod.endsWith(')'))
+                result = result[0]
+            return result
+        }
+        method = method.substr(0, method.indexOf(':'))
     }
-  
+
     const m = methodRegex.exec(method)
-    if (!m) throw new Error('No valid method signature for '+method)
-    const types = m[1].split(',').filter(_=>_)
-    if (values.length<types.length) throw new Error('invalid number of arguments. Must be at least '+types.length)
-  
-    return { txdata: '0x'+ (values.length 
-    ? simpleEncode(method,...values).toString('hex')
-    : methodID(method.substr(0, method.indexOf('(')), []).toString('hex') )
-    , convert }
-  }
+    if (!m) throw new Error('No valid method signature for ' + method)
+    const types = m[1].split(',').filter(_ => _)
+    if (values.length < types.length) throw new Error('invalid number of arguments. Must be at least ' + types.length)
+
+    return {
+        txdata: '0x' + (values.length
+            ? simpleEncode(method, ...values).toString('hex')
+            : methodID(method.substr(0, method.indexOf('(')), []).toString('hex'))
+        , convert
+    }
+}

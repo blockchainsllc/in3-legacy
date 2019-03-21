@@ -44,6 +44,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "JSON-Tests",
+      "program": "${workspaceFolder}/js/test/json.js",
+      "outFiles": [
+        "${workspaceFolder}/js/**/*.js"
+      ],
+      "args": [
+        "-t",
+        "3",
+        "test/testdata/eth_getTransactionByHash.json"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "testClient starten",
       "program": "${workspaceFolder}/js/src/testClient.js",
       "outFiles": [

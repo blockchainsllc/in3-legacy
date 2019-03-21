@@ -26,16 +26,14 @@ ARG NPM_REGISTRY_TOKEN
 COPY tsconfig.json  ./
 COPY proxy  ./proxy/
 COPY src  ./src/
-COPY package.json ./
+COPY package.json package-lock.json ./
 
 # allowing docker to access the private repo
-RUN echo "//npm.slock.it/:_authToken=\"$NPM_REGISTRY_TOKEN\"" > ~/.npmrc \
-    && npm set registry https://npm.slock.it \
-    && apk add --no-cache make gcc g++ python \
+RUN apk add --no-cache make gcc g++ python \
     && npm install \
     && npm run build \
     && npm prune --production \
-    && rm -rf src tsconfig.json ~/.npmrc proxy \
+    && rm -rf src tsconfig.json proxy \
     && apk del binutils gmp isl libgomp libatomic pkgconf mpfr3 mpc1 gcc musl-dev libc-dev g++ make libbz2 expat libffi gdbm  ncurses-terminfo-base ncurses-terminfo  ncurses-libs readline sqlite-libs python2
 
 # setup ENTRYPOINT
