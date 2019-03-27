@@ -32,6 +32,7 @@ import axios from 'axios'
 import { EthereumProvider } from './provider'
 
 import EthAPI from '../modules/eth/api'
+import IpfsAPI from '../modules/ipfs/api'
 
 const defaultConfig = require('./defaultConfig.json')
 const CACHEABLE = ['ipfs_get', 'web3_clientVersion', 'web3_sha3', 'net_version', 'eth_protocolVersion', 'eth_coinbase', 'eth_gasPrice', 'eth_accounts', 'eth_getBalance', 'eth_getStorageAt', 'eth_getTransactionCount', 'eth_getBlockTransactionCountByHash', 'eth_getBlockTransactionCountByNumber',
@@ -54,7 +55,7 @@ export default class Client extends EventEmitter {
 
   // APIS
   public eth: EthAPI
-
+  public ipfs: IpfsAPI
 
 
   public defConfig: IN3Config
@@ -83,6 +84,8 @@ export default class Client extends EventEmitter {
     }
     verifyConfig(this.defConfig)
     this.eth = new EthAPI(this)
+    //TODO get ipfs url from config
+    this.ipfs = new IpfsAPI("/ip4/0.0.0.0/tcp/5002")
     this.chains = {}
   }
 
