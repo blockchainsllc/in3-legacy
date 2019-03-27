@@ -27,7 +27,10 @@ export default class API{
       this.ipfs.add(data, (err, results) => {
         if(!err){
           const hash = results[0].hash
-          resolve(bs58.decode(hash))
+          if(verifyIPFSHash(data, 'buffer', hash))
+            resolve(bs58.decode(hash))
+          else
+            reject('verification failed')
         }
         else {
           reject(err)
