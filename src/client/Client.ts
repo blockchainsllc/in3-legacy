@@ -84,8 +84,7 @@ export default class Client extends EventEmitter {
     }
     verifyConfig(this.defConfig)
     this.eth = new EthAPI(this)
-    //TODO get ipfs url from config
-    this.ipfs = new IpfsAPI("/ip4/0.0.0.0/tcp/5002")
+    this.ipfs = new IpfsAPI(this)
     this.chains = {}
   }
 

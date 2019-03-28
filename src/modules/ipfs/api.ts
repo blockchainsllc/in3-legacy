@@ -1,41 +1,26 @@
-const ipfsClient = require('ipfs-http-client')
+import Client from '../../client/Client'
 const bs58 = require('bs58')
 import {verifyIPFSHash} from './ipfs'
 
 export default class API{
-  ipfs: any
+  client: Client
 
-  constructor(url: string){
-    this.ipfs = new ipfsClient(url)
+  constructor(_client: Client){
+    this.client = _client
   }
 
-  get(hash: Buffer): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      this.ipfs.get(hash, (err, files) => {
-        if(!err) {
-          resolve(files[0].content)
-        }
-        else {
-          reject(err)
-        }
-      })
+  get(hash: string, resultEncoding?: string): Promise<Buffer> {
+    return this.client.sendRPC('ipfs_get', [hash, resultEncoding || 'base64'], '0x7d0').then(response => {
+      if(response.result) return Buffer.from(response.result, 'base64')
+      else Promise.reject(response.error || 'Hash not found')
     })
   }
 
-  put(data: Buffer): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      this.ipfs.add(data, (err, results) => {
-        if(!err){
-          const hash = results[0].hash
-          if(verifyIPFSHash(data, 'buffer', hash))
-            resolve(bs58.decode(hash))
-          else
-            reject('verification failed')
-        }
-        else {
-          reject(err)
-        }
-      })
+
+  put(data: string, dataEncoding?: string): Promise<string> {
+    return this.client.sendRPC('ipfs_put', [data, dataEncoding || 'base64'], '0x7d0').then(response => {
+      if(response.result) return response.result
+      else Promise.reject(response.error || 'Hash not found')
     })
   }
 }
