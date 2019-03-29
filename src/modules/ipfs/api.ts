@@ -15,7 +15,7 @@ export default class API{
 
 
   put(data: Buffer, dataEncoding?: string): Promise<string> {
-    return this.client.sendRPC('ipfs_put', [data.toString(dataEncoding), dataEncoding || 'base64'], '0x7d0').then(response =>
+    return this.client.sendRPC('ipfs_put', [data.toString(dataEncoding||'base64'), dataEncoding || 'base64'], '0x7d0').then(response =>
       response.result? response.result : Promise.reject(response.error || 'Hash not found')
     )
   }
