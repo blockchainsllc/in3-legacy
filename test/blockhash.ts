@@ -21,7 +21,7 @@
 import { assert } from 'chai'
 import 'mocha'
 import { serialize, util } from '../src/index'
-import { checkBlockSignatures, getSigner, getAuthorities, getChainSpec } from '../src/modules/eth/header'
+import { checkBlockSignatures, getSigner, getChainSpec } from '../src/modules/eth/header'
 import * as ethUtil from 'ethereumjs-util'
 import { toNumber } from '../src/util/util';
 const BN = ethUtil.BN
@@ -331,11 +331,10 @@ async function verifyBlock(blockData: any, chainId?: string) {
       putInCache: (key, value) => ctx[key] = value
     } as any
     const chainSpec = await getChainSpec(b, ctx)
-    const authrities = await getAuthorities(spec, toNumber(b.number), () => null)
+    const authrities = chainSpec.authorities
     const signer = getSigner(b)
     assert.isDefined(authrities.find(_ => _.equals(signer)))
     const finality = await checkBlockSignatures([b], async (block) => chainSpec)
   }
 
 }
-

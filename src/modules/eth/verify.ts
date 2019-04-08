@@ -46,7 +46,7 @@ export interface BlockHeaderProof {
 }
 
 /** verify the signatures of a blockhash */
-export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainContext) {
+export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainContext, verifiedAuthSpec?) {
 
   // calculate the blockHash
   const blockHash = b.hash()
@@ -58,7 +58,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
 
     // for proof of authorities we can verify the signatures
     if (ctx && ctx.chainSpec && (ctx.chainSpec.engine === 'authorityRound' || ctx.chainSpec.engine === 'clique')) {
-      const finality = await checkBlockSignatures([b, ...(proof.proof && proof.proof.finalityBlocks || [])], _ => getChainSpec(_, ctx))
+      const finality = await checkBlockSignatures([b, ...(proof.proof && proof.proof.finalityBlocks || [])], _ => getChainSpec(_, ctx), verifiedAuthSpec)
       if (proof.finality && proof.finality > finality)
         throw new Error('we have only a finality of ' + finality + ' but expected was ' + proof.finality)
     }
@@ -266,7 +266,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
 
 
 /** verifies a TransactionProof */
-export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogData[], ctx: ChainContext) {
+export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogData[], ctx: ChainContext, verifiedAuthSpec?) {
 
   if (!logs) throw new Error('No Logs!')
   if (!logs.length) return
@@ -287,7 +287,7 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
     if (toHex(blockProof.number) !== bn) throw new Error('wrong blocknumber')
 
     // verify the blockhash and the signatures
-    await verifyBlock(block, headerProof, ctx)
+    await verifyBlock(block, headerProof, ctx, verifiedAuthSpec)
 
     // verifiy all merkle-Trees of the receipts
     await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
