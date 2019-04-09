@@ -75,7 +75,7 @@
       "verifier": "eth",
       "chainSpec": {
         "engine": "clique",
-        "genesisValidatorList": [
+        "validatorList": [
           "0xe0a2bd4258d2768837baa26a28fe71dc079f84c7"
         ]
       },
