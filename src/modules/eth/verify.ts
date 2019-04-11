@@ -314,7 +314,7 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
     const receipt = receiptData[l.transactionHash]
     if (!receipt) throw new Error('The receipt ' + l.transactionHash + 'is missing in the proof')
 
-    const logData = receipt[3][toNumber(l.transactionLogIndex)]
+    const logData = receipt[receipt.length-1][toNumber(l.transactionLogIndex)]
     if (!logData) throw new Error('Log not found in Transaction')
 
     if (!logData[0].equals(address(l.address)))

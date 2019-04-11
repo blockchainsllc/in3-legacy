@@ -1,4 +1,4 @@
-import { bytes, toBlockHeader, rlp, Block, hash, address, BlockData, LogData } from './serialize'
+import { bytes, bytes32, toBlockHeader, rlp, Block, hash, address, BlockData, LogData } from './serialize'
 import { toHex, toNumber } from '../../util/util'
 import { verifyLogProof, BlockHeaderProof } from './verify'
 import DeltaHistory from '../../util/DeltaHistory'
@@ -127,13 +127,13 @@ function addCliqueValidators(history: DeltaHistory<string>, ctx: ChainContext, s
 
 }
 
-function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, states: HistoryEntry[]) {
+async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, states: HistoryEntry[]) {
   for(const s of states) {
     //skip the current block if already added in the delta
     const current = [...history.getData(s.block)]
     if (JSON.stringify(current) === JSON.stringify(s.validators)) continue
 
-    if (s.proof) {
+    if (s.proof && Object.keys(s.proof).length > 0) {
       const authorities = history.getData(history.getLastIndex()).map(h => address(h.startsWith('0x')? h : '0x' + h))
       const verifiedAuthSpec = {
         authorities: authorities,
@@ -142,11 +142,13 @@ function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, sta
       }
 
       const proof: BlockHeaderProof = {
-        proof: s.proof as Proof
+        proof: s.proof as Proof,
+        expectedBlockHash: bytes32(s.data.blockHash)
       }
-      verifyLogProof(proof, [s.data], ctx, verifiedAuthSpec)
+      await verifyLogProof(proof, [s.data], ctx, verifiedAuthSpec)
       history.addState(s.block, s.validators)
     }
+    else if(Object.keys(s.proof).length === 0 && s.block === 0) continue
     else
       throw new Error('The validator list logs has no proof')
   }
@@ -162,7 +164,7 @@ async function addValidators(ctx: ChainContext, validators: DeltaHistory<string>
       return
     else {
       const list = await ctx.client.sendRPC('in3_validatorlist', [ bNum.toString(16) ], ctx.chainId, { proof: 'none' })
-      addAuraValidators(validators, ctx, list.result && list.result.states)
+      await addAuraValidators(validators, ctx, list.result && list.result.states)
     }
   }
 
