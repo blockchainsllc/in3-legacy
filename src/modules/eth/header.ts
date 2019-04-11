@@ -44,12 +44,12 @@ export async function checkBlockSignatures(blockHeaders: (Buffer | string | Bloc
     let signer: Buffer = null
     if (chainSpec.spec.engine === 'clique') {
       signer = getCliqueSigner(new Block(data.serializeHeader()))
-      if (!chain.authorities.find(_ => signer.equals(_))) throw new Error('the author is not part of the authorities')
+      if (!chain.authorities.find(_ => signer.equals(_))) throw new Error('the author is not part of the clique authorities')
     }
     else {
       // author needs to be a authority
       if (/*(chain.proposer && !chain.proposer.equals(data.coinbase)) || */!chain.authorities.find(_ => data.coinbase.equals(_)))
-        throw new Error('the author is not part of the authorities')
+        throw new Error('the author is not part of the aura authorities')
 
       // check signature
       signer = getSigner(data)
@@ -134,7 +134,7 @@ function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, sta
     if (JSON.stringify(current) === JSON.stringify(s.validators)) continue
 
     if (s.proof) {
-      const authorities = history.getData(s.block).map(address)
+      const authorities = history.getData(history.getLastIndex()).map(h => address(h.startsWith('0x')? h : '0x' + h))
       const verifiedAuthSpec = {
         authorities: authorities,
         spec: ctx.chainSpec,
@@ -142,8 +142,7 @@ function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, sta
       }
 
       const proof: BlockHeaderProof = {
-        proof: s.proof as Proof,
-        finality: 51
+        proof: s.proof as Proof
       }
       verifyLogProof(proof, [s.data], ctx, verifiedAuthSpec)
       history.addState(s.block, s.validators)
@@ -193,7 +192,7 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<{ autho
   }
 
   // get the current validator-list for the block
-  const res: any = { authorities: validators.getData(toNumber(b.number)).map(address), spec: ctx.chainSpec }
+  const res: any = { authorities: validators.getData(toNumber(b.number)).map(h => address(h.startsWith('0x')? h : '0x' + h)), spec: ctx.chainSpec }
 
   // find out who is able to sign with this nonce
   res.proposer = res.authorities[(ctx.chainSpec.engine == 'clique' ? toNumber(b.number) : b.sealedFields[0].readUInt32BE(0)) % res.authorities.length]
