@@ -1,16 +1,29 @@
 import Client from './Client'
 
-export class EthereumProvider {
+export class HttpProvider {
   IN3Client: Client
   host: string
+  connected: boolean
 
-  constructor(client: Client, _host: string){
+  constructor(_host: string, options=  {}, client: Client){
     this.IN3Client = client
     this.host = _host
+    this.connected = true;
   }
 
   send(method, parameters): Promise<object> {
-    return this.IN3Client.send(method, parameters)
+    let request
+
+    if(typeof(method) == "string")
+      request = { method: method, params: parameters }
+    else
+      request = method
+
+    if(typeof parameters == "function")
+      return this.IN3Client.send(request, parameters)
+    else
+      return this.IN3Client.send(request)
+
   }
 
   sendBatch(methods, moduleInstance): Promise<object[]> {
@@ -24,35 +37,11 @@ export class EthereumProvider {
     return Promise.all(methodCalls);
   }
 
-  registerEventListeners(): void {
-    throw new Error("Method not Implemented")
+  supportsSubscriptions(): boolean {
+    return false
   }
 
-  subscribe(subscribeMethod: string, subscriptionMethod: string, parameters: any[]): Promise<string> {
-    throw new Error("Method not Implemented")
-  }
-
-  unsubscribe(subscriptionId: string, unsubscribeMethod: string): Promise<boolean>{
-    throw new Error("Method not Implemented")
-  }
-
-  clearSubscriptions(unsubscribeMethod: string): Promise<boolean> {
-    throw new Error("Method not Implemented")
-  }
-
-  on(type: string, callback: () => void): void{
-    throw new Error("Method not Implemented")
-  }
-
-  removeListener(type: string, callback: () => void): void {
-    throw new Error("Method not Implemented")
-  }
-
-  removeAllListeners(type: string): void {
-    throw new Error("Method not Implemented")
-  }
-
-  reset(): void {
-    throw new Error("Method not Implemented")
+  disconnect(): boolean {
+    return true;
   }
 }
