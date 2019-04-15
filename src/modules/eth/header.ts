@@ -98,7 +98,7 @@ function addCliqueValidators(history: DeltaHistory<string>, ctx: ChainContext, s
     let newValidator: Buffer = null
     let verified = false
 
-    for (const p of s.proof as any) {
+    for (const p of s.proof as string[]) {
       const block = new Block(p)
       const signer = '0x' + getCliqueSigner(block).toString('hex')
       if (current.indexOf(signer) < 0) continue // this is no proof!
