@@ -82,8 +82,11 @@ async function runSingleTest(test: any, c: number) {
     }, {
             handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]> {
                 if((data as any)[0].method == 'in3_validatorlist') {
-                  const validatorResponse = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist.json', 'utf8').toString())
+                  const states = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist.json', 'utf8').toString())
+                  const validatorResponse = mockValidatorList(states, (data as any)[0].params)
+                  //console.log((data as any)[0].params)
                   validatorResponse.id = (data as any)[0].id
+                  validatorResponse.jsonrpc = (data as any)[0].jsonrpc
                   return Promise.resolve([validatorResponse])
                 }
                 test.response[res].id = (data as any)[0].id
@@ -118,6 +121,37 @@ async function runSingleTest(test: any, c: number) {
     else
         result.error = s ? 'Should have failed' : (error && error.message) || 'Failed'
     return result
+}
+
+function mockValidatorList(states, params?){
+    const blockNumber: number = (params && params.length > 0)?parseInt(params[0]):0
+    const numStates: number = (params && params.length > 1)?parseInt(params[1]):null
+    const excludeCurrentDelta: boolean = (params && params.length > 2)?params[2]:false
+
+    //console.log(blockNumber, numStates, excludeCurrentDelta)
+
+    const filteredStates = blockNumber != 0 ?
+    states.filter((state, index, s) => {
+        if(state.block >= blockNumber)
+          return true
+        else if(index != (s.length-1) && blockNumber < s[index + 1].block && !excludeCurrentDelta)
+          return true
+        else if(index === (s.length-1) && blockNumber > s[s.length - 1].block && !excludeCurrentDelta)
+          return true
+        else
+          return false
+    })
+    : states
+
+    return ({
+      id: 0,
+      result: {
+        states: numStates && numStates < filteredStates.length?filteredStates.slice(0, numStates):filteredStates,
+        lastCheckedBlock: 11759901,
+        statesLength: 56
+      },
+      jsonrpc: null
+    })
 }
 
 function addSpace(s: string, l: number, filler = ' ', color = '') {

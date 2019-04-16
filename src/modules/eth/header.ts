@@ -153,17 +153,36 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
   }
 }
 
-async function addValidators(ctx: ChainContext, validators: DeltaHistory<string>, bNum: number) {
+async function addValidators(ctx: ChainContext, validators: DeltaHistory<string>) {
   if (ctx.chainSpec.engine == 'clique') {
-    const list = await ctx.client.sendRPC('in3_validatorlist', [ bNum.toString(16) ], ctx.chainId, { proof: 'none' })
+    const list = await ctx.client.sendRPC('in3_validatorlist', [ (validators.getLastIndex()).toString(16), null ], ctx.chainId, { proof: 'none' })
     addCliqueValidators(validators, ctx, list.result && list.result.states)
   }
   else if (ctx.chainSpec.engine == 'authorityRound') {
     if ((ctx.chainId === 'kovan' || ctx.chainId === "0x2a") && ctx.chainSpec.validatorList)
       return
     else {
-      const list = await ctx.client.sendRPC('in3_validatorlist', [ bNum.toString(16) ], ctx.chainId, { proof: 'none' })
-      await addAuraValidators(validators, ctx, list.result && list.result.states)
+      let loopCounter = 0
+      let chunkSize = null //will get the entire list instead in chunks
+      let statesLength = chunkSize?chunkSize:1
+
+      while(loopCounter < statesLength/(chunkSize?chunkSize:1)){
+        loopCounter += 1
+
+        const list = await ctx.client.sendRPC('in3_validatorlist', [
+          '0x' + (validators.getLastIndex() + 1).toString(16), //starting from block DEFAULT: 0
+          chunkSize?('0x' + chunkSize.toString(16)): null, //number of validator state to be fetched DEFAULT: 1
+          true //should the server exclude the previous validator state DEFAULT: false
+        ], ctx.chainId, { proof: 'none' })
+
+        statesLength = list.result && list.result.statesLength ? list.result.statesLength : statesLength
+        chunkSize = chunkSize? chunkSize: statesLength
+
+        if (list.result && list.result.states && list.result.states.length > 0)
+          await addAuraValidators(validators, ctx, list.result && list.result.states)
+        else
+          break
+      }
     }
   }
 
@@ -183,14 +202,11 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<{ autho
   }
 
   // no validators in the cache yet, so we have to find them,.
-  if (!validators) {
+  if (!validators)
     validators = new DeltaHistory<string>(ctx.chainSpec.validatorList, false)
-    await addValidators(ctx, validators, 0)
-  }
-  //update the validator list taken from cache, if there are any updates to validator list.
-  else{
-    await addValidators(ctx, validators, validators.getLastIndex())
-  }
+
+  await addValidators(ctx, validators)
+
 
   // get the current validator-list for the block
   const res: any = { authorities: validators.getData(toNumber(b.number)).map(h => address(h.startsWith('0x')? h : '0x' + h)), spec: ctx.chainSpec }
