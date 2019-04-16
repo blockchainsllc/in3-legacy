@@ -29,7 +29,7 @@ import { EventEmitter } from 'events'
 import ChainContext from './ChainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
-import { EthereumProvider } from './provider'
+import { HttpProvider } from './provider'
 
 import EthAPI from '../modules/eth/api'
 import IpfsAPI from '../modules/ipfs/api'
@@ -90,8 +90,8 @@ export default class Client extends EventEmitter {
 
   //create a web3 Provider
   createWeb3Provider() {
-    const provider = new EthereumProvider(this, 'EthProvider')
-    return provider
+    const provider = new HttpProvider('EthProvider', {}, this)
+    return provider as any
   }
 
 
