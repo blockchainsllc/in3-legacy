@@ -148,7 +148,6 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
       await verifyValidatorProof(s.block, proof, s.validators, ctx, verifiedAuthSpec)
       history.addState(s.block, s.validators)
     }
-    else if(Object.keys(s.proof).length === 0 && s.block === 0) continue
     else
       throw new Error('The validator list logs has no proof')
   }
