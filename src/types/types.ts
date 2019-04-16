@@ -640,6 +640,39 @@ export interface LogProof {
     }
 }
 /**
+ * a Object holding proofs for event logs. The key is the blockNumber as hex
+ */
+export interface ValidatorProof {
+    /**
+     * the serialized blockheader
+     * example: 0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b
+     */
+    block: string
+    /**
+     * the BlockHash
+     */
+    blockHash: string
+    /**
+     * the transactionLogIndex
+     */
+    logIndex: string
+    /**
+     * the map of existing receipts with the txHash as key
+     */
+    receipts: {
+        [name: string]: {
+            /**
+             * the transactionIndex within the block
+             */
+            txIndex: number
+            /**
+             * the merkleProof
+             */
+            proof: string /* ^0x[0-9a-fA-F]+$ */ []
+        }
+    }
+}
+/**
  * the Proof-data as part of the in3-section
  */
 export interface Proof {
@@ -647,7 +680,7 @@ export interface Proof {
      * the type of the proof
      * example: accountProof
      */
-    type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'callProof' | 'logProof'
+    type: 'transactionProof' | 'receiptProof' | 'blockProof' | 'accountProof' | 'callProof' | 'logProof' | 'validatorProof'
     /**
      * the serialized blockheader as hex, required in most proofs
      * example: 0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b
@@ -660,12 +693,12 @@ export interface Proof {
     finalityBlocks?: any[]
     /**
      * the list of transactions of the block
-     * example: 
+     * example:
      */
     transactions?: any[]
     /**
      * the list of uncle-headers of the block
-     * example: 
+     * example:
      */
     uncles?: any[]
     /**
@@ -684,6 +717,10 @@ export interface Proof {
      * the Log Proof in case of a Log-Request
      */
     logProof?: LogProof
+    /**
+     * the Log Proof in case of a Log-Request
+     */
+    validatorProof?: ValidatorProof
     /**
      * a map of addresses and their AccountProof
      */

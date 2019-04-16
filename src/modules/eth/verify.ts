@@ -32,6 +32,7 @@ import ChainContext from '../../client/ChainContext'
 import { verifyIPFSHash } from '../ipfs/ipfs'
 import { checkBlockSignatures, getChainSpec } from './header'
 import { BlackListError } from '../../client/Client'
+import { rawEncode } from 'ethereumjs-abi'
 import * as BN from 'bn.js'
 
 // these method are accepted without proof
@@ -263,10 +264,75 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
 
 }
 
+/** verifies a TransactionProof */
+export async function verifyValidatorProof(blockNumber: number, headerProof: BlockHeaderProof, validatorList: string[], ctx: ChainContext, verifiedAuthSpec?) {
+
+  if (!validatorList) throw new Error('No Validator List!')
+  if (!validatorList.length) return
+
+  if (!headerProof.proof.validatorProof) throw new Error('Missing validatorProof')
+
+  const receiptData: { [txHash: string]: Receipt } = {}
+
+  //extract the block Proof
+  const blockProof = headerProof.proof.validatorProof
+
+  // decode the blockheader
+  const block = blockFromHex(blockProof.block)
+
+  //calculate the blockHash
+  const blockHash: Buffer = block.hash()
+
+  //if (toHex(blockProof.number) !== bn) throw new Error('wrong blocknumber')
+
+  //verify block number
+  if (blockNumber !== toNumber(block.number))
+    throw new Error("Block Number in validator Proof doesn't match")
+
+  // verify the blockhash and the signatures
+  await verifyBlock(block, headerProof, ctx, verifiedAuthSpec)
+
+  // verifiy all merkle-Trees of the receipts
+  await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
+    verifyMerkleProof(
+      block.receiptTrie, // expected merkle root
+      util.rlp.encode(blockProof.receipts[txHash].txIndex), // path, which is the transsactionIndex
+      blockProof.receipts[txHash].proof.map(bytes), // array of Buffer with the merkle-proof-data
+      undefined // we don't want to check, but use the found value in the next step
+    ).then(value => receiptData[txHash] = util.rlp.decode(value))
+  ))
+
+
+
+  Object.keys(receiptData).forEach(txHash => {
+    const receipt = receiptData[txHash]
+
+    const logData = receipt[receipt.length-1][toNumber(blockProof.logIndex)]
+    if (!logData) throw new Error('Validator changeLog not found in Transaction')
+
+    //check for contract address from chain spec
+    if (!logData[0].equals(address(ctx.chainSpec.validatorContract)))
+      throw new Error('Wrong address in log ')
+
+    //check for the standard topic "0x55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89"
+    if (!logData[1].map(toHex).includes('0x55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89'))
+      throw new Error('Wrong Topics in log ')
+
+    //check the list
+    const listABI = rawEncode(['address[]'], [validatorList.map(v => ('0x' + v))])
+    if (toHex(logData[2]) !== toHex(listABI))
+      throw new Error('Wrong data in log ')
+
+    //check the blockhash in the proof
+    if (!blockHash.equals(bytes32(blockProof.blockHash)))
+      throw new Error('wrong blockhash')
+  })
+
+}
 
 
 /** verifies a TransactionProof */
-export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogData[], ctx: ChainContext, verifiedAuthSpec?) {
+export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogData[], ctx: ChainContext) {
 
   if (!logs) throw new Error('No Logs!')
   if (!logs.length) return
@@ -287,7 +353,7 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
     if (toHex(blockProof.number) !== bn) throw new Error('wrong blocknumber')
 
     // verify the blockhash and the signatures
-    await verifyBlock(block, headerProof, ctx, verifiedAuthSpec)
+    await verifyBlock(block, headerProof, ctx)
 
     // verifiy all merkle-Trees of the receipts
     await Promise.all(Object.keys(blockProof.receipts).map(txHash =>

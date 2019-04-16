@@ -1,6 +1,6 @@
 import { bytes, bytes32, toBlockHeader, rlp, Block, hash, address, BlockData, LogData } from './serialize'
 import { toHex, toNumber } from '../../util/util'
-import { verifyLogProof, BlockHeaderProof } from './verify'
+import { verifyValidatorProof, BlockHeaderProof } from './verify'
 import DeltaHistory from '../../util/DeltaHistory'
 import { rawDecode } from 'ethereumjs-abi'
 import { recover } from 'secp256k1'
@@ -143,9 +143,9 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
 
       const proof: BlockHeaderProof = {
         proof: s.proof as Proof,
-        expectedBlockHash: bytes32(s.data.blockHash)
+        expectedBlockHash: bytes32((s.proof as Proof).validatorProof.blockHash)
       }
-      await verifyLogProof(proof, [s.data], ctx, verifiedAuthSpec)
+      await verifyValidatorProof(s.block, proof, s.validators, ctx, verifiedAuthSpec)
       history.addState(s.block, s.validators)
     }
     else if(Object.keys(s.proof).length === 0 && s.block === 0) continue
