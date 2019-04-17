@@ -283,8 +283,6 @@ export async function verifyValidatorProof(blockNumber: number, headerProof: Blo
   //calculate the blockHash
   const blockHash: Buffer = block.hash()
 
-  //if (toHex(blockProof.number) !== bn) throw new Error('wrong blocknumber')
-
   //verify block number
   if (blockNumber !== toNumber(block.number))
     throw new Error("Block Number in validator Proof doesn't match")
@@ -319,7 +317,7 @@ export async function verifyValidatorProof(blockNumber: number, headerProof: Blo
       throw new Error('Wrong Topics in log ')
 
     //check the list
-    const listABI = rawEncode(['address[]'], [validatorList.map(v => ('0x' + v))])
+    const listABI = rawEncode(['address[]'], [validatorList.map(v => v.startsWith('0x')?v:('0x' + v))])
     if (toHex(logData[2]) !== toHex(listABI))
       throw new Error('Wrong data in log ')
 
