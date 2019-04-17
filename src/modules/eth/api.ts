@@ -1,14 +1,33 @@
 import Client from '../../client/Client'
 import { simpleDecode, simpleEncode, methodID } from 'ethereumjs-abi'
-import { toBuffer, toChecksumAddress, privateToAddress } from 'ethereumjs-util'
+import { toBuffer, toChecksumAddress, privateToAddress, keccak } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
 import { toHex } from '../../util/util'
+import { bytes32, bytes } from './serialize';
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
 export type Quantity = number | string
 export type Hash = string
 export type Address = string
 export type Data = string
+
+
+export type ABIField = {
+    indexed: boolean
+    name: string
+    type: string
+}
+export type ABI = {
+    anonymous?: boolean
+    constant?: boolean
+    payable?: boolean
+    stateMutability?: 'nonpayable' | 'payable' | 'view' | 'pure'
+
+    inputs: ABIField[],
+    outputs?: ABIField[]
+    name: string
+    type: 'event' | 'function'
+}
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
     from: Address
@@ -493,8 +512,49 @@ export default class API {
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas as string), args.confirmations) : txHash
     }
 
-}
+    contractAt(abi: ABI[], address: string) {
+        const api = this, ob = { _address: address, _eventHashes: {} as any }
+        for (const def of abi.filter(_ => _.type == 'function')) {
+            if (def.constant) {
+                const signature = def.name + createSignature(def.inputs) + ':' + createSignature(def.outputs)
+                ob[def.name] = function (...args: any[]) {
+                    return api.callFn(this._address, signature, args)
+                }
+            }
+            else {
+                const method = def.name + createSignature(def.inputs)
+                ob[def.name] = function (...args: any[]) {
+                    let tx: TxRequest = {} as any
+                    if (args.length > def.inputs.length) tx = args.pop()
+                    tx.method = method
+                    tx.args = args.slice(0, def.name.length);
+                    tx.confirmations = tx.confirmations || 1
+                    return api.sendTransaction(tx)
+                }
+            }
+        }
 
+        for (const def of abi.filter(_ => _.type == 'event')) {
+            const eHash = '0x' + keccak(Buffer.from(def.name + createSignature(def.inputs), 'utf8')).toString('hex')
+            ob._eventHashes[def.name] = eHash
+            ob._eventHashes[eHash] = def
+
+            ob[def.name] = {
+                getLogs(options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } } = {}) {
+                    return api.getLogs({
+                        address: this._address,
+                        fromBlock: options.fromBlock || 'latest',
+                        toBlock: options.toBlock || 'latest',
+                        topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + bytes32(options.filter[d.name]).toString('hex') : null))],
+                        limit: options.limit || 50
+                    })
+                }
+            }
+        }
+        return ob
+    }
+
+}
 
 async function confirm(txHash: string, api: API, gasPaid: number, confirmations: number, timeout = 10) {
     let steps = 200
@@ -543,6 +603,16 @@ async function prepareTransaction(args: TxRequest, api?: API): Promise<Transacti
     return tx
 }
 
+function decodeResult(types: string[], result: Buffer): any {
+    result = simpleDecode('dummy(uint):(' + types.join() + ')', result).map((v, i) => {
+        if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
+        if (v && v.ixor) return v.toString()
+        if (types[i] !== 'string' && typeof v === 'string' && v[1] !== 'x')
+            return '0x' + v
+        return v
+    })
+
+}
 
 function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
     if (!method) throw new Error('method needs to be a valid contract method signature')
@@ -554,14 +624,7 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
         const srcFullMethod = method;
         const retTypes = method.split(':')[1].substr(1).replace(')', ' ').trim().split(',');
         convert = result => {
-            if (result)
-                result = simpleDecode(method.replace('()', '(uint)') + ':(' + retTypes.join() + ')', Buffer.from(result.substr(2), 'hex')).map((v, i) => {
-                    if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
-                    if (v && v.ixor) return v.toString()
-                    if (retTypes[i] !== 'string' && typeof v === 'string' && v[1] !== 'x')
-                        return '0x' + v
-                    return v
-                })
+            if (result) result = decodeResult(retTypes, Buffer.from(result.substr(2), 'hex'))
             if (Array.isArray(result) && !srcFullMethod.endsWith(')'))
                 result = result[0]
             return result
@@ -581,3 +644,36 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
         , convert
     }
 }
+
+function createSignature(fields: ABIField[]): string {
+    return '(' + fields.map(f => {
+        let baseType = f.type
+        const t = baseType.indexOf('[')
+        if (t > 0) baseType = baseType.substr(0, t)
+        if (baseType === 'uint' || baseType === 'int') baseType += '256'
+        return baseType + (t < 0 ? '' : f.type.substr(t))
+    }).join(',') + ')'
+}
+function parseABIString(def: string): ABI {
+    const [name, args] = def.split(/[\(\)]/)
+    return {
+        name, type: 'event', inputs: args.split(',').filter(_ => _).map(_ => _.split(' ').filter(z => z)).map(_ => ({
+            type: _[0],
+            name: _[_.length - 1],
+            indexed: _[1] == 'indexed'
+        }))
+    }
+}
+
+function decodeEventData(log: Log, def: string | { _eventHashes: any }): any {
+    let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def), r: any = {}
+    if (!d) throw new Error('Could not find the ABI')
+    const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed)
+    if (indexed.length)
+        decodeResult(indexed.map(_ => _.type), Buffer.concat(log.topics.slice(1).map(bytes))).forEach((v, i) => r[indexed[i].name] = v)
+    if (unindexed.length)
+        decodeResult(unindexed.map(_ => _.type), bytes(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
+    return r
+}
+
+
