@@ -1,5 +1,5 @@
 import { bytes, bytes32, toBlockHeader, rlp, Block, hash, address, BlockData, LogData } from './serialize'
-import { toHex, toNumber } from '../../util/util'
+import { toHex, toNumber, toMinHex } from '../../util/util'
 import { verifyValidatorProof, BlockHeaderProof } from './verify'
 import DeltaHistory from '../../util/DeltaHistory'
 import { rawDecode } from 'ethereumjs-abi'
@@ -149,40 +149,26 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
       history.addState(s.block, s.validators)
     }
     else
-      throw new Error('The validator list logs has no proof')
+      throw new Error('The validator list has no proof')
   }
 }
 
 async function addValidators(ctx: ChainContext, validators: DeltaHistory<string>) {
   if (ctx.chainSpec.engine == 'clique') {
-    const list = await ctx.client.sendRPC('in3_validatorlist', [ (validators.getLastIndex()).toString(16), null ], ctx.chainId, { proof: 'none' })
+    const list = await ctx.client.sendRPC('in3_validatorlist', [ toMinHex(validators.getLastIndex()), null ], ctx.chainId, { proof: 'none' })
     addCliqueValidators(validators, ctx, list.result && list.result.states)
   }
   else if (ctx.chainSpec.engine == 'authorityRound') {
-    if ((ctx.chainId === 'kovan' || ctx.chainId === "0x2a") && ctx.chainSpec.validatorList)
+    if (ctx.chainSpec.validatorList && !ctx.chainSpec.validatorContract) //defined list of validators
       return
     else {
-      let loopCounter = 0
-      let chunkSize = null //will get the entire list instead in chunks
-      let statesLength = chunkSize?chunkSize:1
+      const list = await ctx.client.sendRPC('in3_validatorlist', [
+        toMinHex(validators.getLastIndex() + 1), //starting from block DEFAULT: 0
+        null, //number of validator state to be fetched DEFAULT: 1, null will get the entire list
+        true //should the server exclude the previous validator state DEFAULT: false
+      ], ctx.chainId, { proof: 'none' })
 
-      while(loopCounter < statesLength/(chunkSize?chunkSize:1)){
-        loopCounter += 1
-
-        const list = await ctx.client.sendRPC('in3_validatorlist', [
-          '0x' + (validators.getLastIndex() + 1).toString(16), //starting from block DEFAULT: 0
-          chunkSize?('0x' + chunkSize.toString(16)): null, //number of validator state to be fetched DEFAULT: 1
-          true //should the server exclude the previous validator state DEFAULT: false
-        ], ctx.chainId, { proof: 'none' })
-
-        statesLength = list.result && list.result.statesLength ? list.result.statesLength : statesLength
-        chunkSize = chunkSize? chunkSize: statesLength
-
-        if (list.result && list.result.states && list.result.states.length > 0)
-          await addAuraValidators(validators, ctx, list.result && list.result.states)
-        else
-          break
-      }
+      await addAuraValidators(validators, ctx, list.result && list.result.states)
     }
   }
 
