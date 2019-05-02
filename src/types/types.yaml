@@ -326,6 +326,9 @@ definitions:
             loggerUrl:
                 type: string
                 description: a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }
+            rpc:
+                type: string
+                description: url of one or more rpc-endpoints to use. (list can be comma seperated)
             servers:
                 type: object
                 description: the nodelist per chain

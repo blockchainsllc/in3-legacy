@@ -110,7 +110,7 @@ export default class Filters {
           params: [{ ...filter.options, fromBlock: '0x' + filter.lastBlock.toString(16) }]
         }
       ]) as Promise<RPCResponse[]>)
-        .then(all => all[1].result ? all : [all[0],{result:[]} as any])
+        .then(all => all[1].result ? all : [all[0], { result: [] } as any])
         .then(checkForError)
         .then(all => [parseInt(all[0].result), all[1].result] as [number, LogData])
 

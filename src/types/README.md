@@ -264,6 +264,7 @@ const iN3Config:types.IN3Config = {
 *  **autoUpdateList** `boolean` - if true the nodelist will be automaticly updated if the lastBlock is newer   
 *  **cacheStorage** [{"description":"a cache handler offering 2 functions ( setItem(string,string), getItem(string) )"}](#{"description":"a cache handler offering 2 functions ( setitem(string,string), getitem(string) )"}) - a cache handler offering 2 functions ( setItem(string,string), getItem(string) )   
 *  **loggerUrl** `string` - a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }   
+*  **rpc** `string` - url of one or more rpc-endpoints to use. (list can be comma seperated)   
 *  **servers** `object` - the nodelist per chain   
     each key in this object will structure its value like: 
     *  **verifier** `string` - name of the module responsible for handling the verification   

@@ -513,12 +513,20 @@ export default class API {
     }
 
     contractAt(abi: ABI[], address: string) {
-        const api = this, ob = { _address: address, _eventHashes: {} as any }
+        const api = this, ob = { _address: address, _eventHashes: {} as any, events: {} as any }
         for (const def of abi.filter(_ => _.type == 'function')) {
             if (def.constant) {
                 const signature = def.name + createSignature(def.inputs) + ':' + createSignature(def.outputs)
                 ob[def.name] = function (...args: any[]) {
-                    return api.callFn(this._address, signature, args)
+                    return api.callFn(this._address, signature, ...args)
+                        .then(r => {
+                            if (def.outputs.length > 1) {
+                                let o = {}
+                                def.outputs.forEach((d, i) => o[d.name] = r[i])
+                                return o;
+                            }
+                            return r
+                        })
                 }
             }
             else {
@@ -538,19 +546,31 @@ export default class API {
             const eHash = '0x' + keccak(Buffer.from(def.name + createSignature(def.inputs), 'utf8')).toString('hex')
             ob._eventHashes[def.name] = eHash
             ob._eventHashes[eHash] = def
-
-            ob[def.name] = {
+            ob.events[def.name] = {
                 getLogs(options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } } = {}) {
                     return api.getLogs({
-                        address: this._address,
+                        address,
                         fromBlock: options.fromBlock || 'latest',
                         toBlock: options.toBlock || 'latest',
                         topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + bytes32(options.filter[d.name]).toString('hex') : null))],
                         limit: options.limit || 50
-                    })
+                    }).then((logs: Log[]) => logs.map(_ => ({ ..._, event: ob.events.decode(_) })))
                 }
             }
         }
+        ob.events.decode = function (log: Log) { return decodeEventData(log, ob) }
+        ob.events.all = {
+            getLogs(options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[] } = {}) {
+                return api.getLogs({
+                    address,
+                    fromBlock: options.fromBlock || 'latest',
+                    toBlock: options.toBlock || 'latest',
+                    topics: options.topics || [],
+                    limit: options.limit || 50
+                }).then((logs: Log[]) => logs.map(_ => ({ ..._, event: ob.events.decode(_) })))
+            }
+        }
+
         return ob
     }
 
@@ -604,7 +624,7 @@ async function prepareTransaction(args: TxRequest, api?: API): Promise<Transacti
 }
 
 function decodeResult(types: string[], result: Buffer): any {
-    result = simpleDecode('dummy(uint):(' + types.join() + ')', result).map((v, i) => {
+    return simpleDecode('dummy(uint):(' + types.join() + ')', result).map((v, i) => {
         if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
         if (v && v.ixor) return v.toString()
         if (types[i] !== 'string' && typeof v === 'string' && v[1] !== 'x')
@@ -625,7 +645,7 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
         const retTypes = method.split(':')[1].substr(1).replace(')', ' ').trim().split(',');
         convert = result => {
             if (result) result = decodeResult(retTypes, Buffer.from(result.substr(2), 'hex'))
-            if (Array.isArray(result) && !srcFullMethod.endsWith(')'))
+            if (Array.isArray(result) && (!srcFullMethod.endsWith(')') || result.length == 1))
                 result = result[0]
             return result
         }
@@ -666,7 +686,7 @@ function parseABIString(def: string): ABI {
 }
 
 function decodeEventData(log: Log, def: string | { _eventHashes: any }): any {
-    let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def), r: any = {}
+    let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def), r: any = { event: d && d.name }
     if (!d) throw new Error('Could not find the ABI')
     const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed)
     if (indexed.length)

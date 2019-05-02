@@ -67,6 +67,24 @@
         }
       ]
     },
+    "0xffff": {
+      "name": "local rpc",
+      "verifier": "eth",
+      "needsUpdate": false,
+      "contractChain": "0xffff",
+      "contract": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "nodeList": [
+        {
+          "deposit": 0,
+          "chainIds": [
+            "0xffff"
+          ],
+          "address": "0x0000000000000000000000000000000000000000",
+          "url": "http://localhost:8545",
+          "props": 65535
+        }
+      ]
+    },
     "0x5": {
       "name": "goerli",
       "verifier": "eth",
