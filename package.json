@@ -11,7 +11,7 @@
     "changelog": "auto-changelog",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
-    "cmd": "node --inspect -e \"axios=require('axios').default;in3=require('./js/src/index');Client=in3.default;c=new Client()\" -i"
+    "cmd": "node --experimental-repl-await --inspect -e \"axios=require('axios').default;in3=require('./js/src/index');Client=in3.default;c=new Client()\" -i"
   },
   "nyc": {
     "include": [
@@ -71,15 +71,16 @@
     "bs58": "^4.0.1",
     "buffer": "^5.2.1",
     "cbor": "^4.0.0",
-    "ethereumjs-abi": "0.6.5",
+    "ethereumjs-abi": "0.6.7",
     "ethereumjs-account": "2.0.5",
-    "ethereumjs-tx": "1.3.4",
-    "ethereumjs-util": "5.2.0",
+    "ethereumjs-tx": "1.3.7",
+    "ethereumjs-util": "6.1.0",
     "ethereumjs-vm": "2.3.5",
     "ethjs-util": "0.1.4",
     "merkle-patricia-tree": "^2.3.1",
     "multihashing-async": "^0.5.1",
-    "protons": "^1.0.1"
+    "protons": "^1.0.1",
+    "slockit-generator": "^1.0.3"
   },
   "optionalDependencies": {
     "koa": "^2.5.3",

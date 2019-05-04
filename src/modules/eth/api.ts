@@ -1,8 +1,8 @@
 import Client from '../../client/Client'
 import { simpleDecode, simpleEncode, methodID } from 'ethereumjs-abi'
-import { toBuffer, toChecksumAddress, privateToAddress, keccak } from 'ethereumjs-util'
+import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
-import { toHex } from '../../util/util'
+import { toHex, toNumber, toBN, toBuffer } from '../../util/util'
 import { bytes32, bytes } from './serialize';
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
@@ -11,6 +11,14 @@ export type Hash = string
 export type Address = string
 export type Data = string
 
+export type Signature = {
+    message: string
+    messageHash: string
+    v: number
+    r: string
+    s: string
+    signature?: string
+}
 
 export type ABIField = {
     indexed: boolean
@@ -109,6 +117,8 @@ export type TransactionDetail = {
     creates: Address
     /** (optional) conditional submission, Block number in block or timestamp in time or null. (parity-feature)    */
     condition: any
+    /** optional: the private key to use for signing */
+    pk?: any
 }
 
 export type Block = {
@@ -193,6 +203,12 @@ export type TxRequest = {
     /** contract */
     to: Address
 
+    /** address of the account to use */
+    from?: Address
+
+    /** the data to send */
+    data?: Data
+
     /** the gas needed */
     gas: number
 
@@ -218,9 +234,22 @@ export type TxRequest = {
     confirmations: number
 }
 
+export interface Signer {
+    /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
+    prepareTransaction?: (tx: Transaction) => Promise<Transaction>
+
+    /** returns true if the account is supported (or unlocked) */
+    hasAccount(account: Address): Promise<boolean>
+
+    /** signing of any data. */
+    sign: (data: Buffer, account: Address) => Promise<Signature>
+}
+
 
 export default class API {
     client: Client
+    signer?: Signer
+
     constructor(client: Client) { this.client = client }
 
     private send<T>(name: string, ...params: any[]): Promise<T> {
@@ -496,16 +525,49 @@ export default class API {
         return this.send<string>('eth_sendRawTransaction', data)
     }
 
+    /**
+     * signs any kind of message using the `\x19Ethereum Signed Message:\n`-prefix
+     * @param account the address to sign the message with (if this is a 32-bytes hex-string it will be used as private key)
+     * @param data the data to sign (Buffer, hexstring or utf8-string)
+     */
+    async sign(account: Address, data: Data): Promise<Signature> {
+        // prepare data
+        const d = toBuffer(data)
+        const hash = keccak(Buffer.concat([Buffer.from('\x19Ethereum Signed Message:\n' + d.length, 'utf8'), d]))
+        let s: any = {
+            message: data,
+            messageHash: toHex(hash)
+        }
+
+        if (account && account.length == 66) // use direct pk
+            s = { ...s, ...ecsign(hash, toBuffer(account)) }
+        else if (this.signer && await this.signer.hasAccount(account)) // use signer
+            s = { ...s, ...(await this.signer.sign(hash, account)) }
+        s.signature = toHex(s.r) + toHex(s.s).substr(2) + toHex(s.v).substr(2)
+        return s
+    }
+
     /** sends a Transaction */
     async sendTransaction(args: TxRequest): Promise<string | TransactionReceipt> {
-        if (!args.pk) throw new Error('missing private key!')
+        if (!args.pk && (!this.signer || !(await this.signer.hasAccount(args.from)))) throw new Error('missing private key!')
 
         // prepare
         const tx = await prepareTransaction(args, this)
+        let etx: any = null
 
-        // sign it
-        const etx = new ETx({ ...tx, gasLimit: tx.gas })
-        etx.sign(toBuffer(args.pk))
+        if (args.pk) {
+            // sign it with the raw keyx
+            etx = new ETx({ ...tx, gasLimit: tx.gas })
+            etx.sign(toBuffer(args.pk))
+        }
+        else if (this.signer && args.from) {
+            const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(tx) : tx
+            etx = new ETx({ ...t, gasLimit: t.gas })
+            const signature = await this.signer.sign(etx.hash(false), args.from)
+            if (etx._chainId > 0) signature.v += etx._chainId * 2 + 8
+            Object.assign(etx, signature)
+        }
+        else throw new Error('Invalid transaction-data')
         const txHash = await this.sendRawTransaction(toHex(etx.serialize()))
 
         // send it
@@ -611,6 +673,8 @@ async function prepareTransaction(args: TxRequest, api?: API): Promise<Transacti
     if (args.to) tx.to = toHex(args.to)
     if (args.method)
         tx.data = createCallParams(args.method, args.args).txdata
+    else if (args.data)
+        tx.data = toHex(args.data)
     if (sender || args.nonce)
         tx.nonce = toHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
     if (api)
@@ -623,15 +687,29 @@ async function prepareTransaction(args: TxRequest, api?: API): Promise<Transacti
     return tx
 }
 
-function decodeResult(types: string[], result: Buffer): any {
-    return simpleDecode('dummy(uint):(' + types.join() + ')', result).map((v, i) => {
-        if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
-        if (v && v.ixor) return v.toString()
-        if (types[i] !== 'string' && typeof v === 'string' && v[1] !== 'x')
-            return '0x' + v
-        return v
-    })
+function convertToType(solType: string, v: any): any {
+    // check for arrays
+    const list = solType.lastIndexOf('[')
+    if (list >= 0) {
+        if (!Array.isArray(v)) throw new Error('Invalid result for type ' + solType + '. Value must be an array, but is not!')
+        solType = solType.substr(0, list)
+        return v.map(_ => convertToType(solType, _))
+    }
 
+    // convert integers
+    if (solType.startsWith('uint')) return parseInt(solType.substr(4)) <= 32 ? toNumber(v) : toBN(v)
+    if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? toNumber(v) : toBN(v) // TODO handle negative values
+    if (solType === 'bool') typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
+    if (solType === 'string') return v.toString('utf8')
+
+    // everything else will be hexcoded string
+    if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
+    if (v && v.ixor) return '0x' + v.toString(16)
+    return v[1] !== 'x' ? '0x' + v : v
+}
+
+function decodeResult(types: string[], result: Buffer): any {
+    return simpleDecode('dummy(uint):(' + types.join() + ')', result).map((v, i) => convertToType(types[i], v))
 }
 
 function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
@@ -697,3 +775,30 @@ function decodeEventData(log: Log, def: string | { _eventHashes: any }): any {
 }
 
 
+export class SimpleSigner implements Signer {
+    accounts: { [ac: string]: Hash }
+
+    constructor(...pks: Hash[]) {
+        this.accounts = {}
+        if (pks) pks.forEach(_ => this.addAccount(_))
+    }
+
+    addAccount(pk: Hash) {
+        const adr: Address = toHex(privateToAddress(toBuffer(pk)))
+        this.accounts[adr] = pk
+        return adr
+    }
+
+
+    async hasAccount(account: string): Promise<boolean> {
+        return !!this.accounts[account]
+    }
+
+    async sign(data: Buffer, account: string): Promise<Signature> {
+        const pk = toBuffer(this.accounts[account])
+        if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
+        const sig = ecsign(data, pk)
+        return { messageHash: toHex(data), v: sig.v, r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
+    }
+
+}

@@ -22,6 +22,7 @@ import { simpleEncode, simpleDecode } from 'ethereumjs-abi'
 import { toBuffer, toChecksumAddress } from 'ethereumjs-util'
 import { toHex, toSimpleHex } from '../../util/util'
 import { IN3Config } from '../../types/types';
+import { RPCResponse } from '../..';
 
 export async function callContract(client: Client, contract: string, chainId: string, signature: string, args: any[], config?: IN3Config) {
   return simpleDecode(signature, await client.sendRPC('eth_call', [{
@@ -29,7 +30,7 @@ export async function callContract(client: Client, contract: string, chainId: st
     data: '0x' + simpleEncode(signature, ...args).toString('hex')
   },
     'latest'], chainId, config)
-    .then(_ => _.error ? Promise.reject(new Error('Error handling call to ' + contract + ' :' + JSON.stringify(_.error))) : toBuffer(_.result + '')))
+    .then(_ => (_.error ? Promise.reject(new Error('Error handling call to ' + contract + ' :' + JSON.stringify(_.error))) : toBuffer(_.result + '')) as any as RPCResponse))
 }
 
 export async function getChainData(client: Client, chainId: string, config?: IN3Config) {

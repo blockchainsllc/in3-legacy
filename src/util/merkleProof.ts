@@ -17,7 +17,7 @@
 * For questions, please contact info@slock.it              *
 ***********************************************************/
 
-import { sha3, rlp } from 'ethereumjs-util'
+import { keccak, rlp } from 'ethereumjs-util'
 
 /**
  * Verifies a Merkle Proof.
@@ -44,14 +44,14 @@ export default async function verify(rootHash: Buffer, path: Buffer, proof: Buff
   // iterate through the nodes starting at root
   for (let i = 0; i < proof.length; i++) {
     const p = proof[i]
-    const hash = sha3(p) as Buffer
+    const hash = keccak(p)
 
     // verify the hash of the node
     if (Buffer.compare(hash, wantedHash))
       throw new Error('Bad proof node ' + i + ': hash mismatch')
 
     // create the node
-    const node = lastNode = new Node(rlp.decode(p))
+    const node = lastNode = new Node(rlp.decode(p) as any)
 
     switch (node.type) {
       case 'empty':
@@ -175,7 +175,7 @@ class Node {
 }
 
 // create the nibbles of a path
-const hexToInt = {'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,a:10,b:11,c:12,d:13,e:14,f:15}
+const hexToInt = { '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, a: 10, b: 11, c: 12, d: 13, e: 14, f: 15 }
 export function stringToNibbles(bkey: Buffer): number[] {
-  return bkey.toString('hex').split('').map(_=>hexToInt[_])
+  return bkey.toString('hex').split('').map(_ => hexToInt[_])
 }

@@ -82,7 +82,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
 
 
   // verify the signatures for only the blocks matching the given
-  const messageHash: Buffer = util.sha3(Buffer.concat([blockHash, bytes32(b.number)]))
+  const messageHash: Buffer = util.keccak(Buffer.concat([blockHash, bytes32(b.number)]))
   if (!signaturesForBlock.reduce((p, signature, i) => {
 
     if (!messageHash.equals(bytes32(signature.msgHash)))
@@ -242,7 +242,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
       util.rlp.encode(toNumber(headerProof.proof.txIndex - 1)), // path, which is the transsactionIndex
       headerProof.proof.merkleProof.map(bytes), undefined)
       .then(r => {
-        const prevReceipt = rlp.decode(r)
+        const prevReceipt = rlp.decode(r) as Buffer
         const gasUsed = toNumber(receipt.cumulativeGasUsed) - toNumber(prevReceipt[prevReceipt.length - 3])
         if (toNumber(receipt.gasUsed) != gasUsed)
           throw new Error('The Transaction did consumed ' + gasUsed)
@@ -296,7 +296,7 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
         util.rlp.encode(blockProof.receipts[txHash].txIndex), // path, which is the transsactionIndex
         blockProof.receipts[txHash].proof.map(bytes), // array of Buffer with the merkle-proof-data
         undefined // we don't want to check, but use the found value in the next step
-      ).then(value => receiptData[txHash] = util.rlp.decode(value))
+      ).then(value => receiptData[txHash] = util.rlp.decode(value) as any)
     )),
       // verifiy all merkle-Trees of the receipts
       await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
@@ -402,7 +402,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
     await Promise.all(block.transactions.map((tx, i) =>
       promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
     ))
-    const thash: Buffer = block.transactions.length ? trie.root : util.SHA3_RLP
+    const thash: Buffer = block.transactions.length ? trie.root : util.KECCAK256_RLP
     if (!thash.equals(block.transactionsTrie))
       throw new Error('The Transactions do not match transactionRoot!')
   }
@@ -429,7 +429,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 
 export function verifyTransaction(t: TransactionData) {
   const raw = toTransaction(t)
-  let rawHash: Buffer, v = ethUtil.bufferToInt(t.v)
+  let rawHash: Buffer, v = ethUtil.bufferToInt(bytes(t.v))
   if (t.chainId) {  // use  EIP155 spec
     rawHash = hash([...raw.slice(0, 6), uint(t.chainId), Buffer.allocUnsafe(0), Buffer.allocUnsafe(0)])
     v -= toNumber(t.chainId) * 2 + 8
@@ -438,7 +438,7 @@ export function verifyTransaction(t: TransactionData) {
     rawHash = hash(raw.slice(0, 6))
 
   if (new BN(t.s).cmp(N_DIV_2) === 1) throw new Error('Invalid signature')
-  const senderPubKey = ethUtil.ecrecover(rawHash, v, t.r, t.s)
+  const senderPubKey = ethUtil.ecrecover(rawHash, v, bytes(t.r), bytes(t.s))
   if (!bytes(t.publicKey).equals(senderPubKey)) throw new Error('Invalid public key')
   if (!address(t.from).equals(ethUtil.publicToAddress(senderPubKey))) throw new Error('Invalid from')
   if (t.raw && !bytes(t.raw).equals(ethUtil.rlp.encode(raw))) throw new Error('Invalid Raw data')
