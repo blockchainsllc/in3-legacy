@@ -17,7 +17,7 @@
 # For questions, please contact info@slock.it              *
 #***********************************************************/
 
-FROM node:8-alpine
+FROM node:10-alpine
 
 WORKDIR /app
 
@@ -33,8 +33,7 @@ RUN apk add --no-cache make gcc g++ python \
     && npm install \
     && npm run build \
     && npm prune --production \
-    && rm -rf src tsconfig.json proxy \
-    && apk del binutils gmp isl libgomp libatomic pkgconf mpfr3 mpc1 gcc musl-dev libc-dev g++ make libbz2 expat libffi gdbm  ncurses-terminfo-base ncurses-terminfo  ncurses-libs readline sqlite-libs python2
+    && rm -rf src tsconfig.json proxy && apk del binutils gmp isl libgomp libatomic pkgconf mpfr3 mpc1 gcc musl-dev libc-dev g++ make libbz2 expat libffi gdbm  ncurses-terminfo-base ncurses-terminfo  ncurses-libs readline sqlite-libs python2
 
 # setup ENTRYPOINT
 EXPOSE 8545
