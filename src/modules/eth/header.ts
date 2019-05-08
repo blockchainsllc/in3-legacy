@@ -29,7 +29,7 @@ export async function checkBlockSignatures(blockHeaders: (Buffer | string | Bloc
   }
 
   // authority_round
-  const chainSpec = verifiedAuthSpec? verifiedAuthSpec: await getChainSpec(blocks[0])
+  const chainSpec = verifiedAuthSpec || await getChainSpec(blocks[0])
   const signatures = []
 
   // we only check signatures for authorityRound
@@ -39,7 +39,7 @@ export async function checkBlockSignatures(blockHeaders: (Buffer | string | Bloc
   await Promise.all(blocks.map(async data => {
 
     // read the current Validators
-    const chain = data === blocks[0] ? chainSpec : (verifiedAuthSpec? verifiedAuthSpec: await getChainSpec(data))
+    const chain = data === blocks[0] ? chainSpec : (verifiedAuthSpec || await getChainSpec(data))
 
     let signer: Buffer = null
     if (chainSpec.spec.engine === 'clique') {
