@@ -155,7 +155,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
 
 async function addValidators(ctx: ChainContext, validators: DeltaHistory<string>) {
   if (ctx.chainSpec.engine == 'clique') {
-    const list = await ctx.client.sendRPC('in3_validatorlist', [ toMinHex(validators.getLastIndex()), null ], ctx.chainId, { proof: 'none' })
+    const list = await ctx.client.sendRPC('in3_validatorlist', [ validators.getLastIndex(), null ], ctx.chainId, { proof: 'none' })
     addCliqueValidators(validators, ctx, list.result && list.result.states)
   }
   else if (ctx.chainSpec.engine == 'authorityRound') {
@@ -163,7 +163,7 @@ async function addValidators(ctx: ChainContext, validators: DeltaHistory<string>
       return
     else {
       const list = await ctx.client.sendRPC('in3_validatorlist', [
-        toMinHex(validators.getLastIndex() + 1), //starting from block DEFAULT: 0
+        validators.getLastIndex() + 1, //starting from block DEFAULT: 0
         null, //number of validator state to be fetched DEFAULT: 1, null will get the entire list
         true //should the server exclude the previous validator state DEFAULT: false
       ], ctx.chainId, { proof: 'none' })

@@ -43,7 +43,7 @@
         "engine": "authorityRound",
         "validatorContract": "0x1000000000000000000000000000000000000005",
         "validatorList": [
-          "4ba15b56452521c0826a35a6f2022e1210fc519b"
+          "0x4ba15b56452521c0826a35a6f2022e1210fc519b"
         ]
       },
       "needsUpdate": true,

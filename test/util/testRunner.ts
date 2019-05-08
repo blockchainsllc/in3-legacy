@@ -1,4 +1,5 @@
 import Client from '../../src/client/Client'
+import { toNumber } from '../../src/util/util'
 import { readFileSync } from 'fs'
 import { Transport, RPCRequest, RPCResponse } from '../../src'
 
@@ -124,8 +125,8 @@ async function runSingleTest(test: any, c: number) {
 }
 
 function mockValidatorList(states, params?){
-    const blockNumber: number = (params && params.length > 0)?parseInt(params[0]):0
-    const numStates: number = (params && params.length > 1)?parseInt(params[1]):null
+    const blockNumber: number = (params && params.length > 0)?toNumber(params[0]):0
+    const numStates: number = (params && params.length > 1)?toNumber(params[1]):null
     const excludeCurrentDelta: boolean = (params && params.length > 2)?params[2]:false
 
     //console.log(blockNumber, numStates, excludeCurrentDelta)
