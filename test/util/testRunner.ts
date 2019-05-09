@@ -83,11 +83,12 @@ async function runSingleTest(test: any, c: number) {
     }, {
             handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]> {
                 if((data as any)[0].method == 'in3_validatorlist') {
-                  const states = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist.json', 'utf8').toString())
-                  const validatorResponse = mockValidatorList(states, (data as any)[0].params)
-                  //console.log((data as any)[0].params)
+                  const response = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist.json', 'utf8').toString())
+                  const validatorResponse = mockValidatorList(response, (data as any)[0].params)
+
                   validatorResponse.id = (data as any)[0].id
                   validatorResponse.jsonrpc = (data as any)[0].jsonrpc
+
                   return Promise.resolve([validatorResponse])
                 }
                 test.response[res].id = (data as any)[0].id
@@ -124,35 +125,21 @@ async function runSingleTest(test: any, c: number) {
     return result
 }
 
-function mockValidatorList(states, params?){
-    const blockNumber: number = (params && params.length > 0)?toNumber(params[0]):0
-    const numStates: number = (params && params.length > 1)?toNumber(params[1]):null
-    const excludeCurrentDelta: boolean = (params && params.length > 2)?params[2]:false
+function mockValidatorList(response, params?){
+    const states = response.result.states
 
-    //console.log(blockNumber, numStates, excludeCurrentDelta)
-
-    const filteredStates = blockNumber != 0 ?
-    states.filter((state, index, s) => {
-        if(state.block >= blockNumber)
-          return true
-        else if(index != (s.length-1) && blockNumber < s[index + 1].block && !excludeCurrentDelta)
-          return true
-        else if(index === (s.length-1) && blockNumber > s[s.length - 1].block && !excludeCurrentDelta)
-          return true
-        else
-          return false
-    })
-    : states
+    const startIndex: number = (params && params.length > 0)?toNumber(params[0]):0
+    const limit: number = (params && params.length > 1)?toNumber(params[1]):2
 
     return ({
       id: 0,
       result: {
-        states: numStates && numStates < filteredStates.length?filteredStates.slice(0, numStates):filteredStates,
-        lastCheckedBlock: 11759901,
-        statesLength: 56
+        states: limit? response.result.states.slice(startIndex, startIndex + limit + 1): response.result.states.slice(startIndex),
+        lastCheckedBlock: response.result.lastCheckedBlock
       },
-      jsonrpc: null
-    })
+      jsonrpc: '2.0',
+      in3: response.in3
+    } as RPCResponse)
 }
 
 function addSpace(s: string, l: number, filler = ' ', color = '') {
