@@ -82,6 +82,16 @@ export default class Client extends EventEmitter {
         ...((config && config.servers) || {})
       }
     }
+    if (config && config.rpc) {
+      this.defConfig.servers['0xffff'].nodeList = config.rpc.split(',').filter(_ => _).map(url => ({
+        deposit: 0,
+        chainIds: ['0xffff'],
+        address: '0x0000000000000000000000000000000000000000',
+        url, props: 0
+      }))
+      this.defConfig.proof = 'none'
+      this.defConfig.chainId = '0xffff'
+    }
     verifyConfig(this.defConfig)
     this.eth = new EthAPI(this)
     this.ipfs = new IpfsAPI(this)
@@ -451,7 +461,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         r.in3 = { ...in3, ...r.in3 }
 
       // sign it?
-      if (conf.key) {
+      if (r.in3 && conf.key) {
         const sig = ecsign(hashPersonalMessage(Buffer.from(JSON.stringify(r))), conf.key = toBuffer(conf.key), 1)
         r.in3.clientSignature = toRpcSig(sig.v, sig.r, sig.s, 1)
       }

@@ -128,7 +128,7 @@ export interface ReceiptData {
 export const serialize = (val: Block | Transaction | Receipt | Account) => rlp.encode(val) as Buffer
 
 /** returns the hash of the object */
-export const hash = (val: Block | Transaction | Receipt | Account | Buffer) => Array.isArray(val) ? ethUtil.rlphash(val) as Buffer : ethUtil.sha3(val) as Buffer
+export const hash = (val: Block | Transaction | Receipt | Account | Buffer) => Array.isArray(val) ? ethUtil.rlphash(val) : ethUtil.keccak(val)
 
 
 // types ...
@@ -247,9 +247,9 @@ export class Block {
   /** creates a Block-Onject from either the block-data as returned from rpc, a buffer or a hex-string of the encoded blockheader */
   constructor(data: Buffer | string | BlockData) {
     if (Buffer.isBuffer(data))
-      this.raw = ethUtil.rlp.decode(data)
+      this.raw = ethUtil.rlp.decode(data) as any as Buffer[]
     else if (typeof data === 'string')
-      this.raw = ethUtil.rlp.decode(Buffer.from(data.replace('0x', ''), 'hex'))
+      this.raw = ethUtil.rlp.decode(Buffer.from(data.replace('0x', ''), 'hex')) as any as Buffer[]
     else if (typeof data === 'object') {
       this.raw = toBlockHeader(data)
 
@@ -293,8 +293,8 @@ export function createTx(transaction) {
   const tx = new Tx(txParams)
   tx._from = fromAddress
   tx.getSenderAddress = function () { return fromAddress }
-  if (txParams.hash && txParams.hash !== '0x' + ethUtil.sha3(tx.serialize()).toString('hex'))
-    throw new Error('wrong txhash! : ' + (txParams.hash + '!== 0x' + ethUtil.sha3(tx.serialize()).toString('hex')) + '  full tx=' + tx.serialize().toString('hex'))
+  if (txParams.hash && txParams.hash !== '0x' + ethUtil.keccak(tx.serialize()).toString('hex'))
+    throw new Error('wrong txhash! : ' + (txParams.hash + '!== 0x' + ethUtil.keccak(tx.serialize()).toString('hex')) + '  full tx=' + tx.serialize().toString('hex'))
 
   // override hash
   const txHash = ethUtil.toBuffer(txParams.hash)
