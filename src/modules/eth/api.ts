@@ -21,7 +21,7 @@ export type Signature = {
 }
 
 export type ABIField = {
-    indexed: boolean
+    indexed?: boolean
     name: string
     type: string
 }
@@ -34,7 +34,7 @@ export type ABI = {
     inputs: ABIField[],
     outputs?: ABIField[]
     name: string
-    type: 'event' | 'function'
+    type: 'event' | 'function' | 'constructor'
 }
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
@@ -201,7 +201,7 @@ export type LogFilter = {
 
 export type TxRequest = {
     /** contract */
-    to: Address
+    to?: Address
 
     /** address of the account to use */
     from?: Address
@@ -210,28 +210,28 @@ export type TxRequest = {
     data?: Data
 
     /** the gas needed */
-    gas: number
+    gas?: number
 
     /** the gasPrice used */
-    gasPrice: number
+    gasPrice?: number
 
     /** the nonce */
-    nonce: number
+    nonce?: number
 
     /** the value in wei */
-    value: Quantity
+    value?: Quantity
 
     /** the ABI of the method to be used */
-    method: string
+    method?: string
 
     /** the argument to pass to the method */
-    args: any[]
+    args?: any[]
 
     /**raw private key in order to sign */
-    pk: Hash
+    pk?: Hash
 
     /**  number of block to wait before confirming*/
-    confirmations: number
+    confirmations?: number
 }
 
 export interface Signer {
@@ -575,7 +575,7 @@ export default class API {
     }
 
     contractAt(abi: ABI[], address: string) {
-        const api = this, ob = { _address: address, _eventHashes: {} as any, events: {} as any }
+        const api = this, ob = { _address: address, _eventHashes: {} as any, events: {} as any, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
             if (def.constant) {
                 const signature = def.name + createSignature(def.inputs) + ':' + createSignature(def.outputs)
@@ -616,7 +616,7 @@ export default class API {
                         toBlock: options.toBlock || 'latest',
                         topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + bytes32(options.filter[d.name]).toString('hex') : null))],
                         limit: options.limit || 50
-                    }).then((logs: Log[]) => logs.map(_ => ({ ..._, event: ob.events.decode(_) })))
+                    }).then((logs: Log[]) => logs.map(_ => ({ log: _, event: ob.events.decode(_) })))
                 }
             }
         }
@@ -629,12 +629,17 @@ export default class API {
                     toBlock: options.toBlock || 'latest',
                     topics: options.topics || [],
                     limit: options.limit || 50
-                }).then((logs: Log[]) => logs.map(_ => ({ ..._, event: ob.events.decode(_) })))
+                }).then((logs: Log[]) => logs.map(_ => ({ log: _, event: ob.events.decode(_) })))
             }
         }
 
         return ob
     }
+
+    decodeEventData(log: Log, d: ABI): any {
+        return decodeEvent(log, d)
+    }
+
 
 }
 
@@ -667,12 +672,14 @@ async function confirm(txHash: string, api: API, gasPaid: number, confirmations:
 }
 
 async function prepareTransaction(args: TxRequest, api?: API): Promise<Transaction> {
-    const sender = args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex'))
+    const sender = args.from || (args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex')))
 
     const tx: any = {}
     if (args.to) tx.to = toHex(args.to)
-    if (args.method)
+    if (args.method) {
         tx.data = createCallParams(args.method, args.args).txdata
+        if (args.data) tx.data = args.data + tx.data.substr(10) // this is the case  for deploying contracts
+    }
     else if (args.data)
         tx.data = toHex(args.data)
     if (sender || args.nonce)
@@ -764,9 +771,12 @@ function parseABIString(def: string): ABI {
 }
 
 function decodeEventData(log: Log, def: string | { _eventHashes: any }): any {
-    let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def), r: any = { event: d && d.name }
+    let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def)
     if (!d) throw new Error('Could not find the ABI')
-    const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed)
+    return decodeEvent(log, d)
+}
+export function decodeEvent(log: Log, d: ABI): any {
+    const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed), r: any = { event: d && d.name }
     if (indexed.length)
         decodeResult(indexed.map(_ => _.type), Buffer.concat(log.topics.slice(1).map(bytes))).forEach((v, i) => r[indexed[i].name] = v)
     if (unindexed.length)
