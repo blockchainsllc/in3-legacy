@@ -29,7 +29,7 @@ export default class DeltaHistory<T> {
   }
 
   getLastIndex(): number {
-    return this.data[this.data.length - 1].block
+    return this.data.length && this.data[this.data.length - 1].block
   }
 
   addState(start:number, data:T[]) {

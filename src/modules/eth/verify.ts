@@ -47,7 +47,7 @@ export interface BlockHeaderProof {
 }
 
 /** verify the signatures of a blockhash */
-export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainContext, verifiedAuthSpec?) {
+export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainContext) {
 
   // calculate the blockHash
   const blockHash = b.hash()
@@ -59,7 +59,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
 
     // for proof of authorities we can verify the signatures
     if (ctx && ctx.chainSpec && (ctx.chainSpec.engine === 'authorityRound' || ctx.chainSpec.engine === 'clique')) {
-      const finality = await checkBlockSignatures([b, ...(proof.proof && proof.proof.finalityBlocks || [])], _ => getChainSpec(_, ctx), verifiedAuthSpec)
+      const finality = await checkBlockSignatures([b, ...(proof.proof && proof.proof.finalityBlocks || [])], _ => getChainSpec(_, ctx))
       if (proof.finality && proof.finality > finality)
         throw new Error('we have only a finality of ' + finality + ' but expected was ' + proof.finality)
     }
@@ -287,8 +287,10 @@ export async function verifyValidatorProof(blockNumber: number, headerProof: Blo
   if (blockNumber !== toNumber(block.number))
     throw new Error("Block Number in validator Proof doesn't match")
 
-  // verify the blockhash and the signatures
-  await verifyBlock(block, headerProof, ctx, verifiedAuthSpec)
+  // verify the blocksignatures
+  const finality = await checkBlockSignatures([block, ...(headerProof.proof && headerProof.proof.finalityBlocks || [])], _ => getChainSpec(_, ctx), verifiedAuthSpec)
+  if (headerProof.finality && headerProof.finality > finality)
+    throw new Error('we have only a finality of ' + finality + ' but expected was ' + headerProof.finality)
 
   // verifiy all merkle-Trees of the receipts
   await Promise.all(Object.keys(blockProof.receipts).map(txHash =>
@@ -305,7 +307,7 @@ export async function verifyValidatorProof(blockNumber: number, headerProof: Blo
   Object.keys(receiptData).forEach(txHash => {
     const receipt = receiptData[txHash]
 
-    const logData = receipt[receipt.length-1][toNumber(blockProof.logIndex)]
+    const logData = receipt[receipt.length-1][blockProof.logIndex]
     if (!logData) throw new Error('Validator changeLog not found in Transaction')
 
     //check for contract address from chain spec
@@ -764,6 +766,9 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     if (!allowWithoutProof && !response.error) throw new Error('the response does not contain any proof!')
     return !!response.error || allowWithoutProof
   }
+
+  //attach the lastValidatorChange to the chain context
+  ctx.lastValidatorChange = response.in3.lastValidatorChange
 
   // check BlockCache and convert all blockheaders to buffer
   handleBlockCache(proof, ctx)

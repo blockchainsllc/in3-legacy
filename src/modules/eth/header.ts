@@ -1,5 +1,5 @@
 import { bytes, bytes32, toBlockHeader, rlp, Block, hash, address, BlockData, LogData } from './serialize'
-import { toHex, toNumber, toMinHex } from '../../util/util'
+import { toNumber } from '../../util/util'
 import { verifyValidatorProof, BlockHeaderProof } from './verify'
 import DeltaHistory from '../../util/DeltaHistory'
 import { rawDecode } from 'ethereumjs-abi'
@@ -134,7 +134,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
     if (JSON.stringify(current) === JSON.stringify(s.validators)) continue
 
     if (s.proof && Object.keys(s.proof).length > 0) {
-      const authorities = history.getData(history.getLastIndex()).map(h => address(h.startsWith('0x')? h : '0x' + h))
+      const authorities = history.getData(s.block).map(h => address(h.startsWith('0x')? h : '0x' + h))
       const verifiedAuthSpec = {
         authorities: authorities,
         spec: ctx.chainSpec,
@@ -142,8 +142,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
       }
 
       const proof: BlockHeaderProof = {
-        proof: s.proof as Proof,
-        expectedBlockHash: bytes32((s.proof as Proof).validatorProof.blockHash)
+        proof: s.proof as Proof
       }
       await verifyValidatorProof(s.block, proof, s.validators, ctx, verifiedAuthSpec)
       history.addState(s.block, s.validators)
@@ -154,33 +153,18 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
 }
 
 async function checkForValidators(ctx: ChainContext, validators: DeltaHistory<string>) {
-  //if aura chain and no contract (i.e. defined list of validators) -> no additions to be made
-  if (ctx.chainSpec.engine == 'authorityRound' && ctx.chainSpec.validatorList && !ctx.chainSpec.validatorContract)
-    return
 
-  const lastKnownValidatorChange = validators.getLastIndex()
-  const validatorResponse = await ctx.client.sendRPC('in3_validatorlist', [], ctx.chainId, { proof: 'none', keepIn3: true})
+  if (ctx.chainSpec.engine == 'clique') {
+    const list = await ctx.client.sendRPC('in3_validatorlist', [ validators.data.length, null ], ctx.chainId, { proof: 'none', keepIn3: true})
+    addCliqueValidators(validators, ctx, list.result && list.result.states)
+  }
+  else if (ctx.chainSpec.engine == 'authorityRound') {
+    const list = await ctx.client.sendRPC('in3_validatorlist', [
+      validators.data.length, //starting from states index, DEFAULT: 0
+      null, //number of validator states to be fetched, DEFAULT: 2, null will get the entire list
+    ], ctx.chainId, { proof: 'none', keepIn3: true})
 
-  // throw error if the response object does not contain lastValidatorChange
-  if(!(validatorResponse.in3 && validatorResponse.in3.lastValidatorChange))
-    throw new Error("Couldn't get the last validator change")
-
-  const lastValidatorChange = validatorResponse.in3.lastValidatorChange
-
-  //if the client sides last known validator change is outdated update the validator list
-  if (lastValidatorChange < lastKnownValidatorChange) {
-    if (ctx.chainSpec.engine == 'clique') {
-      const list = await ctx.client.sendRPC('in3_validatorlist', [ validators.data.length, null ], ctx.chainId, { proof: 'none', keepIn3: true})
-      addCliqueValidators(validators, ctx, list.result && list.result.states)
-    }
-    else if (ctx.chainSpec.engine == 'authorityRound') {
-      const list = await ctx.client.sendRPC('in3_validatorlist', [
-        validators.data.length, //starting from states index, DEFAULT: 0
-        null, //number of validator states to be fetched, DEFAULT: 2, null will get the entire list
-      ], ctx.chainId, { proof: 'none', keepIn3: true})
-
-      await addAuraValidators(validators, ctx, list.result && list.result.states)
-    }
+    await addAuraValidators(validators, ctx, list.result && list.result.states)
   }
 
   ctx.putInCache('validators', JSON.stringify(validators.toDeltaStrings()))
@@ -188,6 +172,17 @@ async function checkForValidators(ctx: ChainContext, validators: DeltaHistory<st
 
 export async function getChainSpec(b: Block, ctx: ChainContext): Promise<{ authorities: Buffer[], spec: ChainSpec, proposer: Buffer }> {
 
+  //handle POS chains with defined validator list
+  if (ctx.chainSpec.engine == 'authorityRound' && ctx.chainSpec.validatorList && !ctx.chainSpec.validatorContract) {
+    const res: any = {
+      authorities: ctx.chainSpec.validatorList.map(h => address(h.startsWith('0x')? h : '0x' + h)),
+      spec: ctx.chainSpec,
+    }
+
+    res.proposer = address(ctx.chainSpec.validatorList[b.sealedFields[0].readUInt32BE(0) % res.authorities.length])
+
+    return res
+  }
 
   let validators: DeltaHistory<string> = null
   const cache = ctx.getFromCache('validators')
@@ -202,7 +197,11 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<{ autho
   if (!validators)
     validators = new DeltaHistory<string>(ctx.chainSpec.validatorList, false)
 
-  await checkForValidators(ctx, validators)
+  const lastKnownValidatorChange = validators.getLastIndex()
+
+  //if there is an update in the validator list then get it
+  if (ctx.lastValidatorChange < lastKnownValidatorChange)
+    await checkForValidators(ctx, validators)
 
 
   // get the current validator-list for the block
