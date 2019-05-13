@@ -111,8 +111,10 @@ async function runSingleTest(test: any, c: number) {
         client.defConfig.signatureCount = test.signatures.length
 
     //quick hack for validatorProof verification - Magic Code
-    const ctx = client.getChainContext(test.chainId || '0x1')
-    ctx.lastValidatorChange = 11540919
+    if (client.defConfig.chainId === '0x44d') {
+      const ctx = client.getChainContext('0x44d')
+      ctx.lastValidatorChange = 11540919
+    }
 
     let s = false, error = null
     try {
