@@ -12,6 +12,7 @@ configuration-data for the Incubed-client / server
 *  [IN3Config](#in3config)
 *  [RPCRequest](#rpcrequest)
 *  [RPCResponse](#rpcresponse)
+*  [ValidatorProof](#validatorproof)
 *  [LogProof](#logproof)
 *  [Proof](#proof)
 *  [AccountProof](#accountproof)
@@ -164,6 +165,9 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
     txProof: [
       null
     ],
+    validatorProof: {
+      block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+    },
     txIndex: 4,
     signatures: [
       {
@@ -345,6 +349,9 @@ const rPCResponse:types.RPCResponse = {
       txProof: [
         null
       ],
+      validatorProof: {
+        block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+      },
       txIndex: 4,
       signatures: [
         {
@@ -385,6 +392,25 @@ const rPCResponse:types.RPCResponse = {
 *  **in3** [IN3ResponseConfig](#in3responseconfig) - the IN3-Result   
 *  **in3Node** [IN3NodeConfig](#in3nodeconfig) - the node handling this response (internal only)   
 
+### ValidatorProof
+
+a Object holding proofs for validator logs. The key is the blockNumber as hex
+
+```javascript
+import {types} from 'in3'
+const validatorProof:types.ValidatorProof = {
+  block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+}
+```
+ See [types.yaml](../blob/develop/src/types/types.yaml)
+
+*  **logIndex** `number` (required)  - the transaction log index   
+*  **block** `string` (required)  - the serialized blockheader   
+*  **receipts** `object` (required)  - the map of existing receipts with the txHash as key   
+    each key in this object will structure its value like: 
+    *  **txIndex** `integer` (required)  - the transactionIndex within the block   
+    *  **proof** `string[]` (required)  - the merkleProof   
+
 ### LogProof
 
 a Object holding proofs for event logs. The key is the blockNumber as hex
@@ -419,6 +445,9 @@ const proof:types.Proof = {
   txProof: [
     null
   ],
+  validatorProof: {
+    block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+  },
   txIndex: 4,
   signatures: [
     {
@@ -436,7 +465,7 @@ const proof:types.Proof = {
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
 *  **type** `string` (required)  - the type of the proof   
- Must be one of the these values : `'transactionProof`', `'receiptProof`', `'blockProof`', `'accountProof`', `'callProof`', `'logProof`'
+ Must be one of the these values : `'transactionProof`', `'receiptProof`', `'blockProof`', `'accountProof`', `'callProof`', `'logProof`', `'validatorProof`'
 *  **block** `string` - the serialized blockheader as hex, required in most proofs   
 *  **finalityBlocks** `array` - the serialized blockheader as hex, required in case of finality asked   
 *  **transactions** `array` - the list of transactions of the block   
@@ -445,6 +474,7 @@ const proof:types.Proof = {
 *  **merkleProofPrev** `string[]` - the serialized merkle-noodes beginning with the root-node of the previous entry (only for full proof of receipts)   
 *  **txProof** `string[]` - the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex   
 *  **logProof** [LogProof](#logproof) - the Log Proof in case of a Log-Request   
+*  **validatorProof** [ValidatorProof](#validatorproof) - the Validator Proof   
 *  **accounts** `object` - a map of addresses and their AccountProof   
     each key in this object will structure its value like: 
 *  **txIndex** `integer` - the transactionIndex within the block   
@@ -522,6 +552,9 @@ const serverList:types.ServerList = {
     txProof: [
       null
     ],
+    validatorProof: {
+      block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+    },
     txIndex: 4,
     signatures: [
       {

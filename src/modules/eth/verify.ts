@@ -280,9 +280,6 @@ export async function verifyValidatorProof(blockNumber: number, headerProof: Blo
   // decode the blockheader
   const block = blockFromHex(blockProof.block)
 
-  //calculate the blockHash
-  const blockHash: Buffer = block.hash()
-
   //verify block number
   if (blockNumber !== toNumber(block.number))
     throw new Error("Block Number in validator Proof doesn't match")
@@ -299,7 +296,7 @@ export async function verifyValidatorProof(blockNumber: number, headerProof: Blo
       util.rlp.encode(blockProof.receipts[txHash].txIndex), // path, which is the transsactionIndex
       blockProof.receipts[txHash].proof.map(bytes), // array of Buffer with the merkle-proof-data
       undefined // we don't want to check, but use the found value in the next step
-    ).then(value => receiptData[txHash] = util.rlp.decode(value))
+    ).then(value => receiptData[txHash] = util.rlp.decode(value) as any)
   ))
 
 
@@ -322,10 +319,6 @@ export async function verifyValidatorProof(blockNumber: number, headerProof: Blo
     const listABI = rawEncode(['address[]'], [validatorList.map(v => v.startsWith('0x')?v:('0x' + v))])
     if (toHex(logData[2]) !== toHex(listABI))
       throw new Error('Wrong data in log ')
-
-    //check the blockhash in the proof
-    if (!blockHash.equals(bytes32(blockProof.blockHash)))
-      throw new Error('wrong blockhash')
   })
 
 }
