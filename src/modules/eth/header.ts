@@ -200,7 +200,7 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<{ autho
   const lastKnownValidatorChange = validators.getLastIndex()
 
   //if there is an update in the validator list then get it
-  if (ctx.lastValidatorChange < lastKnownValidatorChange)
+  if (ctx.lastValidatorChange > lastKnownValidatorChange)
     await checkForValidators(ctx, validators)
 
 

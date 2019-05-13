@@ -37,7 +37,6 @@ export default class ChainContext {
     this.chainId =chainId
     this.chainSpec = chainSpec
     this.genericCache = {}
-
     this.lastValidatorChange = 0
 
     const s = this.client.defConfig.servers[this.chainId]
