@@ -442,10 +442,10 @@ definitions:
                 description: the node handling this response (internal only)
                 $ref: "#/definitions/IN3NodeConfig"
 
-    ValidatorProof:
+    AuraValidatoryProof:
         type: object
         description: a Object holding proofs for validator logs. The key is the blockNumber as hex
-        required: [logIndex, block, receipts]
+        required: [logIndex, block, txIndex, proof]
         properties:
             logIndex:
                 description: the transaction log index
@@ -454,22 +454,22 @@ definitions:
                 description: the serialized blockheader
                 type: string
                 example: "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b"
-            receipts:
-                description: the map of existing receipts with the txHash as key
-                type: object
-                additionalProperties:
-                    type: object
-                    required: [txIndex, proof]
-                    properties:
-                        txIndex:
-                            type: integer
-                            description: the transactionIndex within the block
-                        proof:
-                            type: array
-                            description: the merkleProof
-                            items:
-                                type: string
-                                pattern: ^0x[0-9a-fA-F]+$
+            txIndex:
+                type: integer
+                description: the transactionIndex within the block
+            proof:
+                type: array
+                description: the merkleProof
+                items:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]+$
+            finalityBlocks:
+                type: array
+                description: the serialized blockheader as hex, required in case of finality asked
+                example:
+                    [
+                        "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
+                    ]
 
     LogProof:
         type: object
@@ -530,7 +530,7 @@ definitions:
                         accountProof,
                         callProof,
                         logProof,
-                        validatorProof
+                        auraValidatoryProof
                     ]
                 example: accountProof
             block:
@@ -585,9 +585,9 @@ definitions:
             logProof:
                 description: the Log Proof in case of a Log-Request
                 $ref: "#/definitions/LogProof"
-            validatorProof:
-                description: the Validator Proof
-                $ref: "#/definitions/ValidatorProof"
+            auraValidatoryProof:
+                description: the Validator Proof specific for aura
+                $ref: "#/definitions/AuraValidatoryProof"
             accounts:
                 type: object
                 description: a map of addresses and their AccountProof
