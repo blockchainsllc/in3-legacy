@@ -1,5 +1,5 @@
 import Client from '../../client/Client'
-import { simpleDecode, simpleEncode, methodID, rawEncode } from 'ethereumjs-abi'
+import { simpleDecode, simpleEncode, methodID, rawEncode, rawDecode } from 'ethereumjs-abi'
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
 import { toHex, toNumber, toBN, toBuffer } from '../../util/util'
@@ -599,11 +599,11 @@ export default class API {
             if (def.constant) {
                 const signature = method + ':' + createSignature(def.outputs)
                 ob[def.name] = function (...args: any[]) {
-                    return api.callFn(this._address, signature, ...args)
+                    return api.callFn(address, signature, ...args)
                         .then(r => {
                             if (def.outputs.length > 1) {
                                 let o = {}
-                                def.outputs.forEach((d, i) => o[d.name] = r[i])
+                                def.outputs.forEach((d, i) => o[i] = o[d.name] = r[i])
                                 return o;
                             }
                             return r
@@ -709,7 +709,7 @@ async function prepareTransaction(args: TxRequest, api?: API): Promise<Transacti
     if (sender || args.nonce)
         tx.nonce = toHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
     if (api)
-        tx.gasPrice = toHex(args.gasPrice || await api.gasPrice())
+        tx.gasPrice = toHex(args.gasPrice || Math.round(1.3 * toNumber(await api.gasPrice())))
     tx.value = toHex(args.value || 0)
     if (sender) tx.from = sender
     tx.gas = toHex(args.gas || (api && await api.estimateGas(tx) || 3000000))
@@ -730,7 +730,7 @@ function convertToType(solType: string, v: any): any {
     // convert integers
     if (solType.startsWith('uint')) return parseInt(solType.substr(4)) <= 32 ? toNumber(v) : toBN(v)
     if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? toNumber(v) : toBN(v) // TODO handle negative values
-    if (solType === 'bool') typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
+    if (solType === 'bool') return typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
     if (solType === 'string') return v.toString('utf8')
 
     // everything else will be hexcoded string
@@ -740,7 +740,7 @@ function convertToType(solType: string, v: any): any {
 }
 
 function decodeResult(types: string[], result: Buffer): any {
-    return simpleDecode('dummy(uint):(' + types.join() + ')', result).map((v, i) => convertToType(types[i], v))
+    return rawDecode(types, result).map((v, i) => convertToType(types[i], v))
 }
 
 function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
