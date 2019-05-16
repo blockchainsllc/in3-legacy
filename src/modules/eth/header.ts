@@ -142,6 +142,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
     if (!s.proof) throw new Error('The validator list has no proof')
     // decode the blockheader
     const block = blockFromHex(proof.block)
+    const finalitySigners = []
 
     //verify blockheaders
     if (toNumber(s.block) !== toNumber(block.number)) throw new Error("Block Number in validator Proof doesn't match")
@@ -151,12 +152,19 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
       const signer = getSigner(b)
       const proposer = current[b.sealedFields[0].readUInt32BE(0) % current.length]
       if (!Buffer.concat(current).includes(signer)) throw new Error('Block was signed by the wrong validator')
+
+      if (!finalitySigners.find(_ => _.equals(signer)))
+        finalitySigners.push(signer)
+
       parentHash = b.hash()
     }
 
-    // is block final?
-    //Enable when finality blocks are supported on the server side.
-    //if (current.length/2 > ((proof.finalityBlocks && proof.finalityBlocks.length) || 0)) throw new Error('Not enough finality to accept the state')
+    //get the required finality from the default config of the client
+    const reqFinality = (ctx.client && ctx.client.defConfig && ctx.client.defConfig.finality) || 0
+    //check if the finality of the response is greater than or equal to the required finality
+    if (Math.ceil(reqFinality * current.length / 100) > finalitySigners.length)
+      throw new Error('Not enough finality to accept the state (' +
+        finalitySigners.length + '/' + (Math.ceil(reqFinality * current.length / 100)) + ')')
 
     // now check the receipt
     const receipt = rlp.decode(await verifyMerkleProof(

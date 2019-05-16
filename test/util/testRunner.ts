@@ -113,7 +113,7 @@ async function runSingleTest(test: any, c: number) {
     //quick hack for validatorProof verification - Magic Code
     if (client.defConfig.chainId === '0x44d') {
       const ctx = client.getChainContext('0x44d')
-      ctx.lastValidatorChange = 11540919
+      ctx.lastValidatorChange = 1216963
     }
 
     let s = false, error = null
