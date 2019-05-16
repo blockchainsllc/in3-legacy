@@ -1,9 +1,10 @@
 import Client from '../../client/Client'
-import { simpleDecode, simpleEncode, methodID } from 'ethereumjs-abi'
+import { simpleDecode, simpleEncode, methodID, rawEncode } from 'ethereumjs-abi'
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
 import { toHex, toNumber, toBN, toBuffer } from '../../util/util'
 import { bytes32, bytes } from './serialize';
+import BN = require('bn.js')
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
 export type Quantity = number | string
@@ -31,10 +32,10 @@ export type ABI = {
     payable?: boolean
     stateMutability?: 'nonpayable' | 'payable' | 'view' | 'pure'
 
-    inputs: ABIField[],
+    inputs?: ABIField[],
     outputs?: ABIField[]
-    name: string
-    type: 'event' | 'function' | 'constructor'
+    name?: string
+    type: 'event' | 'function' | 'constructor' | 'fallback'
 }
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
@@ -49,6 +50,10 @@ export type Transaction = {
     value: Quantity
     /** 4 byte hash of the method signature followed by encoded parameters. For details see Ethereum Contract ABI.*/
     data: string
+    /** nonce */
+    nonce: Quantity
+    /** optional chain id */
+    chainId?: any
 }
 export type TransactionReceipt = {
     /** 32 Bytes - hash of the block where this transaction was in. */
@@ -236,7 +241,7 @@ export type TxRequest = {
 
 export interface Signer {
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
-    prepareTransaction?: (tx: Transaction) => Promise<Transaction>
+    prepareTransaction?: (client: Client, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
     hasAccount(account: Address): Promise<boolean>
@@ -305,8 +310,8 @@ export default class API {
     /**
      * Returns the balance of the account of given address in wei (as hex).
      */
-    getBalance(address: Address, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_getBalance', address, block)
+    getBalance(address: Address, block: BlockType = 'latest'): Promise<BN> {
+        return this.send<string>('eth_getBalance', address, block).then(toBN)
     }
 
     /**
@@ -561,7 +566,7 @@ export default class API {
             etx.sign(toBuffer(args.pk))
         }
         else if (this.signer && args.from) {
-            const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(tx) : tx
+            const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(this.client, tx) : tx
             etx = new ETx({ ...t, gasLimit: t.gas })
             const signature = await this.signer.sign(etx.hash(false), args.from)
             if (etx._chainId > 0) signature.v += etx._chainId * 2 + 8
@@ -570,15 +575,29 @@ export default class API {
         else throw new Error('Invalid transaction-data')
         const txHash = await this.sendRawTransaction(toHex(etx.serialize()))
 
+        if (args.confirmations === undefined) args.confirmations = 1
+
         // send it
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas as string), args.confirmations) : txHash
     }
 
-    contractAt(abi: ABI[], address: string) {
+    contractAt(abi: ABI[], address: string): {
+        [methodName: string]: any,
+        _address: string, _eventHashes: any, events: {
+            [event: string]: {
+                getLogs: (options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } }) => Promise<{ [key: string]: any, event: string, log: Log }[]>
+            }
+            all: {
+                getLogs: (options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } }) => Promise<{ [key: string]: any, event: string, log: Log }[]>
+            }
+            decode: any
+        }, _abi: ABI[], _in3: Client
+    } {
         const api = this, ob = { _address: address, _eventHashes: {} as any, events: {} as any, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
+            const method = def.name + createSignature(def.inputs)
             if (def.constant) {
-                const signature = def.name + createSignature(def.inputs) + ':' + createSignature(def.outputs)
+                const signature = method + ':' + createSignature(def.outputs)
                 ob[def.name] = function (...args: any[]) {
                     return api.callFn(this._address, signature, ...args)
                         .then(r => {
@@ -592,16 +611,17 @@ export default class API {
                 }
             }
             else {
-                const method = def.name + createSignature(def.inputs)
                 ob[def.name] = function (...args: any[]) {
                     let tx: TxRequest = {} as any
                     if (args.length > def.inputs.length) tx = args.pop()
                     tx.method = method
                     tx.args = args.slice(0, def.name.length);
                     tx.confirmations = tx.confirmations || 1
+                    tx.to = address
                     return api.sendTransaction(tx)
                 }
             }
+            ob[def.name].encode = (...args: any[]) => createCallParams(method, args.slice(0, def.name.length)).txdata
         }
 
         for (const def of abi.filter(_ => _.type == 'event')) {
@@ -633,11 +653,15 @@ export default class API {
             }
         }
 
-        return ob
+        return ob as any
     }
 
     decodeEventData(log: Log, d: ABI): any {
         return decodeEvent(log, d)
+    }
+    hashMessage(data: string | Buffer): Buffer {
+        const d = toBuffer(data)
+        return keccak(Buffer.concat([Buffer.from('\x19Ethereum Signed Message:\n' + d.length, 'utf8'), d]))
     }
 
 
@@ -750,7 +774,11 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
     }
 }
 
-function createSignature(fields: ABIField[]): string {
+export function createSignatureHash(def: ABI) {
+    return keccak(def.name + createSignature(def.inputs))
+}
+
+export function createSignature(fields: ABIField[]): string {
     return '(' + fields.map(f => {
         let baseType = f.type
         const t = baseType.indexOf('[')
@@ -811,4 +839,19 @@ export class SimpleSigner implements Signer {
         return { messageHash: toHex(data), v: sig.v, r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
     }
 
+}
+
+export function soliditySha3(...args: any[]): string {
+    return toHex(keccak(rawEncode(args.map(_ => {
+        switch (typeof (_)) {
+            case 'number':
+                return _ < 0 ? 'int256' : 'uint256'
+            case 'string':
+                return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
+            case 'boolean':
+                return 'bool'
+            default:
+                return BN.isBN(_) ? 'uint256' : 'bytes'
+        }
+    }), args)))
 }
