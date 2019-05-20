@@ -479,6 +479,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     // we will sennd all non cachable requests or the ones that timedout
     const toSend = request.filter((r, i) => !cacheEntries[i] || !cacheEntries[i].ts || cacheEntries[i].ts + conf.cacheTimeout * 1000 < start)
     let resultsFromCache = false
+    //    console.log(" send " + JSON.stringify(toSend) + ' to ' + node.url)
 
     // send the request to the server with a timeout
     const responses = toSend.length == 0 ? [] : resolveRefs(await transport.handle(node.url, toSend, conf.timeout)
@@ -501,6 +502,8 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
           })
         })
       ))
+
+    //    console.log(" res : " + JSON.stringify(responses))
 
     // update stats
     if (!resultsFromCache && responses.length) {

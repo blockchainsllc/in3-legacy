@@ -3,7 +3,7 @@ import { simpleDecode, simpleEncode, methodID, rawEncode, rawDecode } from 'ethe
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
 import { toHex, toNumber, toBN, toBuffer } from '../../util/util'
-import { bytes32, bytes } from './serialize';
+import { bytes32, bytes, address } from './serialize';
 import BN = require('bn.js')
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
@@ -282,7 +282,7 @@ export default class API {
      * Executes a new message call immediately without creating a transaction on the block chain.
      */
     call(tx: Transaction, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_call', tx, block)
+        return this.send<string>('eth_call', tx, toHexBlock(block))
     }
 
     /**
@@ -304,14 +304,14 @@ export default class API {
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
      */
     estimateGas(tx: Transaction, block: BlockType = 'latest'): Promise<number> {
-        return this.send<string>('eth_estimateGas', tx, block).then(parseInt)
+        return this.send<string>('eth_estimateGas', tx, toHexBlock(block)).then(parseInt)
     }
 
     /**
      * Returns the balance of the account of given address in wei (as hex).
      */
     getBalance(address: Address, block: BlockType = 'latest'): Promise<BN> {
-        return this.send<string>('eth_getBalance', address, block).then(toBN)
+        return this.send<string>('eth_getBalance', address, toHexBlock(block)).then(toBN)
     }
 
     /**
@@ -326,7 +326,7 @@ export default class API {
      * Returns the value from a storage position at a given address.
      */
     getStorageAt(address: Address, pos: Quantity, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_getStorageAt', address, pos, block)
+        return this.send<string>('eth_getStorageAt', address, pos, toHexBlock(block))
     }
 
 
@@ -341,7 +341,7 @@ export default class API {
      * Returns information about a block by block number.
      */
     getBlockByNumber(block: BlockType = 'latest', includeTransactions = false): Promise<Block> {
-        return this.send<Block>('eth_getBlockByNumber', block, includeTransactions)
+        return this.send<Block>('eth_getBlockByNumber', toHexBlock(block), includeTransactions)
     }
 
 
@@ -378,6 +378,9 @@ export default class API {
      * Returns an array of all logs matching a given filter object.
      */
     getLogs(filter: LogFilter): Promise<Log[]> {
+        if (filter.fromBlock) filter.fromBlock = toHexBlock(filter.fromBlock) as BlockType
+        if (filter.toBlock) filter.toBlock = toHexBlock(filter.toBlock) as BlockType
+        if (filter.limit) filter.limit = toNumber(filter.limit)
         return this.send<Log[]>('eth_getLogs', filter)
     }
 
@@ -396,7 +399,7 @@ export default class API {
      * Returns information about a transaction by block number and transaction index position.
      */
     getTransactionByBlockNumberAndIndex(block: BlockType, pos: Quantity): Promise<TransactionDetail> {
-        return this.send<TransactionDetail>('eth_getTransactionByBlockNumberAndIndex', block, pos)
+        return this.send<TransactionDetail>('eth_getTransactionByBlockNumberAndIndex', toHexBlock(block), pos)
     }
 
     /**
@@ -418,7 +421,11 @@ export default class API {
      * Note That the receipt is available even for pending transactions.
      */
     getTransactionReceipt(hash: Hash): Promise<TransactionReceipt> {
-        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash)
+        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash).then(_ => ({
+            ..._,
+            contractAddress: _.contractAddress && toChecksumAddress(_.contractAddress),
+            from: _.from && toChecksumAddress(_.from)
+        }))
     }
 
     /**
@@ -636,7 +643,10 @@ export default class API {
                         toBlock: options.toBlock || 'latest',
                         topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + bytes32(options.filter[d.name]).toString('hex') : null))],
                         limit: options.limit || 50
-                    }).then((logs: Log[]) => logs.map(_ => ({ log: _, event: ob.events.decode(_) })))
+                    }).then((logs: Log[]) => logs.map(_ => {
+                        const event = ob.events.decode(_)
+                        return { ...event, log: _, event }
+                    }))
                 }
             }
         }
@@ -649,7 +659,10 @@ export default class API {
                     toBlock: options.toBlock || 'latest',
                     topics: options.topics || [],
                     limit: options.limit || 50
-                }).then((logs: Log[]) => logs.map(_ => ({ log: _, event: ob.events.decode(_) })))
+                }).then((logs: Log[]) => logs.map(_ => {
+                    const event = ob.events.decode(_)
+                    return { ...event, log: _, event }
+                }))
             }
         }
 
@@ -673,8 +686,8 @@ async function confirm(txHash: string, api: API, gasPaid: number, confirmations:
     while (Date.now() - start < timeout * 1000) {
         const receipt = await api.getTransactionReceipt(txHash)
         if (receipt) {
-            if (receipt.status !== '0x1' && gasPaid && gasPaid === parseInt(receipt.gasUsed as any))
-                throw new Error('Transaction failed and all gas was used up')
+            if (!receipt.status && gasPaid && gasPaid === parseInt(receipt.gasUsed as any))
+                throw new Error('Transaction failed and all gas was used up gasPaid=' + gasPaid)
             if (receipt.status && receipt.status == '0x0')
                 throw new Error('The Transaction failed because it returned status=0')
 
@@ -712,7 +725,12 @@ async function prepareTransaction(args: TxRequest, api?: API): Promise<Transacti
         tx.gasPrice = toHex(args.gasPrice || Math.round(1.3 * toNumber(await api.gasPrice())))
     tx.value = toHex(args.value || 0)
     if (sender) tx.from = sender
-    tx.gas = toHex(args.gas || (api && await api.estimateGas(tx) || 3000000))
+    try {
+        tx.gas = toHex(args.gas || (api && (toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
+    }
+    catch (ex) {
+        throw new Error('The Transaction ' + JSON.stringify(args, null, 2) + ' will not be succesfully executed, since estimating gas failed with: ' + ex)
+    }
 
 
     return tx
@@ -732,6 +750,8 @@ function convertToType(solType: string, v: any): any {
     if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? toNumber(v) : toBN(v) // TODO handle negative values
     if (solType === 'bool') return typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
     if (solType === 'string') return v.toString('utf8')
+    if (solType === 'address') return toChecksumAddress('0x' + v)
+    //    if (solType === 'bytes') return toBuffer(v)
 
     // everything else will be hexcoded string
     if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
@@ -765,6 +785,9 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
     if (!m) throw new Error('No valid method signature for ' + method)
     const types = m[1].split(',').filter(_ => _)
     if (values.length < types.length) throw new Error('invalid number of arguments. Must be at least ' + types.length)
+    values.forEach((v, i) => {
+        if (types[i] === 'bytes') values[i] = toBuffer(v)
+    })
 
     return {
         txdata: '0x' + (values.length
@@ -800,7 +823,7 @@ function parseABIString(def: string): ABI {
 
 function decodeEventData(log: Log, def: string | { _eventHashes: any }): any {
     let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def)
-    if (!d) throw new Error('Could not find the ABI')
+    if (!d) return null//throw new Error('Could not find the ABI')
     return decodeEvent(log, d)
 }
 export function decodeEvent(log: Log, d: ABI): any {
@@ -841,6 +864,7 @@ export class SimpleSigner implements Signer {
 
 }
 
+
 export function soliditySha3(...args: any[]): string {
     return toHex(keccak(rawEncode(args.map(_ => {
         switch (typeof (_)) {
@@ -854,4 +878,8 @@ export function soliditySha3(...args: any[]): string {
                 return BN.isBN(_) ? 'uint256' : 'bytes'
         }
     }), args)))
+}
+
+function toHexBlock(b: any): string {
+    return typeof b === 'string' ? b : toHex(b)
 }
