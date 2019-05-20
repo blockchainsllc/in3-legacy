@@ -2,7 +2,7 @@ import Client from '../../client/Client'
 import { simpleDecode, simpleEncode, methodID, rawEncode, rawDecode } from 'ethereumjs-abi'
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
-import { toHex, toNumber, toBN, toBuffer } from '../../util/util'
+import { toHex, toNumber, toBN, toBuffer, toMinHex } from '../../util/util'
 import { bytes32, bytes, address } from './serialize';
 import BN = require('bn.js')
 
@@ -303,8 +303,8 @@ export default class API {
     /**
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
      */
-    estimateGas(tx: Transaction, block: BlockType = 'latest'): Promise<number> {
-        return this.send<string>('eth_estimateGas', tx, toHexBlock(block)).then(parseInt)
+    estimateGas(tx: Transaction/*, block: BlockType = 'latest'*/): Promise<number> {
+        return this.send<string>('eth_estimateGas', tx/*, toHexBlock(block)*/).then(parseInt)
     }
 
     /**
@@ -421,7 +421,7 @@ export default class API {
      * Note That the receipt is available even for pending transactions.
      */
     getTransactionReceipt(hash: Hash): Promise<TransactionReceipt> {
-        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash).then(_ => ({
+        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash).then(_ => !_ ? null : ({
             ..._,
             contractAddress: _.contractAddress && toChecksumAddress(_.contractAddress),
             from: _.from && toChecksumAddress(_.from)
@@ -720,13 +720,13 @@ async function prepareTransaction(args: TxRequest, api?: API): Promise<Transacti
     else if (args.data)
         tx.data = toHex(args.data)
     if (sender || args.nonce)
-        tx.nonce = toHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
+        tx.nonce = toMinHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
     if (api)
-        tx.gasPrice = toHex(args.gasPrice || Math.round(1.3 * toNumber(await api.gasPrice())))
-    tx.value = toHex(args.value || 0)
+        tx.gasPrice = toMinHex(args.gasPrice || Math.round(1.3 * toNumber(await api.gasPrice())))
+    tx.value = toMinHex(args.value || 0)
     if (sender) tx.from = sender
     try {
-        tx.gas = toHex(args.gas || (api && (toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
+        tx.gas = toMinHex(args.gas || (api && (toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
     }
     catch (ex) {
         throw new Error('The Transaction ' + JSON.stringify(args, null, 2) + ' will not be succesfully executed, since estimating gas failed with: ' + ex)
@@ -845,18 +845,18 @@ export class SimpleSigner implements Signer {
     }
 
     addAccount(pk: Hash) {
-        const adr: Address = toHex(privateToAddress(toBuffer(pk)))
+        const adr: Address = toChecksumAddress(toHex(privateToAddress(toBuffer(pk))))
         this.accounts[adr] = pk
         return adr
     }
 
 
     async hasAccount(account: string): Promise<boolean> {
-        return !!this.accounts[account]
+        return !!this.accounts[toChecksumAddress(account)]
     }
 
     async sign(data: Buffer, account: string): Promise<Signature> {
-        const pk = toBuffer(this.accounts[account])
+        const pk = toBuffer(this.accounts[toChecksumAddress(account)])
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         const sig = ecsign(data, pk)
         return { messageHash: toHex(data), v: sig.v, r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
@@ -881,5 +881,5 @@ export function soliditySha3(...args: any[]): string {
 }
 
 function toHexBlock(b: any): string {
-    return typeof b === 'string' ? b : toHex(b)
+    return typeof b === 'string' ? b : toMinHex(b)
 }
