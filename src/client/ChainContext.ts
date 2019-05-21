@@ -19,7 +19,7 @@
 
 import Client from './Client'
 import { RPCRequest, RPCResponse, ChainSpec } from '../types/types';
-import {getModule, Module} from './modules'
+import { getModule, Module } from './modules'
 
 /**
  * Context for a specific chain including cache and chainSpecs.
@@ -29,15 +29,15 @@ export default class ChainContext {
   chainSpec: ChainSpec
   module: Module
   chainId: string
-  genericCache: {[key:string]:string}
+  genericCache: { [key: string]: string }
 
-  constructor(client: Client, chainId:string, chainSpec:ChainSpec) {
+  constructor(client: Client, chainId: string, chainSpec: ChainSpec) {
     this.client = client
-    this.chainId =chainId
+    this.chainId = chainId
     this.chainSpec = chainSpec
     this.genericCache = {}
     const s = this.client.defConfig.servers[this.chainId]
-    this.module= getModule( s && s.verifier || 'eth')
+    this.module = getModule(s && s.verifier || 'eth')
 
     try {
       // if we are running in the browser we use to localStorage as cache
@@ -55,8 +55,8 @@ export default class ChainContext {
    * this function should be overriden by modules that want to handle calls internally
    * @param request 
    */
-  handleIntern(request:RPCRequest):Promise<RPCResponse> {
-      return null
+  handleIntern(request: RPCRequest): Promise<RPCResponse> {
+    return null
   }
 
 
@@ -92,14 +92,20 @@ export default class ChainContext {
     }
   }
 
-  getFromCache(key:string):string {
+  getFromCache(key: string): string {
     return this.genericCache[key]
   }
 
-  putInCache(key:string, value:string) {
-    this.genericCache[key]=value
-    if (this.client.defConfig.cacheStorage && this.chainId) 
-       this.client.defConfig.cacheStorage.setItem('in3.cache.' + this.chainId, JSON.stringify(this.genericCache))
+  putInCache(key: string, value: string) {
+    this.genericCache[key] = value
+    if (this.client.defConfig.cacheStorage && this.chainId)
+      this.client.defConfig.cacheStorage.setItem('in3.cache.' + this.chainId, JSON.stringify(this.genericCache))
+  }
+
+  clearCache(prefix: string) {
+    Object.keys(this.genericCache).filter(_ => !prefix || _.startsWith(prefix)).forEach(k => delete this.genericCache[k])
+    if (this.client.defConfig.cacheStorage && this.chainId)
+      this.client.defConfig.cacheStorage.setItem('in3.cache.' + this.chainId, JSON.stringify(this.genericCache))
   }
 
 }

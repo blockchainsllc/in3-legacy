@@ -504,6 +504,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       ))
 
     //    console.log(" res : " + JSON.stringify(responses))
+    if (conf.cacheTimeout && toSend.find(_ => _.method === 'eth_sendRawTransaction')) ctx.clearCache('eth_')
 
     // update stats
     if (!resultsFromCache && responses.length) {
