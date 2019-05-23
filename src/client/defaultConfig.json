@@ -153,7 +153,7 @@
       "verifier": "eth",
       "chainSpec": {
         "engine": "authorityRound",
-        "contract": "0xaE71807C1B0a093cB1547b682DC78316D945c9B8",
+        "validatorContract": "0xaE71807C1B0a093cB1547b682DC78316D945c9B8",
         "validatorList": [
           "0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED",
           "0x0010f94b296a852aaac52ea6c5ac72e03afd032d",
