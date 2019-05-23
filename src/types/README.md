@@ -165,15 +165,6 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
     txProof: [
       null
     ],
-    auraValidatoryProof: {
-      block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
-      proof: [
-        null
-      ],
-      finalityBlocks: [
-        '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
-      ]
-    },
     txIndex: 4,
     signatures: [
       {
@@ -355,15 +346,6 @@ const rPCResponse:types.RPCResponse = {
       txProof: [
         null
       ],
-      auraValidatoryProof: {
-        block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
-        proof: [
-          null
-        ],
-        finalityBlocks: [
-          '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
-        ]
-      },
       txIndex: 4,
       signatures: [
         {
@@ -462,15 +444,6 @@ const proof:types.Proof = {
   txProof: [
     null
   ],
-  auraValidatoryProof: {
-    block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
-    proof: [
-      null
-    ],
-    finalityBlocks: [
-      '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
-    ]
-  },
   txIndex: 4,
   signatures: [
     {
@@ -488,7 +461,7 @@ const proof:types.Proof = {
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
 *  **type** `string` (required)  - the type of the proof   
- Must be one of the these values : `'transactionProof`', `'receiptProof`', `'blockProof`', `'accountProof`', `'callProof`', `'logProof`', `'auraValidatoryProof`'
+ Must be one of the these values : `'transactionProof`', `'receiptProof`', `'blockProof`', `'accountProof`', `'callProof`', `'logProof`'
 *  **block** `string` - the serialized blockheader as hex, required in most proofs   
 *  **finalityBlocks** `array` - the serialized blockheader as hex, required in case of finality asked   
 *  **transactions** `array` - the list of transactions of the block   
@@ -497,7 +470,6 @@ const proof:types.Proof = {
 *  **merkleProofPrev** `string[]` - the serialized merkle-noodes beginning with the root-node of the previous entry (only for full proof of receipts)   
 *  **txProof** `string[]` - the serialized merkle-nodes beginning with the root-node in order to prrof the transactionIndex   
 *  **logProof** [LogProof](#logproof) - the Log Proof in case of a Log-Request   
-*  **auraValidatoryProof** [AuraValidatoryProof](#auravalidatoryproof) - the Validator Proof specific for aura   
 *  **accounts** `object` - a map of addresses and their AccountProof   
     each key in this object will structure its value like: 
 *  **txIndex** `integer` - the transactionIndex within the block   
@@ -575,15 +547,6 @@ const serverList:types.ServerList = {
     txProof: [
       null
     ],
-    auraValidatoryProof: {
-      block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
-      proof: [
-        null
-      ],
-      finalityBlocks: [
-        '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
-      ]
-    },
     txIndex: 4,
     signatures: [
       {

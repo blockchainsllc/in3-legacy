@@ -529,8 +529,7 @@ definitions:
                         blockProof,
                         accountProof,
                         callProof,
-                        logProof,
-                        auraValidatoryProof
+                        logProof
                     ]
                 example: accountProof
             block:
@@ -585,9 +584,6 @@ definitions:
             logProof:
                 description: the Log Proof in case of a Log-Request
                 $ref: "#/definitions/LogProof"
-            auraValidatoryProof:
-                description: the Validator Proof specific for aura
-                $ref: "#/definitions/AuraValidatoryProof"
             accounts:
                 type: object
                 description: a map of addresses and their AccountProof
