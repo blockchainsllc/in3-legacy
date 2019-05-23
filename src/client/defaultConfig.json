@@ -153,11 +153,11 @@
       "verifier": "eth",
       "chainSpec": {
         "engine": "authorityRound",
-        "validatorContract": "0xaE71807C1B0a093cB1547b682DC78316D945c9B8",
         "validatorList": [
-          "0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED",
-          "0x0010f94b296a852aaac52ea6c5ac72e03afd032d",
-          "0x00a0a24b9f0e5ec7aa4c7389b8302fd0123194de"
+          "0xfaadface3fbd81ce37b0e19c0b65ff4234148132",
+          "0x03801efb0efe2a25ede5dd3a003ae880c0292e4d",
+          "0xa4df255ecf08bbf2c28055c65225c9a9847abd94",
+          "0x596e8221a30bfe6e7eff67fee664a01c73ba3c56"
         ]
       },
       "needsUpdate": true,
