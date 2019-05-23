@@ -217,7 +217,8 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
       spec: ctx.chainSpec,
     }
 
-    res.proposer = address(ctx.chainSpec.validatorList[b.sealedFields[0].readUInt32BE(0) % res.authorities.length])
+    // for now we do n ot specify a proposer which mean anyone of the validators could sign.
+    //    res.proposer = address(ctx.chainSpec.validatorList[b.sealedFields[0].readUInt32BE(0) % res.authorities.length])
 
     return res
   }
