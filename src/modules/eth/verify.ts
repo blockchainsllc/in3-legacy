@@ -700,7 +700,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
   }
 
   //attach the lastValidatorChange to the chain context
-  if (response.in3.lastValidatorChange)
+  if ((response.in3.lastValidatorChange||0) > ctx.lastValidatorChange)
     ctx.lastValidatorChange = response.in3.lastValidatorChange
 
   // check BlockCache and convert all blockheaders to buffer
