@@ -44,6 +44,13 @@ export function promisify(self, fn, ...args: any[]): Promise<any> {
   })
 }
 
+export function toUtf8(val: any): string {
+  if (!val) return val
+  if (typeof val === 'string')
+    return val.startsWith('0x') ? Buffer.from(val.substr(2), 'hex').toString('utf8') : val
+  return val.toString('utf8')
+}
+
 
 /**
  * check a RPC-Response for errors and rejects the promise if found
@@ -59,7 +66,7 @@ export function checkForError<T extends RPCResponse | RPCResponse[]>(res: T): T 
  */
 export function toBN(val: any) {
   if (BN.isBN(val)) return val
-  if (typeof val === 'number') return new BN(val)
+  if (typeof val === 'number') return new BN(Math.round(val).toString())
   if (Buffer.isBuffer(val)) return new BN(val)
   return new BN(toHex(val).substr(2), 16)
 }
@@ -71,7 +78,7 @@ export function toHex(val: any, bytes?: number): string {
   if (val === undefined) return undefined
   let hex: string
   if (typeof val === 'string')
-    hex = val.startsWith('0x') ? val.substr(2) : new BN(val).toString(16)
+    hex = val.startsWith('0x') ? val.substr(2) : (parseInt(val[0]) ? new BN(val).toString(16) : Buffer.from(val, 'utf8').toString('hex'))
   else if (typeof val === 'number')
     hex = val.toString(16)
   else if (BN.isBN(val))
@@ -95,7 +102,7 @@ export function toNumber(val: any): number {
     case 'string':
       return parseInt(val)
     default:
-      if (Buffer.isBuffer(val)) 
+      if (Buffer.isBuffer(val))
         return val.length == 0 ? 0 : parseInt(toMinHex(val))
       else if (BN.isBN(val))
         return val.bitLength() > 53 ? toNumber(val.toArrayLike(Buffer)) : val.toNumber()
@@ -111,7 +118,11 @@ export function toNumber(val: any): number {
  */
 export function toBuffer(val, len = -1) {
   if (typeof val == 'string')
-    val = val.startsWith('0x') ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex') : new BN(val).toArrayLike(Buffer)
+    val = val.startsWith('0x')
+      ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex')
+      : val.length && (parseInt(val) || val == '0')
+        ? new BN(val).toArrayLike(Buffer)
+        : Buffer.from(val, 'utf8')
   else if (typeof val == 'number')
     val = val === 0 && len === 0 ? Buffer.allocUnsafe(0) : Buffer.from(fixLength(val.toString(16)), 'hex')
   else if (BN.isBN(val))

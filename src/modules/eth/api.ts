@@ -1,9 +1,10 @@
 import Client from '../../client/Client'
-import { simpleDecode, simpleEncode, methodID } from 'ethereumjs-abi'
+import { simpleDecode, simpleEncode, methodID, rawEncode, rawDecode } from 'ethereumjs-abi'
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
-import { toHex, toNumber, toBN, toBuffer } from '../../util/util'
-import { bytes32, bytes } from './serialize';
+import { toHex, toNumber, toBN, toBuffer, toMinHex } from '../../util/util'
+import { bytes32, bytes, address } from './serialize';
+import BN = require('bn.js')
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
 export type Quantity = number | string
@@ -21,7 +22,7 @@ export type Signature = {
 }
 
 export type ABIField = {
-    indexed: boolean
+    indexed?: boolean
     name: string
     type: string
 }
@@ -31,10 +32,10 @@ export type ABI = {
     payable?: boolean
     stateMutability?: 'nonpayable' | 'payable' | 'view' | 'pure'
 
-    inputs: ABIField[],
+    inputs?: ABIField[],
     outputs?: ABIField[]
-    name: string
-    type: 'event' | 'function'
+    name?: string
+    type: 'event' | 'function' | 'constructor' | 'fallback'
 }
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
@@ -49,6 +50,10 @@ export type Transaction = {
     value: Quantity
     /** 4 byte hash of the method signature followed by encoded parameters. For details see Ethereum Contract ABI.*/
     data: string
+    /** nonce */
+    nonce: Quantity
+    /** optional chain id */
+    chainId?: any
 }
 export type TransactionReceipt = {
     /** 32 Bytes - hash of the block where this transaction was in. */
@@ -201,7 +206,7 @@ export type LogFilter = {
 
 export type TxRequest = {
     /** contract */
-    to: Address
+    to?: Address
 
     /** address of the account to use */
     from?: Address
@@ -210,33 +215,33 @@ export type TxRequest = {
     data?: Data
 
     /** the gas needed */
-    gas: number
+    gas?: number
 
     /** the gasPrice used */
-    gasPrice: number
+    gasPrice?: number
 
     /** the nonce */
-    nonce: number
+    nonce?: number
 
     /** the value in wei */
-    value: Quantity
+    value?: Quantity
 
     /** the ABI of the method to be used */
-    method: string
+    method?: string
 
     /** the argument to pass to the method */
-    args: any[]
+    args?: any[]
 
     /**raw private key in order to sign */
-    pk: Hash
+    pk?: Hash
 
     /**  number of block to wait before confirming*/
-    confirmations: number
+    confirmations?: number
 }
 
 export interface Signer {
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
-    prepareTransaction?: (tx: Transaction) => Promise<Transaction>
+    prepareTransaction?: (client: Client, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
     hasAccount(account: Address): Promise<boolean>
@@ -277,7 +282,7 @@ export default class API {
      * Executes a new message call immediately without creating a transaction on the block chain.
      */
     call(tx: Transaction, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_call', tx, block)
+        return this.send<string>('eth_call', tx, toHexBlock(block))
     }
 
     /**
@@ -298,15 +303,15 @@ export default class API {
     /**
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
      */
-    estimateGas(tx: Transaction, block: BlockType = 'latest'): Promise<number> {
-        return this.send<string>('eth_estimateGas', tx, block).then(parseInt)
+    estimateGas(tx: Transaction/*, block: BlockType = 'latest'*/): Promise<number> {
+        return this.send<string>('eth_estimateGas', tx/*, toHexBlock(block)*/).then(parseInt)
     }
 
     /**
      * Returns the balance of the account of given address in wei (as hex).
      */
-    getBalance(address: Address, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_getBalance', address, block)
+    getBalance(address: Address, block: BlockType = 'latest'): Promise<BN> {
+        return this.send<string>('eth_getBalance', address, toHexBlock(block)).then(toBN)
     }
 
     /**
@@ -321,7 +326,7 @@ export default class API {
      * Returns the value from a storage position at a given address.
      */
     getStorageAt(address: Address, pos: Quantity, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_getStorageAt', address, pos, block)
+        return this.send<string>('eth_getStorageAt', address, pos, toHexBlock(block))
     }
 
 
@@ -336,7 +341,7 @@ export default class API {
      * Returns information about a block by block number.
      */
     getBlockByNumber(block: BlockType = 'latest', includeTransactions = false): Promise<Block> {
-        return this.send<Block>('eth_getBlockByNumber', block, includeTransactions)
+        return this.send<Block>('eth_getBlockByNumber', toHexBlock(block), includeTransactions)
     }
 
 
@@ -373,6 +378,9 @@ export default class API {
      * Returns an array of all logs matching a given filter object.
      */
     getLogs(filter: LogFilter): Promise<Log[]> {
+        if (filter.fromBlock) filter.fromBlock = toHexBlock(filter.fromBlock) as BlockType
+        if (filter.toBlock) filter.toBlock = toHexBlock(filter.toBlock) as BlockType
+        if (filter.limit) filter.limit = toNumber(filter.limit)
         return this.send<Log[]>('eth_getLogs', filter)
     }
 
@@ -391,7 +399,7 @@ export default class API {
      * Returns information about a transaction by block number and transaction index position.
      */
     getTransactionByBlockNumberAndIndex(block: BlockType, pos: Quantity): Promise<TransactionDetail> {
-        return this.send<TransactionDetail>('eth_getTransactionByBlockNumberAndIndex', block, pos)
+        return this.send<TransactionDetail>('eth_getTransactionByBlockNumberAndIndex', toHexBlock(block), pos)
     }
 
     /**
@@ -413,7 +421,11 @@ export default class API {
      * Note That the receipt is available even for pending transactions.
      */
     getTransactionReceipt(hash: Hash): Promise<TransactionReceipt> {
-        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash)
+        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash).then(_ => !_ ? null : ({
+            ..._,
+            contractAddress: _.contractAddress && toChecksumAddress(_.contractAddress),
+            from: _.from && toChecksumAddress(_.from)
+        }))
     }
 
     /**
@@ -561,7 +573,7 @@ export default class API {
             etx.sign(toBuffer(args.pk))
         }
         else if (this.signer && args.from) {
-            const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(tx) : tx
+            const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(this.client, tx) : tx
             etx = new ETx({ ...t, gasLimit: t.gas })
             const signature = await this.signer.sign(etx.hash(false), args.from)
             if (etx._chainId > 0) signature.v += etx._chainId * 2 + 8
@@ -570,21 +582,35 @@ export default class API {
         else throw new Error('Invalid transaction-data')
         const txHash = await this.sendRawTransaction(toHex(etx.serialize()))
 
+        if (args.confirmations === undefined) args.confirmations = 1
+
         // send it
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas as string), args.confirmations) : txHash
     }
 
-    contractAt(abi: ABI[], address: string) {
-        const api = this, ob = { _address: address, _eventHashes: {} as any, events: {} as any }
+    contractAt(abi: ABI[], address: string): {
+        [methodName: string]: any,
+        _address: string, _eventHashes: any, events: {
+            [event: string]: {
+                getLogs: (options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } }) => Promise<{ [key: string]: any, event: string, log: Log }[]>
+            }
+            all: {
+                getLogs: (options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } }) => Promise<{ [key: string]: any, event: string, log: Log }[]>
+            }
+            decode: any
+        }, _abi: ABI[], _in3: Client
+    } {
+        const api = this, ob = { _address: address, _eventHashes: {} as any, events: {} as any, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
+            const method = def.name + createSignature(def.inputs)
             if (def.constant) {
-                const signature = def.name + createSignature(def.inputs) + ':' + createSignature(def.outputs)
+                const signature = method + ':' + createSignature(def.outputs)
                 ob[def.name] = function (...args: any[]) {
-                    return api.callFn(this._address, signature, ...args)
+                    return api.callFn(address, signature, ...args)
                         .then(r => {
                             if (def.outputs.length > 1) {
                                 let o = {}
-                                def.outputs.forEach((d, i) => o[d.name] = r[i])
+                                def.outputs.forEach((d, i) => o[i] = o[d.name] = r[i])
                                 return o;
                             }
                             return r
@@ -592,16 +618,17 @@ export default class API {
                 }
             }
             else {
-                const method = def.name + createSignature(def.inputs)
                 ob[def.name] = function (...args: any[]) {
                     let tx: TxRequest = {} as any
                     if (args.length > def.inputs.length) tx = args.pop()
                     tx.method = method
                     tx.args = args.slice(0, def.name.length);
                     tx.confirmations = tx.confirmations || 1
+                    tx.to = address
                     return api.sendTransaction(tx)
                 }
             }
+            ob[def.name].encode = (...args: any[]) => createCallParams(method, args.slice(0, def.name.length)).txdata
         }
 
         for (const def of abi.filter(_ => _.type == 'event')) {
@@ -616,7 +643,10 @@ export default class API {
                         toBlock: options.toBlock || 'latest',
                         topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + bytes32(options.filter[d.name]).toString('hex') : null))],
                         limit: options.limit || 50
-                    }).then((logs: Log[]) => logs.map(_ => ({ ..._, event: ob.events.decode(_) })))
+                    }).then((logs: Log[]) => logs.map(_ => {
+                        const event = ob.events.decode(_)
+                        return { ...event, log: _, event }
+                    }))
                 }
             }
         }
@@ -629,12 +659,24 @@ export default class API {
                     toBlock: options.toBlock || 'latest',
                     topics: options.topics || [],
                     limit: options.limit || 50
-                }).then((logs: Log[]) => logs.map(_ => ({ ..._, event: ob.events.decode(_) })))
+                }).then((logs: Log[]) => logs.map(_ => {
+                    const event = ob.events.decode(_)
+                    return { ...event, log: _, event }
+                }))
             }
         }
 
-        return ob
+        return ob as any
     }
+
+    decodeEventData(log: Log, d: ABI): any {
+        return decodeEvent(log, d)
+    }
+    hashMessage(data: string | Buffer): Buffer {
+        const d = toBuffer(data)
+        return keccak(Buffer.concat([Buffer.from('\x19Ethereum Signed Message:\n' + d.length, 'utf8'), d]))
+    }
+
 
 }
 
@@ -644,8 +686,8 @@ async function confirm(txHash: string, api: API, gasPaid: number, confirmations:
     while (Date.now() - start < timeout * 1000) {
         const receipt = await api.getTransactionReceipt(txHash)
         if (receipt) {
-            if (receipt.status !== '0x1' && gasPaid && gasPaid === parseInt(receipt.gasUsed as any))
-                throw new Error('Transaction failed and all gas was used up')
+            if (!receipt.status && gasPaid && gasPaid === parseInt(receipt.gasUsed as any))
+                throw new Error('Transaction failed and all gas was used up gasPaid=' + gasPaid)
             if (receipt.status && receipt.status == '0x0')
                 throw new Error('The Transaction failed because it returned status=0')
 
@@ -667,21 +709,28 @@ async function confirm(txHash: string, api: API, gasPaid: number, confirmations:
 }
 
 async function prepareTransaction(args: TxRequest, api?: API): Promise<Transaction> {
-    const sender = args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex'))
+    const sender = args.from || (args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex')))
 
     const tx: any = {}
     if (args.to) tx.to = toHex(args.to)
-    if (args.method)
+    if (args.method) {
         tx.data = createCallParams(args.method, args.args).txdata
+        if (args.data) tx.data = args.data + tx.data.substr(10) // this is the case  for deploying contracts
+    }
     else if (args.data)
         tx.data = toHex(args.data)
     if (sender || args.nonce)
-        tx.nonce = toHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
+        tx.nonce = toMinHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
     if (api)
-        tx.gasPrice = toHex(args.gasPrice || await api.gasPrice())
-    tx.value = toHex(args.value || 0)
+        tx.gasPrice = toMinHex(args.gasPrice || Math.round(1.3 * toNumber(await api.gasPrice())))
+    tx.value = toMinHex(args.value || 0)
     if (sender) tx.from = sender
-    tx.gas = toHex(args.gas || (api && await api.estimateGas(tx) || 3000000))
+    try {
+        tx.gas = toMinHex(args.gas || (api && (toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
+    }
+    catch (ex) {
+        throw new Error('The Transaction ' + JSON.stringify(args, null, 2) + ' will not be succesfully executed, since estimating gas failed with: ' + ex)
+    }
 
 
     return tx
@@ -699,8 +748,10 @@ function convertToType(solType: string, v: any): any {
     // convert integers
     if (solType.startsWith('uint')) return parseInt(solType.substr(4)) <= 32 ? toNumber(v) : toBN(v)
     if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? toNumber(v) : toBN(v) // TODO handle negative values
-    if (solType === 'bool') typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
+    if (solType === 'bool') return typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
     if (solType === 'string') return v.toString('utf8')
+    if (solType === 'address') return toChecksumAddress('0x' + v)
+    //    if (solType === 'bytes') return toBuffer(v)
 
     // everything else will be hexcoded string
     if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
@@ -709,7 +760,7 @@ function convertToType(solType: string, v: any): any {
 }
 
 function decodeResult(types: string[], result: Buffer): any {
-    return simpleDecode('dummy(uint):(' + types.join() + ')', result).map((v, i) => convertToType(types[i], v))
+    return rawDecode(types, result).map((v, i) => convertToType(types[i], v))
 }
 
 function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
@@ -734,6 +785,9 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
     if (!m) throw new Error('No valid method signature for ' + method)
     const types = m[1].split(',').filter(_ => _)
     if (values.length < types.length) throw new Error('invalid number of arguments. Must be at least ' + types.length)
+    values.forEach((v, i) => {
+        if (types[i] === 'bytes') values[i] = toBuffer(v)
+    })
 
     return {
         txdata: '0x' + (values.length
@@ -743,7 +797,11 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
     }
 }
 
-function createSignature(fields: ABIField[]): string {
+export function createSignatureHash(def: ABI) {
+    return keccak(def.name + createSignature(def.inputs))
+}
+
+export function createSignature(fields: ABIField[]): string {
     return '(' + fields.map(f => {
         let baseType = f.type
         const t = baseType.indexOf('[')
@@ -764,9 +822,12 @@ function parseABIString(def: string): ABI {
 }
 
 function decodeEventData(log: Log, def: string | { _eventHashes: any }): any {
-    let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def), r: any = { event: d && d.name }
-    if (!d) throw new Error('Could not find the ABI')
-    const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed)
+    let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def)
+    if (!d) return null//throw new Error('Could not find the ABI')
+    return decodeEvent(log, d)
+}
+export function decodeEvent(log: Log, d: ABI): any {
+    const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed), r: any = { event: d && d.name }
     if (indexed.length)
         decodeResult(indexed.map(_ => _.type), Buffer.concat(log.topics.slice(1).map(bytes))).forEach((v, i) => r[indexed[i].name] = v)
     if (unindexed.length)
@@ -784,21 +845,41 @@ export class SimpleSigner implements Signer {
     }
 
     addAccount(pk: Hash) {
-        const adr: Address = toHex(privateToAddress(toBuffer(pk)))
+        const adr: Address = toChecksumAddress(toHex(privateToAddress(toBuffer(pk))))
         this.accounts[adr] = pk
         return adr
     }
 
 
     async hasAccount(account: string): Promise<boolean> {
-        return !!this.accounts[account]
+        return !!this.accounts[toChecksumAddress(account)]
     }
 
     async sign(data: Buffer, account: string): Promise<Signature> {
-        const pk = toBuffer(this.accounts[account])
+        const pk = toBuffer(this.accounts[toChecksumAddress(account)])
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         const sig = ecsign(data, pk)
         return { messageHash: toHex(data), v: sig.v, r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
     }
 
+}
+
+
+export function soliditySha3(...args: any[]): string {
+    return toHex(keccak(rawEncode(args.map(_ => {
+        switch (typeof (_)) {
+            case 'number':
+                return _ < 0 ? 'int256' : 'uint256'
+            case 'string':
+                return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
+            case 'boolean':
+                return 'bool'
+            default:
+                return BN.isBN(_) ? 'uint256' : 'bytes'
+        }
+    }), args)))
+}
+
+function toHexBlock(b: any): string {
+    return typeof b === 'string' ? b : toMinHex(b)
 }
