@@ -29,13 +29,16 @@ export default class ChainContext {
   chainSpec: ChainSpec
   module: Module
   chainId: string
-  genericCache: { [key: string]: string }
+  lastValidatorChange: number
+  genericCache: {[key:string]:string}
 
   constructor(client: Client, chainId: string, chainSpec: ChainSpec) {
     this.client = client
     this.chainId = chainId
     this.chainSpec = chainSpec
     this.genericCache = {}
+    this.lastValidatorChange = 0
+
     const s = this.client.defConfig.servers[this.chainId]
     this.module = getModule(s && s.verifier || 'eth')
 
@@ -53,7 +56,7 @@ export default class ChainContext {
    * this function is calleds before the server is asked.
    * If it returns a promise than the request is handled internally otherwise the server will handle the response.
    * this function should be overriden by modules that want to handle calls internally
-   * @param request 
+   * @param request
    */
   handleIntern(request: RPCRequest): Promise<RPCResponse> {
     return null

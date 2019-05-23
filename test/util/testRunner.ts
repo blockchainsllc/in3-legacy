@@ -1,4 +1,5 @@
 import Client from '../../src/client/Client'
+import { toNumber } from '../../src/util/util'
 import { readFileSync } from 'fs'
 import { Transport, RPCRequest, RPCResponse } from '../../src'
 
@@ -81,6 +82,15 @@ async function runSingleTest(test: any, c: number) {
         loggerUrl: ''
     }, {
             handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]> {
+                if((data as any)[0].method == 'in3_validatorlist') {
+                  const response = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist.json', 'utf8').toString())
+                  const validatorResponse = mockValidatorList(response, (data as any)[0].params)
+
+                  validatorResponse.id = (data as any)[0].id
+                  validatorResponse.jsonrpc = (data as any)[0].jsonrpc
+
+                  return Promise.resolve([validatorResponse])
+                }
                 test.response[res].id = (data as any)[0].id
                 return Promise.resolve([test.response[res++]])
             },
@@ -95,11 +105,16 @@ async function runSingleTest(test: any, c: number) {
         })
     for (const chainId of Object.keys(client.defConfig.servers))
         client.defConfig.servers[chainId].needsUpdate = false
-    if (client.defConfig.chainId === '0x44d')
-        client.getChainContext('0x44d').putInCache('validators', '["0:0:0:0x4ba15b56452521c0826a35a6f2022e1210fc519b:0xc6daf646d4c5ca352bac508ed6776e565d46c7c1:0x78d0558d9489e7f846a0cf9f40b1d917244615e2:0xd778a79ed8c7da5845bc3af0a14f4c73faede798:0x5fa6916603630fb3554780d5077c967ecd1fc78f:0x68766b52c86b237dec0c334a5b9e4d825e265c8e:0x419d94ff81a1138710ddd98ef5743c2b3d31c4e0:0x23ef0e2552f07d793a8676c25350790a0116d68a:0xbe20508bf4c43688a8aa4ea45f0afcf4092d990b:0xb5e8c1bf705f10bf4531941600f7d0a5bab7f5e8:0x1612d4659e4005e2de309e1a7d754ec33e8080f8:0x5f93cc6c9f13f80a5bbc1bb1e0520100f8887ce9"]')
+
     client.defConfig.servers[client.defConfig.chainId].weights = {}
     if (test.signatures)
         client.defConfig.signatureCount = test.signatures.length
+
+    //quick hack for validatorProof verification - Magic Code
+    if (client.defConfig.chainId === '0x44d') {
+      const ctx = client.getChainContext('0x44d')
+      ctx.lastValidatorChange = 1216963
+    }
 
     let s = false, error = null
     try {
@@ -116,8 +131,24 @@ async function runSingleTest(test: any, c: number) {
     return result
 }
 
+function mockValidatorList(response, params?){
+    const states = response.result.states
+
+    const startIndex: number = (params && params.length > 0)?toNumber(params[0]):0
+    const limit: number = (params && params.length > 1)?toNumber(params[1]):2
+
+    return ({
+      id: 0,
+      result: {
+        states: limit? response.result.states.slice(startIndex, startIndex + limit + 1): response.result.states.slice(startIndex),
+        lastCheckedBlock: response.result.lastCheckedBlock
+      },
+      jsonrpc: '2.0',
+      in3: response.in3
+    } as RPCResponse)
+}
+
 function addSpace(s: string, l: number, filler = ' ', color = '') {
     while (s.length < l) s += filler
     return color ? '\x1B[' + color + 'm' + s + '\x1B[0m' : s
 }
-

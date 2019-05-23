@@ -263,8 +263,6 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
 
 }
 
-
-
 /** verifies a TransactionProof */
 export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogData[], ctx: ChainContext) {
 
@@ -700,6 +698,10 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
     if (!allowWithoutProof && !response.error) throw new Error('the response does not contain any proof!')
     return !!response.error || allowWithoutProof
   }
+
+  //attach the lastValidatorChange to the chain context
+  if ((response.in3.lastValidatorChange || 0) > ctx.lastValidatorChange)
+    ctx.lastValidatorChange = response.in3.lastValidatorChange
 
   // check BlockCache and convert all blockheaders to buffer
   handleBlockCache(proof, ctx)

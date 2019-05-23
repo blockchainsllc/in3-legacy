@@ -63,6 +63,7 @@ export type IN3RPCRequestConfig = types.IN3RPCRequestConfig
 export type IN3ResponseConfig = types.IN3ResponseConfig
 export type LogProof = types.LogProof
 export type Proof = types.Proof
+export type AuraValidatoryProof = types.AuraValidatoryProof
 export type RPCResponse = types.RPCResponse
 export type Signature = types.Signature
 export type Transport = _transport.Transport

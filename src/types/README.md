@@ -12,6 +12,7 @@ configuration-data for the Incubed-client / server
 *  [IN3Config](#in3config)
 *  [RPCRequest](#rpcrequest)
 *  [RPCResponse](#rpcresponse)
+*  [AuraValidatoryProof](#auravalidatoryproof)
 *  [LogProof](#logproof)
 *  [Proof](#proof)
 *  [AccountProof](#accountproof)
@@ -384,6 +385,30 @@ const rPCResponse:types.RPCResponse = {
 *  **result** [{"description":"the params","example":"0xa35bc"}](#{"description":"the params","example":"0xa35bc"}) - the params   
 *  **in3** [IN3ResponseConfig](#in3responseconfig) - the IN3-Result   
 *  **in3Node** [IN3NodeConfig](#in3nodeconfig) - the node handling this response (internal only)   
+
+### AuraValidatoryProof
+
+a Object holding proofs for validator logs. The key is the blockNumber as hex
+
+```javascript
+import {types} from 'in3'
+const auraValidatoryProof:types.AuraValidatoryProof = {
+  block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+  proof: [
+    null
+  ],
+  finalityBlocks: [
+    '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+  ]
+}
+```
+ See [types.yaml](../blob/develop/src/types/types.yaml)
+
+*  **logIndex** `number` (required)  - the transaction log index   
+*  **block** `string` (required)  - the serialized blockheader   
+*  **txIndex** `integer` (required)  - the transactionIndex within the block   
+*  **proof** `string[]` (required)  - the merkleProof   
+*  **finalityBlocks** `array` - the serialized blockheader as hex, required in case of finality asked   
 
 ### LogProof
 

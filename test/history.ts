@@ -32,6 +32,7 @@ describe('Delta History', () => {
     assert.deepEqual(h.getData(9),[])
     assert.deepEqual(h.getData(10),['a','b'])
     assert.deepEqual(h.getData(11),['a','b'])
+    assert.equal(h.getLastIndex(), 10)
 
 
     h.addState(20,['a','d','e'])
@@ -39,6 +40,7 @@ describe('Delta History', () => {
     assert.deepEqual(h.getData(10),['a','b'])
     assert.deepEqual(h.getData(19),['a','b'])
     assert.deepEqual(h.getData(20),['a','d','e'])
+    assert.equal(h.getLastIndex(), 20)
 
     h.addState(15,['d','e'])
     assert.deepEqual(h.getData(9),[])
@@ -46,6 +48,7 @@ describe('Delta History', () => {
     assert.deepEqual(h.getData(14),['a','b'])
     assert.deepEqual(h.getData(15),['d','e'])
     assert.deepEqual(h.getData(20),['a','d','e'])
+    assert.equal(h.getLastIndex(), 20)
 
     h.loadDeltaStrings(h.toDeltaStrings())
     assert.deepEqual(h.getData(9),[])
@@ -58,4 +61,3 @@ describe('Delta History', () => {
 
 
 })
-
