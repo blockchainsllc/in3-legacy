@@ -210,7 +210,7 @@ async function checkForValidators(ctx: ChainContext, validators: DeltaHistory<st
 
 export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpec> {
 
-  //handle POS chains with defined validator list
+  //handle POA chains with defined validator list
   if (ctx.chainSpec.engine == 'authorityRound' && ctx.chainSpec.validatorList && !ctx.chainSpec.validatorContract) {
     const res: any = {
       authorities: ctx.chainSpec.validatorList.map(h => address(h.startsWith('0x') ? h : '0x' + h)),
@@ -233,8 +233,35 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
   }
 
   // no validators in the cache yet, so we have to find them.
-  if (!validators)
-    validators = new DeltaHistory<string>(ctx.chainSpec.validatorList, false)
+  if (!validators) {
+    if (ctx.chainSpec.validatorList) {
+      validators = new DeltaHistory<string>(ctx.chainSpec.validatorList, false)
+    }
+    //if it is a transitioned chain then take the defined lists form chainSpec
+    //and verify the other transistion segments
+    else if (ctx.chainSpec.multi) {
+      const specTransitions = Object.keys(ctx.chainSpec.multi)
+      validators = new DeltaHistory<string>([], false)
+
+      for (let i=0; i<specTransitions.length; i++) {
+        if (ctx.chainSpec.multi[specTransitions[i]].list) {
+          validators.addState(parseInt(specTransitions[i]), ctx.chainSpec.multi[specTransitions[i]].list)
+        }
+        // if transition is contract based and there has been another transition on top of it
+        // then pull in all the validator changes for this transition segment and verify them
+        else if (ctx.chainSpec.multi[specTransitions[i]].safeContract && (specTransitions.length - 1) > i) {
+          const list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
+
+          //filter the list to include the states only until the next transition
+          const filteredList = list.result
+            && list.result.states
+            && list.result.states.filter(s => s.block < parseInt(specTransitions[i + 1]))
+
+          await addAuraValidators(validators, ctx, filteredList)
+        }
+      }
+    }
+  }
 
   const lastKnownValidatorChange = validators.getLastIndex()
 

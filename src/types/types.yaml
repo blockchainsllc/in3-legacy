@@ -211,6 +211,9 @@ definitions:
             validatorList:
                 description: the list of validators
                 type: array
+            multi:
+                description: the list of validators and validator contracts for transitioned chains, key-ed by transition block numbers
+                type: array
 
     IN3Config:
         description: the iguration of the IN3-Client. This can be paritally overriden for every request.

@@ -202,6 +202,7 @@ const chainSpec:types.ChainSpec = {}
 *  **engine** `string` - the engine type (like Ethhash, authorityRound, ... )   
 *  **validatorContract** `string` - the aura contract to get the validators   
 *  **validatorList** `array` - the list of validators   
+*  **multi** `array` - the list of validators and validator contracts for transitioned chains, key-ed by transition block numbers   
 
 ### IN3Config
 

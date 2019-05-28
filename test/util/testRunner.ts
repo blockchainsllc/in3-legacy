@@ -83,7 +83,7 @@ async function runSingleTest(test: any, c: number) {
     }, {
             handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]> {
                 if((data as any)[0].method == 'in3_validatorlist') {
-                  const response = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist.json', 'utf8').toString())
+                  const response = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist_' + test.chainId + '.json', 'utf8').toString())
                   const validatorResponse = mockValidatorList(response, (data as any)[0].params)
 
                   validatorResponse.id = (data as any)[0].id
@@ -114,6 +114,12 @@ async function runSingleTest(test: any, c: number) {
     if (client.defConfig.chainId === '0x44d') {
       const ctx = client.getChainContext('0x44d')
       ctx.lastValidatorChange = 1216963
+    }
+
+    //quick hack for transitioned POA verification - Magic Code
+    if (client.defConfig.chainId === '0x2a') {
+      const ctx = client.getChainContext('0x2a')
+      ctx.lastValidatorChange = 10994694
     }
 
     let s = false, error = null
