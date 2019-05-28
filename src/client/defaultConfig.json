@@ -41,10 +41,15 @@
       "verifier": "eth",
       "chainSpec": {
         "engine": "authorityRound",
-        "validatorContract": "0x1000000000000000000000000000000000000005",
-        "validatorList": [
-          "0x4ba15b56452521c0826a35a6f2022e1210fc519b"
-        ]
+        "validatorInfo": {
+          "0": {
+            "contract": "0x1000000000000000000000000000000000000005",
+            "list": [
+              "0x4ba15b56452521c0826a35a6f2022e1210fc519b"
+            ]
+          }
+        }
+
       },
       "needsUpdate": true,
       "contractChain": "0x44d",
@@ -93,9 +98,13 @@
       "verifier": "eth",
       "chainSpec": {
         "engine": "clique",
-        "validatorList": [
-          "0xe0a2bd4258d2768837baa26a28fe71dc079f84c7"
-        ]
+        "validatorInfo": {
+          "0": {
+            "list": [
+              "0xe0a2bd4258d2768837baa26a28fe71dc079f84c7"
+            ]
+          }
+        }
       },
       "needsUpdate": true,
       "contractChain": "0x5",
@@ -153,7 +162,7 @@
       "verifier": "eth",
       "chainSpec": {
         "engine": "authorityRound",
-        "multi": {
+        "validatorInfo": {
   				"0": {
   					"list": [
   						"0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED",
@@ -175,7 +184,14 @@
   					]
   				},
   				"10960500": {
-  					"safeContract": "0xaE71807C1B0a093cB1547b682DC78316D945c9B8"
+  					"contract": "0xaE71807C1B0a093cB1547b682DC78316D945c9B8",
+            "list": [
+              "0xfaadface3fbd81ce37b0e19c0b65ff4234148132",
+              "0x596e8221a30bfe6e7eff67fee664a01c73ba3c56",
+              "0xa4df255ecf08bbf2c28055c65225c9a9847abd94",
+              "0x03801efb0efe2a25ede5dd3a003ae880c0292e4d",
+              "0xd05f7478c6aa10781258c5cc8b4f385fc8fa989c"
+            ]
   				}
   			}
       },

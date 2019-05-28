@@ -200,9 +200,10 @@ const chainSpec:types.ChainSpec = {}
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
 *  **engine** `string` - the engine type (like Ethhash, authorityRound, ... )   
-*  **validatorContract** `string` - the aura contract to get the validators   
-*  **validatorList** `array` - the list of validators   
-*  **multi** `array` - the list of validators and validator contracts for transitioned chains, key-ed by transition block numbers   
+*  **validatorInfo** `object` - An object containing the validator info at different blocks, keyed by blocknumber as a number string   
+    each key in this object will structure its value like: 
+    *  **list** `string<address>[]` (required)  - The list of validators at the particular block   
+    *  **contract** `string` - The validator contract at the block   
 
 ### IN3Config
 

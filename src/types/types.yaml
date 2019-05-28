@@ -205,15 +205,22 @@ definitions:
             engine:
                 description: the engine type (like Ethhash, authorityRound, ... )
                 type: string
-            validatorContract:
-                description: the aura contract to get the validators
-                type: string
-            validatorList:
-                description: the list of validators
-                type: array
-            multi:
-                description: the list of validators and validator contracts for transitioned chains, key-ed by transition block numbers
-                type: array
+            validatorInfo:
+                description: An object containing the validator info at different blocks, keyed by blocknumber as a number string
+                type: object
+                additionalProperties:
+                    type: object
+                    required: [list]
+                    properties:
+                        list:
+                            description: The list of validators at the particular block
+                            type: array
+                            items:
+                                type: string
+                                format: address
+                        contract:
+                            description: The validator contract at the block
+                            type: string
 
     IN3Config:
         description: the iguration of the IN3-Client. This can be paritally overriden for every request.
