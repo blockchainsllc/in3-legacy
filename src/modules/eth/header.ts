@@ -132,7 +132,7 @@ function addCliqueValidators(history: DeltaHistory<string>, ctx: ChainContext, s
 
 }
 
-async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, states: HistoryEntry[], contract?: string) {
+async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, states: HistoryEntry[], contract: string) {
   for (const s of states) {
     //skip the current block if already added in the delta
     const current = history.getData(s.block).map(h => address(h.startsWith('0x') ? h : '0x' + h))
