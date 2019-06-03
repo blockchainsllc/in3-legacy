@@ -239,7 +239,9 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
 
       // if transition is contract based and there has been another transition on top of it
       // then pull in all the validator changes for this transition segment and verify them
-      if (ctx.chainSpec.validatorInfo[specTransitions[i]].contract && (specTransitions.length - 1) > i) {
+      if ( ctx.chainSpec.validatorInfo[specTransitions[i]].contract
+        && ctx.chainSpec.validatorInfo[specTransitions[i]].list
+        && (specTransitions.length - 1) > i) {
         const list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
 
         //filter the list to include the states only until the next transition
