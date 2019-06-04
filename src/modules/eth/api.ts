@@ -7,18 +7,19 @@ import { bytes32, bytes, address } from './serialize';
 import BN = require('bn.js')
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
-export type Quantity = number | string
-export type Hash = string
-export type Address = string
-export type Data = string
+export type Hex = string
+export type Quantity = number | Hex
+export type Hash = Hex
+export type Address = Hex
+export type Data = Hex
 
 export type Signature = {
-    message: string
-    messageHash: string
-    v: number
-    r: string
-    s: string
-    signature?: string
+    message: Data
+    messageHash: Hash
+    v: Hex
+    r: Hash
+    s: Hash
+    signature?: Data
 }
 
 export type ABIField = {
@@ -512,12 +513,12 @@ export default class API {
       * Returns the current ethereum protocol version.
       */
     syncing(): Promise<boolean | {
-        startingBlock: string,
-        currentBlock: string,
-        highestBlock: string
-        blockGap: string[][]
-        warpChunksAmount: string
-        warpChunksProcessed: string
+        startingBlock: Hex,
+        currentBlock: Hex,
+        highestBlock: Hex
+        blockGap: Hex[][]
+        warpChunksAmount: Hex
+        warpChunksProcessed: Hex
     }> {
         return this.send<boolean | {
             startingBlock: string,
@@ -576,7 +577,7 @@ export default class API {
             const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(this.client, tx) : tx
             etx = new ETx({ ...t, gasLimit: t.gas })
             const signature = await this.signer.sign(etx.hash(false), args.from)
-            if (etx._chainId > 0) signature.v += etx._chainId * 2 + 8
+            if (etx._chainId > 0) signature.v = toHex(toNumber(signature.v) + etx._chainId * 2 + 8)
             Object.assign(etx, signature)
         }
         else throw new Error('Invalid transaction-data')
@@ -588,9 +589,9 @@ export default class API {
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas as string), args.confirmations) : txHash
     }
 
-    contractAt(abi: ABI[], address: string): {
+    contractAt(abi: ABI[], address: Address): {
         [methodName: string]: any,
-        _address: string, _eventHashes: any, events: {
+        _address: Address, _eventHashes: any, events: {
             [event: string]: {
                 getLogs: (options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } }) => Promise<{ [key: string]: any, event: string, log: Log }[]>
             }
@@ -672,7 +673,7 @@ export default class API {
     decodeEventData(log: Log, d: ABI): any {
         return decodeEvent(log, d)
     }
-    hashMessage(data: string | Buffer): Buffer {
+    hashMessage(data: Data | Buffer): Buffer {
         const d = toBuffer(data)
         return keccak(Buffer.concat([Buffer.from('\x19Ethereum Signed Message:\n' + d.length, 'utf8'), d]))
     }
@@ -680,7 +681,7 @@ export default class API {
 
 }
 
-async function confirm(txHash: string, api: API, gasPaid: number, confirmations: number, timeout = 10) {
+async function confirm(txHash: Hash, api: API, gasPaid: number, confirmations: number, timeout = 10) {
     let steps = 200
     const start = Date.now()
     while (Date.now() - start < timeout * 1000) {
@@ -859,7 +860,7 @@ export class SimpleSigner implements Signer {
         const pk = toBuffer(this.accounts[toChecksumAddress(account)])
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         const sig = ecsign(data, pk)
-        return { messageHash: toHex(data), v: sig.v, r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
+        return { messageHash: toHex(data), v: toHex(sig.v), r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
     }
 
 }
