@@ -62,8 +62,11 @@ export default class ChainContext {
     return null
   }
 
+  /**
+   * returns the chainspec for th given block number
+   */
   getChainSpec(block:number):ChainSpec {
-    return this.chainSpec && this.chainSpec.find(_=>_.block<=block)
+    return this.chainSpec && this.chainSpec.filter(_=>_.block<=block).pop()
   }
 
 
