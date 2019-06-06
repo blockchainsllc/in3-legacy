@@ -232,8 +232,8 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
     for (const spec of ctx.chainSpec) {
       if (spec.list) validators.addState(spec.block, spec.list)
       if (spec.contract || spec.engine == 'clique') {
-        if (!list) list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
-        const nextBlock = ctx.chainSpec[ctx.chainSpec.indexOf(spec) + 1].block || Number.MAX_VALUE
+        if (!list) list = ctx.client ? await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' }) : { result: { states: [] } }
+        const nextBlock = (ctx.chainSpec[ctx.chainSpec.indexOf(spec) + 1] || { block: Number.MAX_VALUE }).block
         const filteredList = list.result && list.result.states && list.result.states.filter(s => s.block < nextBlock && s.block >= spec.block)
         if (spec.engine === 'authorityRound')
           await addAuraValidators(validators, ctx, filteredList, spec.contract)
