@@ -26,13 +26,13 @@ import { getModule, Module } from './modules'
  */
 export default class ChainContext {
   client: Client
-  chainSpec: ChainSpec
+  chainSpec: ChainSpec[]
   module: Module
   chainId: string
   lastValidatorChange: number
-  genericCache: {[key:string]:string}
+  genericCache: { [key: string]: string }
 
-  constructor(client: Client, chainId: string, chainSpec: ChainSpec) {
+  constructor(client: Client, chainId: string, chainSpec: ChainSpec[]) {
     this.client = client
     this.chainId = chainId
     this.chainSpec = chainSpec
@@ -60,6 +60,10 @@ export default class ChainContext {
    */
   handleIntern(request: RPCRequest): Promise<RPCResponse> {
     return null
+  }
+
+  getChainSpec(block:number):ChainSpec {
+    return this.chainSpec && this.chainSpec.find(_=>_.block<=block)
   }
 
 

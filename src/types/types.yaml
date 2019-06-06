@@ -202,25 +202,22 @@ definitions:
         type: object
         description: describes the chainspecific consensus params
         properties:
+            block:
+                description: the blocknumnber when this configuration should apply
+                type: number
             engine:
                 description: the engine type (like Ethhash, authorityRound, ... )
                 type: string
-            validatorInfo:
-                description: An object containing the validator info at different blocks, keyed by blocknumber as a number string
-                type: object
-                additionalProperties:
-                    type: object
-                    required: [list]
-                    properties:
-                        list:
-                            description: The list of validators at the particular block
-                            type: array
-                            items:
-                                type: string
-                                format: address
-                        contract:
-                            description: The validator contract at the block
-                            type: string
+                enum: ["ethHash", "authorityRound", "clique"]
+            list:
+                description: The list of validators at the particular block
+                type: array
+                items:
+                    type: string
+                    format: address
+            contract:
+                description: The validator contract at the block
+                type: string
 
     IN3Config:
         description: the iguration of the IN3-Client. This can be paritally overriden for every request.
@@ -352,8 +349,10 @@ definitions:
                             type: string
                             description: a alias for the chain
                         chainSpec:
-                            description: chain definition
-                            $ref: "#/definitions/ChainSpec"
+                            type: array
+                            items: 
+                                $ref: "#/definitions/ChainSpec"
+                            description: chain definitions
                         initAddresses:
                             description: a list of addresses which should always be part of the nodelist when getting an update
                             type: array

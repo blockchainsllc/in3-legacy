@@ -196,23 +196,21 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
 
 async function checkForValidators(ctx: ChainContext, validators: DeltaHistory<string>) {
 
-  if (ctx.chainSpec.engine == 'clique') {
+
+  if (ctx.chainSpec && ctx.chainSpec.length) {
     const list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
-    addCliqueValidators(validators, ctx, list.result && list.result.states)
+    if (list && list.result && list.result.states)
+      for (const state of list.result.states as HistoryEntry[]) {
+        const spec = ctx.getChainSpec(state.block)
+        if (spec && spec.engine === 'authorityRound')
+          await addAuraValidators(validators, ctx, [state], spec.contract)
+        else if (spec && spec.engine === 'clique')
+          await addCliqueValidators(validators, ctx, [state])
+      }
+    else
+      throw new Error('Could not get the new validatorlist! ' + (list && JSON.stringify(list.error)))
+
     ctx.putInCache('validators', JSON.stringify(validators.toDeltaStrings()))
-  }
-  else if (ctx.chainSpec.engine == 'authorityRound') {
-    const list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
-
-    // Get the last transition and check if it is a contract based one. If yes,
-    // then update validators. If not, leave as is.
-    const specTransitions = Object.keys(ctx.chainSpec.validatorInfo)
-    const latestTransition = ctx.chainSpec.validatorInfo[specTransitions[specTransitions.length - 1]]
-
-    if (latestTransition.contract) {
-      await addAuraValidators(validators, ctx, list.result && list.result.states, latestTransition.contract)
-      ctx.putInCache('validators', JSON.stringify(validators.toDeltaStrings()))
-    }
   }
 }
 
@@ -228,49 +226,42 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
   }
 
   // no validators in the cache yet, so we have to find them.
-  if (!validators && ctx.chainSpec.validatorInfo) {
-    const specTransitions = Object.keys(ctx.chainSpec.validatorInfo)
+  if (!validators && ctx.chainSpec && ctx.chainSpec.length) {
     validators = new DeltaHistory<string>([], false)
-
-    for (let i=0; i<specTransitions.length; i++) {
-      if (ctx.chainSpec.validatorInfo[specTransitions[i]].list) {
-        validators.addState(parseInt(specTransitions[i]), ctx.chainSpec.validatorInfo[specTransitions[i]].list)
+    let list: any = null
+    for (const spec of ctx.chainSpec) {
+      if (spec.list) validators.addState(spec.block, spec.list)
+      if (spec.contract || spec.engine == 'clique') {
+        if (!list) list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
+        const nextBlock = ctx.chainSpec[ctx.chainSpec.indexOf(spec) + 1].block || Number.MAX_VALUE
+        const filteredList = list.result && list.result.states && list.result.states.filter(s => s.block < nextBlock && s.block >= spec.block)
+        if (spec.engine === 'authorityRound')
+          await addAuraValidators(validators, ctx, filteredList, spec.contract)
+        else if (spec.engine === 'clique')
+          await addCliqueValidators(validators, ctx, filteredList)
       }
-
-      // if transition is contract based and there has been another transition on top of it
-      // then pull in all the validator changes for this transition segment and verify them
-      if ( ctx.chainSpec.validatorInfo[specTransitions[i]].contract
-        && ctx.chainSpec.validatorInfo[specTransitions[i]].list
-        && (specTransitions.length - 1) > i) {
-        const list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
-
-        //filter the list to include the states only until the next transition
-        const filteredList = list.result
-          && list.result.states
-          && list.result.states.filter(s => s.block < parseInt(specTransitions[i + 1]))
-
-        await addAuraValidators(validators, ctx, filteredList, ctx.chainSpec.validatorInfo[specTransitions[i]].contract)
-      }
-
     }
 
     ctx.putInCache('validators', JSON.stringify(validators.toDeltaStrings()))
   }
+  else if (!ctx.chainSpec || !ctx.chainSpec.length) return { authorities: [], proposer: null, spec: null }
 
-  const lastKnownValidatorChange = validators.getLastIndex()
+  const blockNumber = toNumber(b.number)
+  const spec = ctx.chainSpec && ctx.chainSpec.find(_ => _.block <= blockNumber)
+
+  if (!spec) return { authorities: [], proposer: null, spec: null }
 
   //if there is an update in the validator list then get it
-  if (ctx.lastValidatorChange > lastKnownValidatorChange)
+  if (ctx.lastValidatorChange > validators.getLastIndex())
     await checkForValidators(ctx, validators)
 
-
   // get the current validator-list for the block
-  const res: any = { authorities: validators.getData(toNumber(b.number)).map(h => address(h.startsWith('0x') ? h : '0x' + h)), spec: ctx.chainSpec }
+  const res: any = { authorities: validators.getData(toNumber(b.number)).map(h => address(h.startsWith('0x') ? h : '0x' + h)), spec }
 
   // find out who is able to sign with this nonce
-  res.proposer = res.authorities[(ctx.chainSpec.engine == 'clique' ? toNumber(b.number) : b.sealedFields[0].readUInt32BE(0)) % res.authorities.length]
+  res.proposer = res.authorities[(spec.engine == 'clique' ? toNumber(b.number) : b.sealedFields[0].readUInt32BE(0)) % res.authorities.length]
 
-  if (ctx.chainSpec.engine == 'clique' && toNumber(b.difficulty) === 1) res.proposer = null
+  if (spec.engine == 'clique' && toNumber(b.difficulty) === 1) res.proposer = null
 
   return res
 }
