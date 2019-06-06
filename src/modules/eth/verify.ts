@@ -56,8 +56,10 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
   // if we don't expect signatures
   if (!proof.expectedSigners || proof.expectedSigners.length === 0) {
 
+    const spec = ctx && ctx.getChainSpec(toNumber(b.number))
+
     // for proof of authorities we can verify the signatures
-    if (ctx && ctx.chainSpec && (ctx.chainSpec.engine === 'authorityRound' || ctx.chainSpec.engine === 'clique')) {
+    if (spec && (spec.engine === 'authorityRound' || spec.engine === 'clique')) {
       const finality = await checkBlockSignatures([b, ...(proof.proof && proof.proof.finalityBlocks || [])], _ => getChainSpec(_, ctx))
       if (proof.finality && proof.finality > finality)
         throw new Error('we have only a finality of ' + finality + ' but expected was ' + proof.finality)
