@@ -409,7 +409,9 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 
   if (data && (data as any).transactions) {
     const rtransactions = (data as any).transactions as any[]
-    if (rtransactions.length != block.transactions.length) throw new Error('wrong number of transactions in block')
+    const blockTransactionLength = (block.transactions && block.transactions.length) || 0
+
+    if (rtransactions.length != blockTransactionLength) throw new Error('wrong number of transactions in block')
     if (request.params.length == 2 && request.params[1])
       rtransactions.forEach((t: TransactionData, i: number) => {
         if (t.blockHash && !bytes32(t.blockHash).equals(requiredHash || block.hash())) throw new Error('Invalid hash in tx')
