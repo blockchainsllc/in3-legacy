@@ -1,4 +1,4 @@
-image: docker.slock.it/build-images/node:8-alpine
+image: docker.slock.it/build-images/node:11-alpine
 variables:
   COMMIT_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
