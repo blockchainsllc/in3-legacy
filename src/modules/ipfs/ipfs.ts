@@ -83,7 +83,7 @@ export function createIPFSHash(content: Buffer, hashAlg = 'sha2-256') {
 export async function verifyIPFSHash(content: string | Buffer, encoding: string, requestedHash: string) {
   let reponseHash: string
   try {
-    reponseHash = await createIPFSHash(Buffer.isBuffer(content) ? content : Buffer.from(content, encoding))
+    reponseHash = await createIPFSHash(Buffer.isBuffer(content) ? content : Buffer.from(content, encoding as any))
   }
   catch (er) {
     // TODO onlx in the react-native package he is not able to calculate the hash and throws, for now we ignore it, but we should find a solution to make it work there as well.
