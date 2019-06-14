@@ -801,6 +801,9 @@ definitions:
             minBlockHeight:
                 type: integer
                 description: the minimal blockheight in order to sign
+            maxThreads:
+                type: integer
+                description: the maximal number of threads ofr running parallel processes
             persistentFile:
                 type: string
                 description: the filename of the file keeping track of the last handled blocknumber
