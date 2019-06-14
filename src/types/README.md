@@ -645,6 +645,7 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 *  **watchdogInterval** `number` - average time between sending requests to the same node. 0 turns it off (default)   
 *  **freeScore** `number` - the score for requests without a valid signature   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
+*  **maxThreads** `integer` - the maximal number of threads ofr running parallel processes   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   
 *  **startBlock** `number` - blocknumber to start watching the registry   
 *  **watchInterval** `integer` - the number of seconds of the interval for checking for new events   

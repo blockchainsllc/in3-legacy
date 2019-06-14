@@ -468,7 +468,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
 
       // prepare cache-entry
       if (conf.cacheTimeout && CACHEABLE.indexOf(r.method) >= 0) {
-        const key = r.method + r.params.map(_ => _.toString()).join()
+        const key = r.method + JSON.stringify(r.params).replace(/\"/g, '')
         const content = ctx.getFromCache(key)
         const json = content && JSON.parse(content)
         return { key, content: json && json.r, ts: json && json.t }
