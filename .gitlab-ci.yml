@@ -6,7 +6,6 @@ variables:
 stages:
   - build
   - test
-  - implementation
   - deploy
 
 cache:
@@ -74,11 +73,9 @@ test-in3:
       - test/report
 
 test-implementation:
-  stage: implementation
+  stage: test
   tags:
     - short-jobs
-  only: # deploy only on  semantic versions tags
-    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
   script:
     - sh /prepare.sh
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-implementation-tests.git
