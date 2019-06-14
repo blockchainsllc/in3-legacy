@@ -9,7 +9,7 @@ export default class API {
 
   get(hash: string, resultEncoding?: string): Promise<Buffer> {
     return this.client.sendRPC('ipfs_get', [hash, resultEncoding || 'base64'], '0x7d0')
-      .then(response => response.result ? Buffer.from(response.result, resultEncoding || 'base64') : Promise.reject(new Error(response.error || 'Hash not found')) as any)
+      .then(response => response.result ? Buffer.from(response.result, resultEncoding as any || 'base64') : Promise.reject(new Error(response.error || 'Hash not found')) as any)
   }
 
 
