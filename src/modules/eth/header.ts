@@ -138,8 +138,9 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
     const current = history.getData(s.block).map(h => address(h.startsWith('0x') ? h : '0x' + h))
     if (Buffer.concat(current).equals(Buffer.concat(s.validators.map(address)))) continue
 
-    const proof = s.proof as AuraValidatoryProof
     if (!s.proof) throw new Error('The validator list has no proof')
+    const proof = s.proof as AuraValidatoryProof
+
     // decode the blockheader
     const block = blockFromHex(proof.block)
     const finalitySigners = []
@@ -214,6 +215,49 @@ async function checkForValidators(ctx: ChainContext, validators: DeltaHistory<st
   }
 }
 
+function checkForFinality(transitionState: HistoryEntry, history: DeltaHistory<string>) {
+  const current = history.getData(transitionState.block).map(h => address(h.startsWith('0x') ? h : '0x' + h))
+
+  // return if validator list at the block is already been verified and added
+  if (Buffer.concat(current).equals(Buffer.concat(transitionState.validators.map(address)))) return
+
+  if (!transitionState.proof)
+    throw new Error('The transition state has no proof')
+
+  const proof = transitionState.proof as AuraValidatoryProof
+
+  // decode the blockheader
+  const block = blockFromHex(proof.block)
+  const finalitySigners = []
+
+  //verify blockheaders
+  if (toNumber(transitionState.block) !== toNumber(block.number))
+    throw new Error("Block Number in transition validator Proof doesn't match")
+
+  let parentHash = block.parentHash
+  let lastFinalityBlock = null
+
+  for (const b of [block, ...(proof.finalityBlocks || []).map(blockFromHex)]) {
+    if (!parentHash.equals(b.parentHash)) throw new Error('Invalid ParentHash')
+    const signer = getSigner(b)
+    const proposer = current[b.sealedFields[0].readUInt32BE(0) % current.length]
+    if (!Buffer.concat(current).includes(signer)) throw new Error('Block was signed by the wrong validator')
+
+    if (!finalitySigners.find(_ => _.equals(signer)))
+      finalitySigners.push(signer)
+
+    parentHash = b.hash()
+    lastFinalityBlock = b.number
+  }
+
+  //check if the finality of the response is greater than 51%
+  if (Math.ceil(0.51 * current.length) > finalitySigners.length)
+    throw new Error('Not enough finality to accept the state (' +
+      finalitySigners.length + '/' + (Math.ceil(0.51 * current.length)) + ')')
+
+  history.addState(lastFinalityBlock, transitionState.validators)
+}
+
 export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpec> {
 
   let validators: DeltaHistory<string> = null
@@ -230,11 +274,29 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
     validators = new DeltaHistory<string>([], false)
     let list: any = null
     for (const spec of ctx.chainSpec) {
-      if (spec.list) validators.addState(spec.block, spec.list)
+      if (spec.list && !spec.requiresFinality) validators.addState(spec.block, spec.list)
       if (spec.contract || spec.engine == 'clique') {
-        if (!list) list = ctx.client ? await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' }) : { result: { states: [] } }
+        if (!list) list = ctx.client
+          ? await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
+          : { result: { states: [] } }
+
+        /* check if the transition also has a list if it does then we have to for
+        finality to add that list to the history. */
+        if (spec.list && spec.requiresFinality) {
+          const transitionState = list.result &&
+            list.result.states &&
+            list.result.states.filter(s => s.block == spec.block)
+
+          if (!spec.bypassFinality) checkForFinality(transitionState, validators)
+          else validators.addState(spec.bypassFinality, spec.list)
+        }
+
         const nextBlock = (ctx.chainSpec[ctx.chainSpec.indexOf(spec) + 1] || { block: Number.MAX_VALUE }).block
-        const filteredList = list.result && list.result.states && list.result.states.filter(s => s.block < nextBlock && s.block >= spec.block)
+
+        const filteredList = list.result &&
+          list.result.states &&
+          list.result.states.filter(s => s.block < nextBlock && s.block >= spec.block)
+
         if (spec.engine === 'authorityRound')
           await addAuraValidators(validators, ctx, filteredList, spec.contract)
         else if (spec.engine === 'clique')

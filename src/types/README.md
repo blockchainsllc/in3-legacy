@@ -199,7 +199,9 @@ const chainSpec:types.ChainSpec = {
   engine: 'ethHash',
   list: [
     null
-  ]
+  ],
+  requiresFinality: true,
+  bypassFinality: 'bypassFinality = 10960502 -> will skip the finality check and add the list at block 10960502'
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -209,6 +211,8 @@ const chainSpec:types.ChainSpec = {
  Must be one of the these values : `'ethHash`', `'authorityRound`', `'clique`'
 *  **list** `string<address>[]` - The list of validators at the particular block   
 *  **contract** `string` - The validator contract at the block   
+*  **requiresFinality** `boolean` - indicates whether the transition requires a finality check   
+*  **bypassFinality** `number` - Bypass finality check for transition to contract based Aura Engines   
 
 ### IN3Config
 

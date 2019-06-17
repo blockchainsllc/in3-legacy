@@ -218,6 +218,14 @@ definitions:
             contract:
                 description: The validator contract at the block
                 type: string
+            requiresFinality:
+                description: indicates whether the transition requires a finality check
+                type: boolean
+                example: true
+            bypassFinality:
+                description: Bypass finality check for transition to contract based Aura Engines
+                type: number
+                example: bypassFinality = 10960502 -> will skip the finality check and add the list at block 10960502
 
     IN3Config:
         description: the iguration of the IN3-Client. This can be paritally overriden for every request.
@@ -350,7 +358,7 @@ definitions:
                             description: a alias for the chain
                         chainSpec:
                             type: array
-                            items: 
+                            items:
                                 $ref: "#/definitions/ChainSpec"
                             description: chain definitions
                         initAddresses:
