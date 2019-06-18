@@ -193,8 +193,7 @@
             "0x03801efb0efe2a25ede5dd3a003ae880c0292e4d",
             "0xd05f7478c6aa10781258c5cc8b4f385fc8fa989c"
           ],
-          "requiresFinality": true,
-          "bypassFinality": 10960502
+          "requiresFinality": true
         }
       ],
       "needsUpdate": true,

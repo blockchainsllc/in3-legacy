@@ -247,7 +247,7 @@ function checkForFinality(transitionState: HistoryEntry, history: DeltaHistory<s
       finalitySigners.push(signer)
 
     parentHash = b.hash()
-    lastFinalityBlock = b.number
+    lastFinalityBlock = toNumber(b.number)
   }
 
   //check if the finality of the response is greater than 51%
@@ -255,7 +255,7 @@ function checkForFinality(transitionState: HistoryEntry, history: DeltaHistory<s
     throw new Error('Not enough finality to accept the state (' +
       finalitySigners.length + '/' + (Math.ceil(0.51 * current.length)) + ')')
 
-  history.addState(lastFinalityBlock, transitionState.validators)
+  history.addState(lastFinalityBlock + 1, transitionState.validators)
 }
 
 export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpec> {
@@ -283,12 +283,20 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
         /* check if the transition also has a list if it does then we have to for
         finality to add that list to the history. */
         if (spec.list && spec.requiresFinality) {
+
+          if (spec.bypassFinality) {
+            validators.addState(spec.bypassFinality, spec.list)
+            continue
+          }
+
           const transitionState = list.result &&
             list.result.states &&
             list.result.states.filter(s => s.block == spec.block)
 
-          if (!spec.bypassFinality) checkForFinality(transitionState, validators)
-          else validators.addState(spec.bypassFinality, spec.list)
+          if(!transitionState || !transitionState.length) continue
+
+          checkForFinality(transitionState[0], validators)
+          continue
         }
 
         const nextBlock = (ctx.chainSpec[ctx.chainSpec.indexOf(spec) + 1] || { block: Number.MAX_VALUE }).block
