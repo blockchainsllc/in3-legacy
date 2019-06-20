@@ -12,4 +12,5 @@ Welcome to Incubed's documentation!
    incentivization
    decentralizing_services
    milestones
+   spec
    api
