@@ -83,12 +83,20 @@ export default class Client extends EventEmitter {
       }
     }
     if (config && config.rpc) {
-      this.defConfig.servers['0xffff'].nodeList = config.rpc.split(',').filter(_ => _).map(url => ({
-        deposit: 0,
-        chainIds: ['0xffff'],
-        address: '0x0000000000000000000000000000000000000000',
-        url, props: 0
-      }))
+      // if we have a rpc-endpoint, we create a local chain def.
+      this.defConfig.servers['0xffff'] = {
+        name: 'local rpc',
+        verifier: 'eth',
+        needsUpdate: false,
+        contractChain: '0xffff',
+        contract: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        nodeList: config.rpc.split(',').filter(_ => _).map(url => ({
+          deposit: 0,
+          chainIds: ['0xffff'],
+          address: '0x0000000000000000000000000000000000000000',
+          url, props: 0
+        }))
+      }
       this.defConfig.proof = 'none'
       this.defConfig.chainId = '0xffff'
     }
