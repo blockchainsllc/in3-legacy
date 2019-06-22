@@ -1,4 +1,4 @@
-# TS : API
+# API Reference TS
 
 This page contains a list of all Datastructures and Classes used within the TypeScript IN3 Client.
 
@@ -65,17 +65,17 @@ This page contains a list of all Datastructures and Classes used within the Type
 
 * **[chainAliases](https://github.com/slockit/in3/blob/master/src/index.ts#L82)**
 
-    * **[goerli](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L690)** :`string` 
+    * **[goerli](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L698)** :`string` 
 
-    * **[ipfs](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L690)** :`string` 
+    * **[ipfs](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L698)** :`string` 
 
-    * **[kovan](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L690)** :`string` 
+    * **[kovan](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L698)** :`string` 
 
-    * **[main](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L690)** :`string` 
+    * **[main](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L698)** :`string` 
 
-    * **[mainnet](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L690)** :`string` 
+    * **[mainnet](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L698)** :`string` 
 
-    * **[tobalaba](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L690)** :`string` 
+    * **[tobalaba](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L698)** :`string` 
 
 * **[chainData](https://github.com/slockit/in3/blob/master/src/index.ts#L49)**
 
@@ -399,17 +399,17 @@ Source: [client/Client.ts](https://github.com/slockit/in3/blob/master/src/client
 
 * **[addListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/in3/ts/in3/node_modules/@types/node/events.d.ts#L11)**(event :`string`|`symbol`, listener :) :`this` 
 
-* **[call](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L209)**(method :`string`, params :`any`, chain :`string`, config :[`Partial<IN3Config>`](#type-partial)) :`Promise<any>` - sends a simply RPC-Request
+* **[call](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L217)**(method :`string`, params :`any`, chain :`string`, config :[`Partial<IN3Config>`](#type-partial)) :`Promise<any>` - sends a simply RPC-Request
 
-* **[clearStats](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L241)**() :`void` - clears all stats and weights, like blocklisted nodes
+* **[clearStats](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L249)**() :`void` - clears all stats and weights, like blocklisted nodes
 
-* **[createWeb3Provider](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L102)**() :`any` 
+* **[createWeb3Provider](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L110)**() :`any` 
 
 * **[emit](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/in3/ts/in3/node_modules/@types/node/events.d.ts#L23)**(event :`string`|`symbol`, args :`any`[]) :`boolean` 
 
 * **[eventNames](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/in3/ts/in3/node_modules/@types/node/events.d.ts#L24)**() :[`Array<>`](#type-array) 
 
-* **[getChainContext](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L109)**(chainId :`string`) :[`ChainContext`](#type-chaincontext) 
+* **[getChainContext](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L117)**(chainId :`string`) :[`ChainContext`](#type-chaincontext) 
 
 * **[getMaxListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/in3/ts/in3/node_modules/@types/node/events.d.ts#L20)**() :`number` 
 
@@ -433,16 +433,16 @@ Source: [client/Client.ts](https://github.com/slockit/in3/blob/master/src/client
 
 * **[removeListener](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/in3/ts/in3/node_modules/@types/node/events.d.ts#L16)**(event :`string`|`symbol`, listener :) :`this` 
 
-* **[send](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L221)**(request :[`RPCRequest`](#type-rpcrequest)[]|[`RPCRequest`](#type-rpcrequest), callback :, config :[`Partial<IN3Config>`](#type-partial)) :`Promise<>` - sends one or a multiple requests.
+* **[send](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L229)**(request :[`RPCRequest`](#type-rpcrequest)[]|[`RPCRequest`](#type-rpcrequest), callback :, config :[`Partial<IN3Config>`](#type-partial)) :`Promise<>` - sends one or a multiple requests.
     if the request is a array the response will be a array as well.
     If the callback is given it will be called with the response, if not a Promise will be returned.
     This function supports callback so it can be used as a Provider for the web3.
 
-* **[sendRPC](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L198)**(method :`string`, params :`any`[] =  [], chain :`string`, config :[`Partial<IN3Config>`](#type-partial)) :[`Promise<RPCResponse>`](#type-rpcresponse) - sends a simply RPC-Request
+* **[sendRPC](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L206)**(method :`string`, params :`any`[] =  [], chain :`string`, config :[`Partial<IN3Config>`](#type-partial)) :[`Promise<RPCResponse>`](#type-rpcresponse) - sends a simply RPC-Request
 
 * **[setMaxListeners](https://github.com/slockit/in3/blob/master/src//Users/simon/ws/in3/ts/in3/node_modules/@types/node/events.d.ts#L19)**(n :`number`) :`this` 
 
-* **[updateNodeList](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L132)**(chainId :`string`, conf :[`Partial<IN3Config>`](#type-partial), retryCount :`number` = 5) :`Promise<void>` - fetches the nodeList from the servers.
+* **[updateNodeList](https://github.com/slockit/in3/blob/master/src/client/Client.ts#L140)**(chainId :`string`, conf :[`Partial<IN3Config>`](#type-partial), retryCount :`number` = 5) :`Promise<void>` - fetches the nodeList from the servers.
 
 
 ## Type IN3Config

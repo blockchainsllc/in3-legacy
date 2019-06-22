@@ -129,6 +129,15 @@ Incubed support multiple chains and a client may even run request to different c
 Each Chain is identified by a `uint64` identifier written as hex-value. (without leading zeros)
 Since incubed started with ethereum, the chainIds for public ethereum-chains are based on the intrinsic chainId of the ethereum-chain. See https://chainid.network .
 
+For each Chain incubed manages a list of nodes as stored in the [server registry](#contracts) and a chainspec describing the verification. 
+
+A chain-configuration holds the following information.
+
+
+## Contracts
+
+
+
 ## Binary Format
 
 TBD

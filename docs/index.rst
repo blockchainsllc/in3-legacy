@@ -3,7 +3,7 @@ Welcome to Incubed's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Concept:
 
    intro
    getting_started
@@ -11,6 +11,13 @@ Welcome to Incubed's documentation!
    poa
    incentivization
    decentralizing_services
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference:
+
+   Threat-Model-for-Incubed
    milestones
    spec
-   api
+   api-ts
+   api-c
