@@ -72,22 +72,6 @@ test-in3:
     paths:
       - test/report
 
-docu-in3:
-  stage: test
-  tags:
-    - short-jobs
-  script:
-    - sh /prepare.sh
-    - npm install
-    - npm run build
-    - npm run updateTS
-    - npm run docu
-
-  artifacts:
-    name: "docu"
-    paths:
-      - docs/_build
-
 test-implementation:
   stage: test
   tags:

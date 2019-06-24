@@ -4,12 +4,9 @@
   "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
   "scripts": {
-    "docu": "docker run --rm -tv $(pwd):/src docker.slock.it/build-images/doc:readthedocs bash -c \"cd //src/docs && make html && make latexpdf && make text\"",
     "build": "tsc -p .; cp src/client/defaultConfig.json js/src/client/",
     "test": "CI=true nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
-    "updateC": "npm install slockit-generator; slockit-doxygen ../../c/in3-core/build/docs/doc_doxygen/xml \"#API Reference C\n\n\" >  docs/api-c.md",
     "updateTypes": "npm install slockit-generator; cd node_modules/slockit-generator; npm run build; cd ../..; slockit-types ",
-    "updateTS": "typedoc  --exclude test --excludePrivate  --readme none --ignoreCompilerErrors --target ES6  --mode 'modules' --json doc.json src/index.ts ; cat  doc.json | slockit-docu index slockit/in3/blob/master/src \"# API Reference TS\n\nThis page contains a list of all Datastructures and Classes used within the TypeScript IN3 Client.\n\" >  docs/api-ts.md ; rm doc.json",
     "changelog": "auto-changelog",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
