@@ -120,8 +120,6 @@ An example of such a response would look like this:
 }
 ```
 
-
-
 ## ChainId
 
 Incubed support multiple chains and a client may even run request to different chains in parallel. While in most cases a chain refers to a specific running blockchain, chainIds may also refer to abstract networks such as ipfs. So then definition of a chain in the context of incubed is simply a distributed data domain offering verifieable api-functions implemented in a in3-node.
@@ -129,14 +127,50 @@ Incubed support multiple chains and a client may even run request to different c
 Each Chain is identified by a `uint64` identifier written as hex-value. (without leading zeros)
 Since incubed started with ethereum, the chainIds for public ethereum-chains are based on the intrinsic chainId of the ethereum-chain. See https://chainid.network .
 
-For each Chain incubed manages a list of nodes as stored in the [server registry](#contracts) and a chainspec describing the verification. 
+For each Chain incubed manages a list of nodes as stored in the [server registry](#registry) and a chainspec describing the verification. These chainspecs are hold in the client as they specify the rules how responses may be validated.
 
-A chain-configuration holds the following information.
+## Registry
+
+As Incubed aims for a fully decentralized access to the blockchain, the registry is implemented as a ethereum smart contract. 
+
+This contract serves different purposes. Primary it serves to manage all the incubed nodes, i.e. it manages both the onboarding and also unregistering process. In order to do so, it also has to manage the deposits: reverting when the amount of provided ether is smaller than the current minimum deposit; but also locking and/or sending back deposits after a servers leaves the in3-netwerk.
+
+In addition, the contract is also used to secure the in3-netwerk by providing functions to convict servers that provided a wrongly signed block and also having a function to vote out inactive servers.
+
+### Node structure
+
+Each Incubed node must be registered in the ServerRegistry in order to be known to the network. A node or server is defined as 
+
+*  **url** `string` - the public url of the node, which must accept JSON-RPC Requests.
+
+*  **owner** `address` - the owner of the node with the permission to edit or remove the node.  
+
+*  **signer** `address` - the address used when signing blockhashes. This address must be unique withitn the nodeList.   
+
+*  **timeout** `uint64` - timeout after which the owner is allowed to receive his stored deposit. This information is also important for the client, since a invalid blockhash-signature can only convicted as long as the server is registered. A long timout may give a higher security since the node can not lie and unregister right away.
+
+*  **deposit** `uint256` - the deposit stored for the node, which the node will lose if it signes a wrong blockhash.
+
+*  **props** `uint64` - a bitmask defining the capabilities of the node:
+
+    - `0x1` : **proof** :  the node is able to deliver proof, if not set it may only server pure Ethereum JSON/RPC, thus also simple remote nodes may be registered as incubed nodes.
+    - `0x2` : **multichain** : the same rpc endpoint may also accept requests for different chains.
+    - `0x4` : **archive** : if set, the node is able to support archive requests returning older states. If not only a pruned node is running.
+
+    More properties will be added in future versions.
+
+*  **unregisterTime** `uint64` - the earliest timestamp when the node can unregister itself by calling `confirmUnregisteringServer`.  This will only be set after the node requests a unregister. For the client nodes with a `unregisterTime` set have a less trust, since he will not be able to convict after this timestamp.
+
+*  **registerTime** `uint64` - the timestamp, when the server was registered.
+
+*  **weight** `uint64` - the number of parallel requests this node may accept. A higher number indicates a stronger node, which will be used withtin the incentivication layer to calculate the score.
+
+The following functions are offered within the registry:
 
 
-## Contracts
+### Registry functions
 
-
+//TODO add interface for new contract.
 
 ## Binary Format
 

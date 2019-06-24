@@ -4,7 +4,7 @@ Incubed implements 2 Versions.
  - **Typescript / Javascript** , which is optimized for dapps, webapps or mobile apps.
  - **embedded C** optimized for microcontrollers and all other use cases.  
 
-## V1.1 Stable - Dec 2018
+## V1.2 Stable - Q3 2019
 
 The first stable release, which was published after devcon. It contains full verification of all relevant ethereum rpc-calls (except eth_call for eWasm-Contracts), but no payment or incentivisation included yet.
 
@@ -29,7 +29,7 @@ The first stable release, which was published after devcon. It contains full ver
 - **TypeScript Support** - as Incubed is written 100% in typescript, you get all the advantages of a typesafe tollchain.
 - **Integrations** -  Incubed has been succesfully tested in all major browsers, nodejs and even react-native.
 
-## V1.2 Incentivisation - Q2 2019
+## V1.2 Incentivisation - Q3 2019
 
 This release will introduce the Incentivisation-Layer, which should help provide more nodes to create the decentralized Network. 
 
@@ -37,20 +37,20 @@ This release will introduce the Incentivisation-Layer, which should help provide
 - **Signed Requests** - Incubed supports the Incentivisation-Layer which requires signed requests in order to assign client requests to certain nodes.
 - **Network-Balancing** - Nodes will balance the Network based on Load and Reputation.
 
-## V1.3 eWasm - Q3 2019
+## V1.3 eWasm - Q1 2020
 
 For `eth_call`-Verification the client and server must be able to execute the code. This release adds the ability to also 
 
 - **eWasm** - Support eWasm Contracts in eth_casll.
 
-## V1.4 Substrate - Q4 2019
+## V1.4 Substrate - Q3 2020
 
 Supporting Polkadot or any Substrate-based chains.
 
 - **Substrate** - Framework support
 - **Runtime-Optimization** - Using pre-compiled Runtimes. 
 
-## V1.5 Services - Q2 2020
+## V1.5 Services - Q1 2021
 
 Generic Interface for any deterministic Service (as docker-container) to be decentralized and verified.
 
