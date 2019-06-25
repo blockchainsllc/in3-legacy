@@ -252,7 +252,7 @@ export interface Signer {
 }
 
 
-export default class API {
+export default class EthAPI {
     client: Client
     signer?: Signer
 
@@ -681,7 +681,7 @@ export default class API {
 
 }
 
-async function confirm(txHash: Hash, api: API, gasPaid: number, confirmations: number, timeout = 10) {
+async function confirm(txHash: Hash, api: EthAPI, gasPaid: number, confirmations: number, timeout = 10) {
     let steps = 200
     const start = Date.now()
     while (Date.now() - start < timeout * 1000) {
@@ -709,7 +709,7 @@ async function confirm(txHash: Hash, api: API, gasPaid: number, confirmations: n
     throw new Error('Error waiting for the transaction to confirm')
 }
 
-async function prepareTransaction(args: TxRequest, api?: API): Promise<Transaction> {
+async function prepareTransaction(args: TxRequest, api?: EthAPI): Promise<Transaction> {
     const sender = args.from || (args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex')))
 
     const tx: any = {}
