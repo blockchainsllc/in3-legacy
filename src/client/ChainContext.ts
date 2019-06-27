@@ -30,7 +30,8 @@ export default class ChainContext {
   module: Module
   chainId: string
   lastValidatorChange: number
-  genericCache: {[key:string]:string}
+  genericCache: { [key: string]: string }
+  registryId?: string
 
   constructor(client: Client, chainId: string, chainSpec: ChainSpec) {
     this.client = client

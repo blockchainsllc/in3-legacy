@@ -82,7 +82,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
 
 
   // verify the signatures for only the blocks matching the given
-  const messageHash: Buffer = util.keccak(Buffer.concat([blockHash, bytes32(b.number)]))
+  const messageHash: Buffer = util.keccak(Buffer.concat([blockHash, bytes32(b.number), ctx.registryId ? bytes32(ctx.registryId) : Buffer.allocUnsafe(0)]))
   if (!signaturesForBlock.reduce((p, signature, i) => {
 
     if (!messageHash.equals(bytes32(signature.msgHash)))
@@ -541,16 +541,16 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // verify the values of the proof
   for (const n of nl.nodes) {
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 1), bytes32(Buffer.concat([uint64(n.timeout ? n.timeout : 0), address(n.address)])), 'wrong owner ')
+    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 1), bytes32(Buffer.concat([uint64(n.timeout ? n.timeout : 3600), address(n.address)])), 'wrong owner ')
     // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals
-    const deposit = getStorageValue(accountProof, getStorageArrayKey(0, n.index, 6, 2))
+    const deposit = getStorageValue(accountProof, getStorageArrayKey(0, n.index, 5, 2))
     if (parseInt(toBN(deposit).toString()) != parseInt(n.deposit as any))
       throw new Error('wrong deposit ')
     //    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
     const props: Buffer = bytes32(n.props)
     if (n.capacity) props.writeUInt32BE(n.capacity, 12)
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 3), props, 'wrong props ')
-    const urlKey = getStorageArrayKey(0, n.index, 6, 0)
+    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 3), props, 'wrong props ')
+    const urlKey = getStorageArrayKey(0, n.index, 5, 0)
     const urlVal = getStringValue(getStorageValue(accountProof, urlKey), urlKey)
     if (typeof urlVal === 'string') {
       if (urlVal !== n.url)
@@ -580,7 +580,7 @@ export function getStorageValue(ap: AccountProof, storageKey: Buffer): Buffer {
     entry = ap.storageProof.find(_ => _.key === key)
   }
 
-  if (!entry) throw new Error(' There is no storrage key ' + key + ' in the storage proof!')
+  if (!entry) throw new Error(' There is no storage key ' + key + ' in the storage proof!')
   return bytes32(entry.value)
 }
 

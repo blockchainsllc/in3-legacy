@@ -121,7 +121,9 @@ export default class Client extends EventEmitter {
     const chainConf = this.defConfig.servers[chainId]
     if (!chainConf) throw new Error('chainid ' + chainId + ' does not exist in config!')
 
-    return this.chains[chainId] = getModule(chainConf.verifier || 'eth').createChainContext(this, chainId, chainConf.chainSpec)
+    this.chains[chainId] = getModule(chainConf.verifier || 'eth').createChainContext(this, chainId, chainConf.chainSpec)
+    this.chains[chainId].registryId = (chainConf as any).registryId
+    return this.chains[chainId]
   }
 
   get config() {
