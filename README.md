@@ -44,7 +44,6 @@ const web3 = new Web3(new In3Client({
 
 // use the web3
 async function main() {
-  // Check Vitalik's networth.
   const block = await web3.eth.getBlock('latest');
   console.log(block);
 }
