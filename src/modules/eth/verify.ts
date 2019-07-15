@@ -437,7 +437,8 @@ export function verifyTransaction(t: TransactionData) {
 
   if (new BN(t.s).cmp(N_DIV_2) === 1) throw new Error('Invalid signature')
   const senderPubKey = ethUtil.ecrecover(rawHash, v, bytes(t.r), bytes(t.s))
-  if (!bytes(t.publicKey).equals(senderPubKey)) throw new Error('Invalid public key')
+
+  if (t.publicKey) if (!bytes(t.publicKey).equals(senderPubKey)) throw new Error('Invalid public key')
   if (!address(t.from).equals(ethUtil.publicToAddress(senderPubKey))) throw new Error('Invalid from')
   if (t.raw && !bytes(t.raw).equals(ethUtil.rlp.encode(raw))) throw new Error('Invalid Raw data')
   if (t.standardV && toNumber(t.standardV) != v - 27) throw new Error('Invalid stanardV ')
@@ -541,6 +542,8 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // verify the values of the proof
   for (const n of nl.nodes) {
+
+    console.log("n ", n)
     checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 1), bytes32(Buffer.concat([uint64(n.timeout ? n.timeout : 3600), address(n.address)])), 'wrong owner ')
     // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals
     const deposit = getStorageValue(accountProof, getStorageArrayKey(0, n.index, 5, 2))
