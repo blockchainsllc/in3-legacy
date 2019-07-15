@@ -39,16 +39,6 @@
     "0x44d": {
       "name": "tobalaba",
       "verifier": "eth",
-      "chainSpec": [
-        {
-          "block": 0,
-          "engine": "authorityRound",
-          "contract": "0x1000000000000000000000000000000000000005",
-          "list": [
-            "0x4ba15b56452521c0826a35a6f2022e1210fc519b"
-          ]
-        }
-      ],
       "needsUpdate": true,
       "contractChain": "0x44d",
       "contract": "0x845E484b505443814B992Bf0319A5e8F5e407879",
@@ -193,8 +183,7 @@
             "0x03801efb0efe2a25ede5dd3a003ae880c0292e4d",
             "0xd05f7478c6aa10781258c5cc8b4f385fc8fa989c"
           ],
-          "requiresFinality": true,
-          "bypassFinality": 10960502
+          "requiresFinality": true
         }
       ],
       "needsUpdate": true,
