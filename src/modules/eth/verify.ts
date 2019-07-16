@@ -543,16 +543,31 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
   // verify the values of the proof
   for (const n of nl.nodes) {
 
-    console.log("n ", n)
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 1), bytes32(Buffer.concat([uint64(n.timeout ? n.timeout : 3600), address(n.address)])), 'wrong owner ')
+    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 4), bytes32("0x" + (n as any).proofHash), 'wrong proof ')
+
+    const calcProofHash = ethUtil.keccak(
+      Buffer.concat([
+        bytes32(n.deposit),
+        uint64(n.timeout),
+        uint64((n as any).registerTime),
+        uint64((n as any).unregisterTime),
+        uint64(n.props),
+        address((n as any).address),
+        bytes(n.url)
+      ])
+    )
+    if (Buffer.compare(calcProofHash, bytes32("0x" + (n as any).proofHash)) !== 0) throw new Error("Wrong ProofHash")
+
+
+    /*
     // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals
-    const deposit = getStorageValue(accountProof, getStorageArrayKey(0, n.index, 5, 2))
+    const deposit = 
     if (parseInt(toBN(deposit).toString()) != parseInt(n.deposit as any))
       throw new Error('wrong deposit ')
     //    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
     const props: Buffer = bytes32(n.props)
     if (n.capacity) props.writeUInt32BE(n.capacity, 12)
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 3), props, 'wrong props ')
+    // checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 3), props, 'wrong props ')
     const urlKey = getStorageArrayKey(0, n.index, 5, 0)
     const urlVal = getStringValue(getStorageValue(accountProof, urlKey), urlKey)
     if (typeof urlVal === 'string') {
@@ -564,6 +579,7 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
       if (url !== n.url)
         throw new Error('Wrong url in proof ' + n.url)
     }
+    */
   }
 }
 
