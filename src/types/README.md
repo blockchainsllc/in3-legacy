@@ -67,7 +67,9 @@ const iN3NodeConfig:types.IN3NodeConfig = {
   ],
   deposit: 12350000,
   capacity: 100,
-  props: 3
+  props: 3,
+  registerTime: 1563279168,
+  unregisterTime: 1563279168
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -80,6 +82,8 @@ const iN3NodeConfig:types.IN3NodeConfig = {
 *  **deposit** `integer` (required)  - the deposit of the node in wei   
 *  **capacity** `integer` - the capacity of the node.   
 *  **props** `integer` - the properties of the node.   
+*  **registerTime** `integer` - the UNIX-timestamp when the node was registered   
+*  **unregisterTime** `integer` - the UNIX-timestamp when the node is allowed to be deregister   
 
 ### IN3RPCRequestConfig
 
@@ -372,7 +376,9 @@ const rPCResponse:types.RPCResponse = {
     ],
     deposit: 12350000,
     capacity: 100,
-    props: 3
+    props: 3,
+    registerTime: 1563279168,
+    unregisterTime: 1563279168
   }
 }
 ```
@@ -527,7 +533,9 @@ const serverList:types.ServerList = {
       ],
       deposit: 12350000,
       capacity: 100,
-      props: 3
+      props: 3,
+      registerTime: 1563279168,
+      unregisterTime: 1563279168
     }
   ],
   proof: {
@@ -567,6 +575,7 @@ const serverList:types.ServerList = {
 *  **lastBlockNumber** `integer` - last Block number   
 *  **nodes** `IN3NodeConfig[]` (required)  - the list of nodes   
 *  **contract** `string` - IN3 Registry   
+*  **registryId** `string` - registryId of the contract for signing requests   
 *  **totalServers** `integer` - number of servers   
 *  **proof** [Proof](#proof)   
 

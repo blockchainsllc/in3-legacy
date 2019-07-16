@@ -88,6 +88,14 @@ definitions:
                 description: the properties of the node.
                 type: integer
                 example: 3
+            registerTime:
+                description: the UNIX-timestamp when the node was registered
+                type: integer
+                example: 1563279168
+            unregisterTime:
+                description: the UNIX-timestamp when the node is allowed to be deregister
+                type: integer
+                example: 1563279168
 
     IN3RPCRequestConfig:
         description: additional config for a IN3 RPC-Request
@@ -682,6 +690,10 @@ definitions:
                 type: string
                 description: IN3 Registry
                 pattern: ^0x[0-9a-fA-F]+$
+            registryId: 
+                type: string
+                description: registryId of the contract for signing requests
+                pattern:  ^0x[0-9a-fA-F]+$
             totalServers:
                 type: integer
                 description: number of servers

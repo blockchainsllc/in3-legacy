@@ -179,7 +179,6 @@ export default class Client extends EventEmitter {
       chain, conf)
     const nl = nlResponse.result as ServerList
 
-
     if (config.proof && config.proof != 'none' && nl.contract.toLowerCase() !== servers.contract.toLowerCase()) {
       // the server gave us the wrong contract!
       // should we retry?

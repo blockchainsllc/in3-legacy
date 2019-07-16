@@ -496,6 +496,7 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // check the total servercount
   checkStorage(accountProof, getStorageArrayKey(0), bytes32(nl.totalServers), 'wrong number of servers ')
+  checkStorage(accountProof, getStorageArrayKey(1), bytes32(nl.registryId), 'wrong registryId')
 
   // check blocknumber
   if (toNumber(block.number) < nl.lastBlockNumber)
@@ -549,37 +550,15 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
       Buffer.concat([
         bytes32(n.deposit),
         uint64(n.timeout),
-        uint64((n as any).registerTime),
-        uint64((n as any).unregisterTime),
+        uint64(n.registerTime),
+        uint64(n.unregisterTime),
         uint64(n.props),
-        address((n as any).address),
+        address(n.address),
         bytes(n.url)
       ])
     )
     if (Buffer.compare(calcProofHash, bytes32("0x" + (n as any).proofHash)) !== 0) throw new Error("Wrong ProofHash")
 
-
-    /*
-    // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals
-    const deposit = 
-    if (parseInt(toBN(deposit).toString()) != parseInt(n.deposit as any))
-      throw new Error('wrong deposit ')
-    //    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
-    const props: Buffer = bytes32(n.props)
-    if (n.capacity) props.writeUInt32BE(n.capacity, 12)
-    // checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 3), props, 'wrong props ')
-    const urlKey = getStorageArrayKey(0, n.index, 5, 0)
-    const urlVal = getStringValue(getStorageValue(accountProof, urlKey), urlKey)
-    if (typeof urlVal === 'string') {
-      if (urlVal !== n.url)
-        throw new Error('Wrong url in proof ' + n.url)
-    }
-    else {
-      const url = Buffer.concat(urlVal.storageKeys.map(_ => getStorageValue(accountProof, _))).slice(0, urlVal.len).toString('utf8')
-      if (url !== n.url)
-        throw new Error('Wrong url in proof ' + n.url)
-    }
-    */
   }
 }
 
