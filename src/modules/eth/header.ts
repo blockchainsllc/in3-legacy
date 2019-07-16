@@ -145,7 +145,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
     //get the required finality from the default config of the client
     const reqFinality = (ctx.client && ctx.client.defConfig && ctx.client.defConfig.finality)
 
-    const finalBlock = checkForFinality(toNumber(s.block), proof, current, reqFinality)
+    checkForFinality(toNumber(s.block), proof, current, reqFinality)
 
     // now check the receipt
     const receipt = rlp.decode(await verifyMerkleProof(
@@ -170,7 +170,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
     if (!logData[2].equals(bytes(rawEncode(['address[]'], [s.validators.map(v => v.startsWith('0x') ? v : ('0x' + v))]))))
       throw new Error('Wrong data in log ')
 
-    history.addState(finalBlock+1, s.validators)
+    history.addState(toNumber(s.block), s.validators)
   }
 }
 
@@ -195,15 +195,11 @@ async function checkForValidators(ctx: ChainContext, validators: DeltaHistory<st
   }
 }
 
-function checkForFinality(blockNumber:number, proof: AuraValidatoryProof, current: Buffer[], _finality: number): number {
+function checkForFinality(stateBlockNumber: number, proof: AuraValidatoryProof, current: Buffer[], _finality: number) {
 
   // decode the blockheader
   const block = blockFromHex(proof.block)
   const finalitySigners = []
-
-  //verify blockheaders
-  if (blockNumber !== toNumber(block.number))
-    throw new Error("Block Number in transition validator Proof doesn't match")
 
   let parentHash = block.parentHash
   let lastFinalityBlock = null
@@ -224,7 +220,9 @@ function checkForFinality(blockNumber:number, proof: AuraValidatoryProof, curren
   if ((finalitySigners.length/current.length) < _finality)
     throw new Error("Cannot reach finality. Required: " + _finality + " Reached: " + (finalitySigners.length/current.length))
 
-  return lastFinalityBlock
+  //verify finality block number
+  if (stateBlockNumber !== (lastFinalityBlock + 1))
+    throw new Error("Block Number in state doesn't match with finality blocks")
 }
 
 export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpec> {
@@ -260,7 +258,22 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
 
           const transitionState = list.result &&
             list.result.states &&
-            list.result.states.filter(s => s.block == spec.block)
+            list.result.states.filter(s => {
+              if (s.block <= spec.block) {
+                return false
+              }
+
+              if (!s.proof) return false
+              const proof = s.proof as AuraValidatoryProof
+
+              const block = blockFromHex(proof.block)
+
+              if (toNumber(block.number) !== spec.block) {
+                return false
+              }
+
+              return true
+            })
 
           if(!transitionState || !transitionState.length) continue
 
@@ -270,14 +283,9 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
           if (!transitionState[0].proof) throw new Error('The validator list has no proof')
           const proof = transitionState[0].proof as AuraValidatoryProof
 
-          const transitionFinality = checkForFinality(toNumber(transitionState[0].block), proof, current, 0.51)
+          checkForFinality(toNumber(transitionState[0].block), proof, current, 0.51)
 
-          if (!transitionFinality)
-            throw new Error("Cannot reach finality on transition block")
-
-          //Apply the changes on block at which finality was reached + 1. Because
-          //the new validators will start signing from the next block.
-          validators.addState(transitionFinality + 1, transitionState[0].validators)
+          validators.addState(toNumber(transitionState[0].block), transitionState[0].validators)
 
           continue
         }

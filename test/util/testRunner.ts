@@ -119,7 +119,7 @@ async function runSingleTest(test: any, c: number) {
     //quick hack for transitioned POA verification - Magic Code
     if (client.defConfig.chainId === '0x2a') {
       const ctx = client.getChainContext('0x2a')
-      ctx.lastValidatorChange = 10994694
+      ctx.lastValidatorChange = 10994697
     }
 
     let s = false, error = null

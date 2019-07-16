@@ -26,7 +26,7 @@
                 "proof": []
             },
             {
-                "block": 10960500,
+                "block": 10960502,
                 "validators": [
                     "0xfaadface3fbd81ce37b0e19c0b65ff4234148132",
                     "0x596e8221a30bfe6e7eff67fee664a01c73ba3c56",
@@ -51,7 +51,7 @@
                     "a4df255ecf08bbf2c28055c65225c9a9847abd94",
                     "596e8221a30bfe6e7eff67fee664a01c73ba3c56"
                 ],
-                "block": 10994694,
+                "block": 10994697,
                 "proof": {
                     "txIndex": 3,
                     "proof": [
@@ -68,10 +68,10 @@
                 }
             }
         ],
-        "lastCheckedBlock": 11660969
+        "lastCheckedBlock": 12239982
     },
     "in3": {
-        "lastValidatorChange": 10994694,
-        "execTime": 0
+        "lastValidatorChange": 10994697,
+        "execTime": 1
     }
 }
