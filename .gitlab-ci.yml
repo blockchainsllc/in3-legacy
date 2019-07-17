@@ -61,7 +61,7 @@ test-in3-geth:
   tags:
     - short-jobs
   variables:
-    RPCURL: http://parity:8545
+    RPCURL: http://geth:8545
     IPFS_URL: http://ipfs:5001
   services:
     - name: jbenet/go-ipfs:latest
