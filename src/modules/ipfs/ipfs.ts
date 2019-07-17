@@ -59,7 +59,7 @@ message PBNode {
 
 /**
  * creates a IPFS-Hash from content
- * @param content 
+ * @param content
  */
 export function createIPFSHash(content: Buffer, hashAlg = 'sha2-256') {
   return new Promise<string>((resolve, reject) => {

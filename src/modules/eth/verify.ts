@@ -56,8 +56,10 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
   // if we don't expect signatures
   if (!proof.expectedSigners || proof.expectedSigners.length === 0) {
 
+    const spec = ctx && ctx.getChainSpec(toNumber(b.number))
+
     // for proof of authorities we can verify the signatures
-    if (ctx && ctx.chainSpec && (ctx.chainSpec.engine === 'authorityRound' || ctx.chainSpec.engine === 'clique')) {
+    if (spec && (spec.engine === 'authorityRound' || spec.engine === 'clique')) {
       const finality = await checkBlockSignatures([b, ...(proof.proof && proof.proof.finalityBlocks || [])], _ => getChainSpec(_, ctx))
       if (proof.finality && proof.finality > finality)
         throw new Error('we have only a finality of ' + finality + ' but expected was ' + proof.finality)
@@ -407,7 +409,9 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 
   if (data && (data as any).transactions) {
     const rtransactions = (data as any).transactions as any[]
-    if (rtransactions.length != block.transactions.length) throw new Error('wrong number of transactions in block')
+    const blockTransactionLength = (block.transactions && block.transactions.length) || 0
+
+    if (rtransactions.length != blockTransactionLength) throw new Error('wrong number of transactions in block')
     if (request.params.length == 2 && request.params[1])
       rtransactions.forEach((t: TransactionData, i: number) => {
         if (t.blockHash && !bytes32(t.blockHash).equals(requiredHash || block.hash())) throw new Error('Invalid hash in tx')
