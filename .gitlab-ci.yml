@@ -39,18 +39,6 @@ test-in3-parity:
         - --offline
       alias: ipfs
     - name: docker.slock.it/core-technology/parity-timemachine:master
-      command:
-        - --jsonrpc-experimental
-        - --jsonrpc-apis=all
-        - --logging=3
-        - --jsonrpc-interface=all
-        - --ws-interface=all
-        - --chain=dev
-        - --gas-cap=8000000
-        - --gasprice=0
-        - --reseal-min-period=0
-        - --gas-floor-target=8700000
-        - --tracing=on
       alias: parity
   script:
     - sh /prepare.sh
@@ -68,7 +56,7 @@ test-in3-parity:
     - npm run build
     - npm test
   
-  test-in3-geth:
+test-in3-geth:
   stage: test
   tags:
     - short-jobs
@@ -82,19 +70,7 @@ test-in3-parity:
         - --offline
       alias: ipfs
     - name: docker.slock.it/core-technology/geth-timemachine:master
-      command:
-        - --jsonrpc-experimental
-        - --jsonrpc-apis=all
-        - --logging=3
-        - --jsonrpc-interface=all
-        - --ws-interface=all
-        - --chain=dev
-        - --gas-cap=8000000
-        - --gasprice=0
-        - --reseal-min-period=0
-        - --gas-floor-target=8700000
-        - --tracing=on
-      alias: parity
+      alias: geth
   script:
     - sh /prepare.sh
     - npm install
@@ -142,7 +118,8 @@ pages:
     name: test-results
     url: http://in3.git-pages.slock.it/in3
   dependencies:
-    - test-in3
+    - test-in3-parity
+    - test-in3-geth
   script:
     - mkdir -p public/
     - cp -r test/report/* public/
