@@ -25,7 +25,7 @@ build-in3:
     paths:
       - js/
 
-test-in3:
+test-in3-parity:
   stage: test
   tags:
     - short-jobs
@@ -39,6 +39,49 @@ test-in3:
         - --offline
       alias: ipfs
     - name: docker.slock.it/core-technology/parity-timemachine:master
+      command:
+        - --jsonrpc-experimental
+        - --jsonrpc-apis=all
+        - --logging=3
+        - --jsonrpc-interface=all
+        - --ws-interface=all
+        - --chain=dev
+        - --gas-cap=8000000
+        - --gasprice=0
+        - --reseal-min-period=0
+        - --gas-floor-target=8700000
+        - --tracing=on
+      alias: parity
+  script:
+    - sh /prepare.sh
+    - npm install
+    - npm run build
+    - npm test
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git
+    - cd in3-server
+    - git checkout 64-simplify-smart-contract
+    - npm install
+    - cd node_modules
+    - rm -rf in3
+    - ln -s ../../ in3
+    - cd ..
+    - npm run build
+    - npm test
+  
+  test-in3-geth:
+  stage: test
+  tags:
+    - short-jobs
+  variables:
+    RPCURL: http://parity:8545
+    IPFS_URL: http://ipfs:5001
+  services:
+    - name: jbenet/go-ipfs:latest
+      command:
+        - daemon
+        - --offline
+      alias: ipfs
+    - name: docker.slock.it/core-technology/geth-timemachine:master
       command:
         - --jsonrpc-experimental
         - --jsonrpc-apis=all
