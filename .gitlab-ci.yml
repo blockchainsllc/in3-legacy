@@ -132,7 +132,7 @@ test-implementation:
     - ln -s ../../ in3
     - cd ..
     - npm run build-ts
-    - npm test; echo "done"
+#    - npm test; echo "done"
 
 pages:
   stage: deploy
