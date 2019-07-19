@@ -168,13 +168,20 @@ export function getAddress(pk: string) {
 export function toMinHex(key: string | Buffer | number) {
   if (typeof key === 'number')
     key = toHex(key)
+
   if (typeof key === 'string') {
+    key = key.trim()
+
+    if(key.length<3 || key[0]!='0' || key[1]!='x')
+      throw new Error("Only Hex format is supported. Given value "+ key +" is not valid Hex ")
+
     for (let i = 2; i < key.length; i++) {
       if (key[i] !== '0')
         return '0x' + key.substr(i)
     }
   }
   else if (Buffer.isBuffer(key)) {
+    console.log("s")
     const hex = key.toString('hex')
     for (let i = 0; i < hex.length; i++) {
       if (hex[i] !== '0')
