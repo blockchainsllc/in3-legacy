@@ -1,11 +1,12 @@
 import Client from '../../client/Client'
-import { simpleDecode, methodID, rawEncode, rawDecode } from 'ethereumjs-abi'
+import { methodID, rawEncode, rawDecode } from 'ethereumjs-abi'
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
 import { toHex, toNumber, toBN, toBuffer, toMinHex } from '../../util/util'
 import { bytes32, bytes, address } from './serialize';
 import BN = require('bn.js')
 import { AbiCoder } from '@ethersproject/abi'
+import { RPCResponse } from '../../types/types';
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
 export type Hex = string
@@ -897,5 +898,16 @@ export function encodeFunction(signature: string, args: any[]): string {
     const methodHash = (methodID(signature.substr(0, signature.indexOf('(')), typeArray)).toString('hex')
 
     return methodHash + abiCoder.encode(typeArray, args).substr(2)
+}
 
+export function decodeFunction(signature: string, args: Buffer | RPCResponse): any {
+    const outputParams = signature.split(':')[1]
+
+    const abiCoder = new AbiCoder()
+
+    const typeTemp = outputParams.substring(outputParams.indexOf('(') + 1, (outputParams.indexOf(')')))
+
+    const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
+
+    return abiCoder.decode(typeArray, toBuffer(args))
 }
