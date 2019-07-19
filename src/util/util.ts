@@ -181,7 +181,6 @@ export function toMinHex(key: string | Buffer | number) {
     }
   }
   else if (Buffer.isBuffer(key)) {
-    console.log("s")
     const hex = key.toString('hex')
     for (let i = 0; i < hex.length; i++) {
       if (hex[i] !== '0')
