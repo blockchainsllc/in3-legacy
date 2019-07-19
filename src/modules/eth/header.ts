@@ -2,12 +2,12 @@ import { bytes, bytes32, toBlockHeader, blockFromHex, rlp, Block, hash, address,
 import { toNumber, toHex } from '../../util/util'
 import DeltaHistory from '../../util/DeltaHistory'
 import verifyMerkleProof from '../../util/merkleProof'
-import { rawDecode, rawEncode } from 'ethereumjs-abi'
 import { recover } from 'secp256k1'
 import { publicToAddress } from 'ethereumjs-util'
 import ChainContext from '../../client/ChainContext'
 import { ChainSpec, Proof, AuraValidatoryProof } from '../../types/types'
 import { RPCRequest, RPCResponse } from '../..';
+import { AbiCoder } from '@ethersproject/abi';
 
 /** Authority specification for proof of authority chains */
 export interface AuthSpec {
@@ -167,7 +167,9 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
       throw new Error('Wrong Topics in log ')
 
     //check the list
-    if (!logData[2].equals(bytes(rawEncode(['address[]'], [s.validators.map(v => v.startsWith('0x') ? v : ('0x' + v))]))))
+    const abiCoder = new AbiCoder()
+
+    if (!logData[2].equals(bytes(abiCoder.encode(['address[]'], [s.validators.map(v => v.startsWith('0x') ? v : ('0x' + v))]))))
       throw new Error('Wrong data in log ')
 
     history.addState(toNumber(s.block), s.validators)
@@ -217,8 +219,8 @@ function checkForFinality(stateBlockNumber: number, proof: AuraValidatoryProof, 
     lastFinalityBlock = toNumber(b.number)
   }
 
-  if ((finalitySigners.length/current.length) < _finality)
-    throw new Error("Cannot reach finality. Required: " + _finality + " Reached: " + (finalitySigners.length/current.length))
+  if ((finalitySigners.length / current.length) < _finality)
+    throw new Error("Cannot reach finality. Required: " + _finality + " Reached: " + (finalitySigners.length / current.length))
 
   //verify finality block number
   if (stateBlockNumber !== (lastFinalityBlock + 1))
@@ -275,7 +277,7 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
               return true
             })
 
-          if(!transitionState || !transitionState.length) continue
+          if (!transitionState || !transitionState.length) continue
 
           const current = validators.getData(transitionState[0].block).map(h => address(h.startsWith('0x') ? h : '0x' + h))
           if (Buffer.concat(current).equals(Buffer.concat(transitionState[0].validators.map(address)))) continue

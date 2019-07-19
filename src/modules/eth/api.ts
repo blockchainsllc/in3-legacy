@@ -1,5 +1,5 @@
 import Client from '../../client/Client'
-import { methodID, rawEncode, rawDecode } from 'ethereumjs-abi'
+import { methodID } from 'ethereumjs-abi'
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
 import { toHex, toNumber, toBN, toBuffer, toMinHex } from '../../util/util'
@@ -763,7 +763,9 @@ function convertToType(solType: string, v: any): any {
 }
 
 function decodeResult(types: string[], result: Buffer): any {
-    return rawDecode(types, result).map((v, i) => convertToType(types[i], v))
+    const abiCoder = new AbiCoder()
+
+    return abiCoder.decode(types, result).map((v, i) => convertToType(types[i], v))
 }
 
 function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
@@ -869,7 +871,9 @@ export class SimpleSigner implements Signer {
 
 
 export function soliditySha3(...args: any[]): string {
-    return toHex(keccak(rawEncode(args.map(_ => {
+
+    const abiCoder = new AbiCoder()
+    return toHex(keccak(abiCoder.encode(args.map(_ => {
         switch (typeof (_)) {
             case 'number':
                 return _ < 0 ? 'int256' : 'uint256'
