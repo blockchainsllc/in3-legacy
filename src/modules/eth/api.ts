@@ -5,7 +5,7 @@ import * as ETx from 'ethereumjs-tx'
 import { toHex, toNumber, toBN, toBuffer, toMinHex } from '../../util/util'
 import { bytes32, bytes, address } from './serialize';
 import BN = require('bn.js')
-import { AbiCoder } from '@ethersproject/abi'
+import { AbiCoder, Interface, Fragment } from '@ethersproject/abi'
 import { RPCResponse } from '../../types/types';
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'

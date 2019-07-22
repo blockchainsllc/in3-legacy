@@ -108,8 +108,10 @@ export function toNumber(val: any): number {
         return val.bitLength() > 53 ? toNumber(val.toArrayLike(Buffer)) : val.toNumber()
       else if (val === undefined || val === null)
         return 0
-      else if (val._isBigNumber)
-        return toNumber(val.toNumber())
+      else if (val._isBigNumber) {
+        val = new BN(val.toString())
+        return val.bitLength() > 53 ? toNumber(val.toArrayLike(Buffer)) : val.toNumber()
+      }
       throw new Error('can not convert a ' + (typeof val) + ' to number')
   }
 }
