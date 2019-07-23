@@ -147,6 +147,7 @@ export const address = val => toBuffer(val, 20)
 export const uint = val => toBuffer(val, 0)
 
 export const uint64 = val => toBuffer(val, 8)
+export const uint128 = val => toBuffer(val, 16)
 
 /** create a Buffer[] from RPC-Response */
 export const toBlockHeader = (block: BlockData) => [

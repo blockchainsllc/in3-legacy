@@ -20,7 +20,7 @@
 import EthChainContext from './EthChainContext'
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../../types/types';
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64 } from './serialize';
+import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64, uint128 } from './serialize';
 import { toHex, toNumber, promisify, toMinHex, toBN, toBuffer } from '../../util/util'
 import { executeCall } from './call'
 import { createRandomIndexes } from '../../client/serverList'
@@ -551,14 +551,12 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
         bytes32(n.deposit),
         uint64(n.timeout),
         uint64(n.registerTime),
-        uint64(n.unregisterTime),
-        uint64(n.props),
+        uint128(n.props),
         address(n.address),
         bytes(n.url)
       ])
     )
     if (Buffer.compare(calcProofHash, bytes32("0x" + (n as any).proofHash)) !== 0) throw new Error("Wrong ProofHash")
-
   }
 }
 
