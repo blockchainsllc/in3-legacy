@@ -868,7 +868,9 @@ export class SimpleSigner implements Signer {
     }
 
 }
-
+function encodeEtheresBN(val: any) {
+    return val && BN.isBN(val) ? toHex(val) : val
+}
 
 export function soliditySha3(...args: any[]): string {
 
@@ -884,7 +886,7 @@ export function soliditySha3(...args: any[]): string {
             default:
                 return BN.isBN(_) ? 'uint256' : 'bytes'
         }
-    }), args)))
+    }), args.map(encodeEtheresBN))))
 }
 
 function toHexBlock(b: any): string {
@@ -901,7 +903,7 @@ export function encodeFunction(signature: string, args: any[]): string {
     const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
     const methodHash = (methodID(signature.substr(0, signature.indexOf('(')), typeArray)).toString('hex')
 
-    return methodHash + abiCoder.encode(typeArray, args).substr(2)
+    return methodHash + abiCoder.encode(typeArray, args.map(encodeEtheresBN)).substr(2)
 }
 
 export function decodeFunction(signature: string, args: Buffer | RPCResponse): any {
