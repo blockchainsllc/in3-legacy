@@ -1,10 +1,12 @@
 import Client from '../../client/Client'
-import { simpleDecode, simpleEncode, methodID, rawEncode, rawDecode } from 'ethereumjs-abi'
+import { methodID } from 'ethereumjs-abi'
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
 import { toHex, toNumber, toBN, toBuffer, toMinHex } from '../../util/util'
 import { bytes32, bytes, address } from './serialize';
 import BN = require('bn.js')
+import { AbiCoder, Interface, Fragment } from '@ethersproject/abi'
+import { RPCResponse } from '../../types/types';
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
 export type Hex = string
@@ -761,7 +763,9 @@ function convertToType(solType: string, v: any): any {
 }
 
 function decodeResult(types: string[], result: Buffer): any {
-    return rawDecode(types, result).map((v, i) => convertToType(types[i], v))
+    const abiCoder = new AbiCoder()
+
+    return abiCoder.decode(types, result).map((v, i) => convertToType(types[i], v))
 }
 
 function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
@@ -792,7 +796,7 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
 
     return {
         txdata: '0x' + (values.length
-            ? simpleEncode(method, ...values).toString('hex')
+            ? encodeFunction(method, values)
             : methodID(method.substr(0, method.indexOf('(')), []).toString('hex'))
         , convert
     }
@@ -864,10 +868,14 @@ export class SimpleSigner implements Signer {
     }
 
 }
-
+function encodeEtheresBN(val: any) {
+    return val && BN.isBN(val) ? toHex(val) : val
+}
 
 export function soliditySha3(...args: any[]): string {
-    return toHex(keccak(rawEncode(args.map(_ => {
+
+    const abiCoder = new AbiCoder()
+    return toHex(keccak(abiCoder.encode(args.map(_ => {
         switch (typeof (_)) {
             case 'number':
                 return _ < 0 ? 'int256' : 'uint256'
@@ -878,9 +886,34 @@ export function soliditySha3(...args: any[]): string {
             default:
                 return BN.isBN(_) ? 'uint256' : 'bytes'
         }
-    }), args)))
+    }), args.map(encodeEtheresBN))))
 }
 
 function toHexBlock(b: any): string {
     return typeof b === 'string' ? b : toMinHex(b)
+}
+
+export function encodeFunction(signature: string, args: any[]): string {
+    const inputParams = signature.split(':')[0]
+
+    const abiCoder = new AbiCoder()
+
+    const typeTemp = inputParams.substring(inputParams.indexOf('(') + 1, (inputParams.indexOf(')')))
+
+    const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
+    const methodHash = (methodID(signature.substr(0, signature.indexOf('(')), typeArray)).toString('hex')
+
+    return methodHash + abiCoder.encode(typeArray, args.map(encodeEtheresBN)).substr(2)
+}
+
+export function decodeFunction(signature: string, args: Buffer | RPCResponse): any {
+    const outputParams = signature.split(':')[1]
+
+    const abiCoder = new AbiCoder()
+
+    const typeTemp = outputParams.substring(outputParams.indexOf('(') + 1, (outputParams.indexOf(')')))
+
+    const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
+
+    return abiCoder.decode(typeArray, toBuffer(args))
 }
