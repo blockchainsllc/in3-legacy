@@ -66,6 +66,7 @@ export function checkForError<T extends RPCResponse | RPCResponse[]>(res: T): T 
  */
 export function toBN(val: any) {
   if (BN.isBN(val)) return val
+  if (val && val._isBigNumber) val = val.toHexString();
   if (typeof val === 'number') return new BN(Math.round(val).toString())
   if (Buffer.isBuffer(val)) return new BN(val)
   return new BN(toHex(val).substr(2), 16)
@@ -83,6 +84,8 @@ export function toHex(val: any, bytes?: number): string {
     hex = val.toString(16)
   else if (BN.isBN(val))
     hex = val.toString(16)
+  else if (val && val._isBigNumber)
+    hex = val.toHexString();
   else
     hex = ethUtil.bufferToHex(val).substr(2)
   if (bytes)
@@ -106,12 +109,15 @@ export function toNumber(val: any): number {
         return val.length == 0 ? 0 : parseInt(toMinHex(val))
       else if (BN.isBN(val))
         return val.bitLength() > 53 ? toNumber(val.toArrayLike(Buffer)) : val.toNumber()
+      else if (val && val._isBigNumber)
+        try {
+          return val.toNumber()
+        }
+        catch (ex) {
+          return toNumber(val.toHexString())
+        }
       else if (val === undefined || val === null)
         return 0
-      else if (val._isBigNumber) {
-        val = new BN(val.toString())
-        return val.bitLength() > 53 ? toNumber(val.toArrayLike(Buffer)) : val.toNumber()
-      }
       throw new Error('can not convert a ' + (typeof val) + ' to number')
   }
 }
@@ -121,6 +127,7 @@ export function toNumber(val: any): number {
  *  if len === 0 it will return an empty Buffer if the value is 0 or '0x00', since this is the way rlpencode works wit 0-values.
  */
 export function toBuffer(val, len = -1) {
+  if (val && val._isBigNumber) val = val.toHexString()
   if (typeof val == 'string')
     val = val.startsWith('0x')
       ? Buffer.from((val.length % 2 ? '0' : '') + val.substr(2), 'hex')
