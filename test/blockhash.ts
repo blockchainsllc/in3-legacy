@@ -322,7 +322,7 @@ async function verifyBlock(blockData: any, chainId?: string) {
   const hash = new serialize.Block(blockData).hash()
   assert.equal('0x' + hash.toString('hex'), blockData.hash)
 
-  if (chainId) {
+  if (chainId && conf.servers[chainId].chainSpec) {
     const spec = conf.servers[chainId].chainSpec
     const ctx = {
       chainSpec: spec,
