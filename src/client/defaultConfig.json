@@ -147,7 +147,7 @@
     "0x2a": {
       "name": "kovan",
       "verifier": "eth",
-      "chainSpec": [
+      "deactivated_chainSpec": [
         {
           "block": 0,
           "engine": "authorityRound",
