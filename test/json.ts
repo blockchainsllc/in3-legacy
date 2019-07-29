@@ -11,5 +11,5 @@ for (const a of process.argv.slice(2)) {
         files.push(a)
 }
 //console.log("files:", JSON.stringify(files))
-run_test(files, filter).then(() => console.log('done'), console.log)
+//run_test(files, filter).then(() => console.log('done'), console.log)
 
