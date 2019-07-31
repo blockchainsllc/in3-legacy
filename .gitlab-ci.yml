@@ -38,7 +38,7 @@ test-in3:
         - daemon
         - --offline
       alias: ipfs
-    - name: slockit/parity-in3:v2.3
+    - name: parity/parity:stable
       command:
         - --jsonrpc-experimental
         - --jsonrpc-apis=all
@@ -100,7 +100,7 @@ test-usn-lib:
     TEST_RESULTS: test/results/parity/
     TEST_SCOPE: short
   services:
-    - name: slockit/parity-in3:v2.3
+    - name: parity/parity:stable
       command:
         - --jsonrpc-experimental
         - --jsonrpc-apis=all
