@@ -753,7 +753,7 @@ function convertToType(solType: string, v: any): any {
     if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? toNumber(v) : toBN(v) // TODO handle negative values
     if (solType === 'bool') return typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
     if (solType === 'string') return v.toString('utf8')
-    if (solType === 'address') return toChecksumAddress('0x' + v)
+    if (solType === 'address') return toChecksumAddress(toHex(v))
     //    if (solType === 'bytes') return toBuffer(v)
 
     // everything else will be hexcoded string
@@ -903,7 +903,11 @@ export function encodeFunction(signature: string, args: any[]): string {
     const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
     const methodHash = (methodID(signature.substr(0, signature.indexOf('(')), typeArray)).toString('hex')
 
-    return methodHash + abiCoder.encode(typeArray, args.map(encodeEtheresBN)).substr(2)
+    try {
+        return methodHash + abiCoder.encode(typeArray, args.map(encodeEtheresBN)).substr(2)
+    } catch (e) {
+        throw new Error(`Error trying to encode ${signature} with the params ${args}: ${e}`)
+    }
 }
 
 export function decodeFunction(signature: string, args: Buffer | RPCResponse): any {
@@ -915,5 +919,9 @@ export function decodeFunction(signature: string, args: Buffer | RPCResponse): a
 
     const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
 
-    return abiCoder.decode(typeArray, toBuffer(args))
+    try {
+        return abiCoder.decode(typeArray, toBuffer(args))
+    } catch (e) {
+        throw new Error(`Error trying to decode ${signature} with the params ${args}: ${e}`)
+    }
 }
