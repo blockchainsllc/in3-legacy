@@ -98,12 +98,15 @@ test-usn-lib:
     - sh /prepare.sh
     - npm install
     - npm run build
+    - cd ..
+    - mkdir usn-testing
+    - cd usn-testing
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/iotlayer/usn-lib.git
     - cd usn-lib
     - npm install
     - rm -rf node_modules/in3
     - cd node_modules
-    - ln -s ../../ in3
+    - ln -s /builds/in3/ts/in3 in3
     - cd ..
     - npm run build
     - npm test; echo "done"
