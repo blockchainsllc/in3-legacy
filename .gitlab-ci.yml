@@ -101,6 +101,7 @@ test-usn-lib:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/iotlayer/usn-lib.git
     - cd usn-lib
     - npm install
+    - rm -rf node_modules/in3
     - cd node_modules
     - ln -s ../../ in3
     - cd ..
