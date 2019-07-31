@@ -96,6 +96,9 @@ test-usn-lib:
     - short-jobs
   variables:
     RPCURL: http://parity:8545
+    USN_TESTMODE: parity
+    TEST_RESULTS: test/results/parity/
+    TEST_SCOPE: short
   services:
     - name: slockit/parity-in3:v2.3
       command:
