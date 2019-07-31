@@ -123,6 +123,7 @@ test-usn-lib:
     - mkdir usn-testing
     - cd usn-testing
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/iotlayer/usn-lib.git
+    - git checkout 53-testing-in3-version-error
     - cd usn-lib
     - npm install
     - rm -rf node_modules/in3
