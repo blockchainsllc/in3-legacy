@@ -98,8 +98,7 @@ test-usn-lib:
     - sh /prepare.sh
     - npm install
     - npm run build
-    - npm test
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it:iotlayer/usn-lib.git
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/iotlayer/usn-lib.git
     - cd usn-lib
     - npm install
     - cd node_modules
