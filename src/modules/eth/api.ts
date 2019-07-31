@@ -893,6 +893,19 @@ function toHexBlock(b: any): string {
     return typeof b === 'string' ? b : toMinHex(b)
 }
 
+function fixTypeTest(input: string, type: string): any {
+
+    switch (type) {
+        case "bytes32":
+            return "0x" + toBuffer(input, 32).toString('hex')
+        case "bytes4":
+            return "0x" + toBuffer(input, 4).toString('hex')
+        default: return input
+
+    }
+
+}
+
 export function encodeFunction(signature: string, args: any[]): string {
     const inputParams = signature.split(':')[0]
 
@@ -903,6 +916,9 @@ export function encodeFunction(signature: string, args: any[]): string {
     const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
     const methodHash = (methodID(signature.substr(0, signature.indexOf('(')), typeArray)).toString('hex')
 
+    for (let i = 0; i < args.length; i++) {
+        args[i] = fixTypeTest(args[i], typeArray[i])
+    }
     try {
         return methodHash + abiCoder.encode(typeArray, args.map(encodeEtheresBN)).substr(2)
     } catch (e) {
