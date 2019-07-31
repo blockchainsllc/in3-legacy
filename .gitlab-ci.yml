@@ -116,6 +116,7 @@ test-usn-lib:
     - npm install
     - npm run build
     - cd ..
+    - rm -rf usn-testing
     - mkdir usn-testing
     - cd usn-testing
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/iotlayer/usn-lib.git
@@ -127,6 +128,8 @@ test-usn-lib:
     - cd ..
     - npm run build
     - npm test; echo "done"
+    - cd ..
+    - rm -rf usn-testing
 
 pages:
   stage: deploy
