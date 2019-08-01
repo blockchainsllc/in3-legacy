@@ -1,6 +1,6 @@
 [
     {
-        "descr": "in3_nodeList",
+        "descr": "partial in3 nodelist",
         "chainId": "0x1",
         "fuzzer": true,
         "verification": "proofWithSignatures",
@@ -114,7 +114,7 @@
         ]
     },
     {
-        "descr": "in3_nodeList",
+        "descr": "partial in3 nodelist with wrong server as response",
         "chainId": "0x1",
         "success": false,
         "verification": "proofWithSignatures",
