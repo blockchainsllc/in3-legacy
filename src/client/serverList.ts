@@ -50,6 +50,9 @@ export function canOnionRouting(node: IN3NodeConfig) {
   return !!(node.props & 0x08)
 }
 
+/** 
+ * helper function creating deterministic random indexes used for limited nodelists
+ */
 export function createRandomIndexes(len: number, limit: number, seed: Buffer, result: number[] = []) {
   let step = seed.readUIntBE(0, 6) // first 6 bytes
   let pos = seed.readUIntBE(6, 6) % len// next 6 bytes
