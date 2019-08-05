@@ -765,7 +765,11 @@ function convertToType(solType: string, v: any): any {
 function decodeResult(types: string[], result: Buffer): any {
     const abiCoder = new AbiCoder()
 
-    return abiCoder.decode(types, result).map((v, i) => convertToType(types[i], v))
+    try {
+        return abiCoder.decode(types, result).map((v, i) => convertToType(types[i], v))
+    } catch (e) {
+        throw new Error(`Error trying to decode ${types} with the params ${result}: ${e}`)
+    }
 }
 
 function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
