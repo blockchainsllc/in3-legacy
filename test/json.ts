@@ -7,7 +7,7 @@ for (const a of process.argv.slice(2)) {
     if (a == '-t') filter = -2
     else if (filter === -2)
         filter = parseInt(a)
-    else
+    else if(a.indexOf('.json') != -1)
         files.push(a)
 }
 //console.log("files:", JSON.stringify(files))
