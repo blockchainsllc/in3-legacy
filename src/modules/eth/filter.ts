@@ -19,8 +19,7 @@
 
 import Client from '../../client/Client';
 import { RPCRequest, RPCResponse } from '../../types/types'
-import { LogData } from './serialize'
-import { checkForError } from '../../util/util'
+import { util, serialize} from 'in3-common'
 export type FilterType = 'event' | 'block' | 'pending'
 export interface FilterOptions {
   fromBlock?: number | string
@@ -111,8 +110,8 @@ export default class Filters {
         }
       ]) as Promise<RPCResponse[]>)
         .then(all => all[1].result ? all : [all[0], { result: [] } as any])
-        .then(checkForError)
-        .then(all => [parseInt(all[0].result), all[1].result] as [number, LogData])
+        .then(util.checkForError)
+        .then(all => [parseInt(all[0].result), all[1].result] as [number, serialize.LogData])
 
       filter.lastBlock = blockNumber + 1
       return logs

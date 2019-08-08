@@ -2,8 +2,7 @@ import Client from '../../client/Client'
 import { methodID } from 'ethereumjs-abi'
 import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
-import { toHex, toNumber, toBN, toBuffer, toMinHex } from '../../util/util'
-import { bytes32, bytes, address } from './serialize';
+import { util, serialize } from 'in3-common'
 import BN = require('bn.js')
 import { AbiCoder, Interface, Fragment } from '@ethersproject/abi'
 import { RPCResponse } from '../../types/types';
@@ -314,7 +313,7 @@ export default class EthAPI {
      * Returns the balance of the account of given address in wei (as hex).
      */
     getBalance(address: Address, block: BlockType = 'latest'): Promise<BN> {
-        return this.send<string>('eth_getBalance', address, toHexBlock(block)).then(toBN)
+        return this.send<string>('eth_getBalance', address, toHexBlock(block)).then(util.toBN)
     }
 
     /**
@@ -383,7 +382,7 @@ export default class EthAPI {
     getLogs(filter: LogFilter): Promise<Log[]> {
         if (filter.fromBlock) filter.fromBlock = toHexBlock(filter.fromBlock) as BlockType
         if (filter.toBlock) filter.toBlock = toHexBlock(filter.toBlock) as BlockType
-        if (filter.limit) filter.limit = toNumber(filter.limit)
+        if (filter.limit) filter.limit = util.toNumber(filter.limit)
         return this.send<Log[]>('eth_getLogs', filter)
     }
 
@@ -547,18 +546,18 @@ export default class EthAPI {
      */
     async sign(account: Address, data: Data): Promise<Signature> {
         // prepare data
-        const d = toBuffer(data)
+        const d = util.toBuffer(data)
         const hash = keccak(Buffer.concat([Buffer.from('\x19Ethereum Signed Message:\n' + d.length, 'utf8'), d]))
         let s: any = {
             message: data,
-            messageHash: toHex(hash)
+            messageHash: util.toHex(hash)
         }
 
         if (account && account.length == 66) // use direct pk
-            s = { ...s, ...ecsign(hash, toBuffer(account)) }
+            s = { ...s, ...ecsign(hash, util.toBuffer(account)) }
         else if (this.signer && await this.signer.hasAccount(account)) // use signer
             s = { ...s, ...(await this.signer.sign(hash, account)) }
-        s.signature = toHex(s.r) + toHex(s.s).substr(2) + toHex(s.v).substr(2)
+        s.signature = util.toHex(s.r) + util.toHex(s.s).substr(2) + util.toHex(s.v).substr(2)
         return s
     }
 
@@ -573,17 +572,17 @@ export default class EthAPI {
         if (args.pk) {
             // sign it with the raw keyx
             etx = new ETx({ ...tx, gasLimit: tx.gas })
-            etx.sign(toBuffer(args.pk))
+            etx.sign(util.toBuffer(args.pk))
         }
         else if (this.signer && args.from) {
             const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(this.client, tx) : tx
             etx = new ETx({ ...t, gasLimit: t.gas })
             const signature = await this.signer.sign(etx.hash(false), args.from)
-            if (etx._chainId > 0) signature.v = toHex(toNumber(signature.v) + etx._chainId * 2 + 8)
+            if (etx._chainId > 0) signature.v = util.toHex(util.toNumber(signature.v) + etx._chainId * 2 + 8)
             Object.assign(etx, signature)
         }
         else throw new Error('Invalid transaction-data')
-        const txHash = await this.sendRawTransaction(toHex(etx.serialize()))
+        const txHash = await this.sendRawTransaction(util.toHex(etx.serialize()))
 
         if (args.confirmations === undefined) args.confirmations = 1
 
@@ -644,7 +643,7 @@ export default class EthAPI {
                         address,
                         fromBlock: options.fromBlock || 'latest',
                         toBlock: options.toBlock || 'latest',
-                        topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + bytes32(options.filter[d.name]).toString('hex') : null))],
+                        topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + serialize.bytes32(options.filter[d.name]).toString('hex') : null))],
                         limit: options.limit || 50
                     }).then((logs: Log[]) => logs.map(_ => {
                         const event = ob.events.decode(_)
@@ -676,7 +675,7 @@ export default class EthAPI {
         return decodeEvent(log, d)
     }
     hashMessage(data: Data | Buffer): Buffer {
-        const d = toBuffer(data)
+        const d = util.toBuffer(data)
         return keccak(Buffer.concat([Buffer.from('\x19Ethereum Signed Message:\n' + d.length, 'utf8'), d]))
     }
 
@@ -712,24 +711,24 @@ async function confirm(txHash: Hash, api: EthAPI, gasPaid: number, confirmations
 }
 
 async function prepareTransaction(args: TxRequest, api?: EthAPI): Promise<Transaction> {
-    const sender = args.from || (args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex')))
+    const sender = args.from || (args.pk && toChecksumAddress(privateToAddress(util.toBuffer(args.pk)).toString('hex')))
 
     const tx: any = {}
-    if (args.to) tx.to = toHex(args.to)
+    if (args.to) tx.to = util.toHex(args.to)
     if (args.method) {
         tx.data = createCallParams(args.method, args.args).txdata
         if (args.data) tx.data = args.data + tx.data.substr(10) // this is the case  for deploying contracts
     }
     else if (args.data)
-        tx.data = toHex(args.data)
+        tx.data = util.toHex(args.data)
     if (sender || args.nonce)
-        tx.nonce = toMinHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
+        tx.nonce = util.toMinHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
     if (api)
-        tx.gasPrice = toMinHex(args.gasPrice || Math.round(1.3 * toNumber(await api.gasPrice())))
-    tx.value = toMinHex(args.value || 0)
+        tx.gasPrice = util.toMinHex(args.gasPrice || Math.round(1.3 * util.toNumber(await api.gasPrice())))
+    tx.value = util.toMinHex(args.value || 0)
     if (sender) tx.from = sender
     try {
-        tx.gas = toMinHex(args.gas || (api && (toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
+        tx.gas = util.toMinHex(args.gas || (api && (util.toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
     }
     catch (ex) {
         throw new Error('The Transaction ' + JSON.stringify(args, null, 2) + ' will not be succesfully executed, since estimating gas failed with: ' + ex)
@@ -749,9 +748,9 @@ function convertToType(solType: string, v: any): any {
     }
 
     // convert integers
-    if (solType.startsWith('uint')) return parseInt(solType.substr(4)) <= 32 ? toNumber(v) : toBN(v)
-    if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? toNumber(v) : toBN(v) // TODO handle negative values
-    if (solType === 'bool') return typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
+    if (solType.startsWith('uint')) return parseInt(solType.substr(4)) <= 32 ? util.toNumber(v) : util.toBN(v)
+    if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? util.toNumber(v) : util.toBN(v) // TODO handle negative values
+    if (solType === 'bool') return typeof (v) === 'boolean' ? v : (util.toNumber(v) ? true : false)
     if (solType === 'string') return v.toString('utf8')
     if (solType === 'address') return toChecksumAddress('0x' + v)
     //    if (solType === 'bytes') return toBuffer(v)
@@ -791,7 +790,7 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
     const types = m[1].split(',').filter(_ => _)
     if (values.length < types.length) throw new Error('invalid number of arguments. Must be at least ' + types.length)
     values.forEach((v, i) => {
-        if (types[i] === 'bytes') values[i] = toBuffer(v)
+        if (types[i] === 'bytes') values[i] = util.toBuffer(v)
     })
 
     return {
@@ -834,9 +833,9 @@ function decodeEventData(log: Log, def: string | { _eventHashes: any }): any {
 export function decodeEvent(log: Log, d: ABI): any {
     const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed), r: any = { event: d && d.name }
     if (indexed.length)
-        decodeResult(indexed.map(_ => _.type), Buffer.concat(log.topics.slice(1).map(bytes))).forEach((v, i) => r[indexed[i].name] = v)
+        decodeResult(indexed.map(_ => _.type), Buffer.concat(log.topics.slice(1).map(serialize.bytes))).forEach((v, i) => r[indexed[i].name] = v)
     if (unindexed.length)
-        decodeResult(unindexed.map(_ => _.type), bytes(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
+        decodeResult(unindexed.map(_ => _.type), serialize.bytes(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
     return r
 }
 
@@ -850,7 +849,7 @@ export class SimpleSigner implements Signer {
     }
 
     addAccount(pk: Hash) {
-        const adr: Address = toChecksumAddress(toHex(privateToAddress(toBuffer(pk))))
+        const adr: Address = toChecksumAddress(util.toHex(privateToAddress(util.toBuffer(pk))))
         this.accounts[adr] = pk
         return adr
     }
@@ -861,21 +860,21 @@ export class SimpleSigner implements Signer {
     }
 
     async sign(data: Buffer, account: string): Promise<Signature> {
-        const pk = toBuffer(this.accounts[toChecksumAddress(account)])
+        const pk = util.toBuffer(this.accounts[toChecksumAddress(account)])
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         const sig = ecsign(data, pk)
-        return { messageHash: toHex(data), v: toHex(sig.v), r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
+        return { messageHash: util.toHex(data), v: util.toHex(sig.v), r: util.toHex(sig.r), s: util.toHex(sig.s), message: util.toHex(data) }
     }
 
 }
 function encodeEtheresBN(val: any) {
-    return val && BN.isBN(val) ? toHex(val) : val
+    return val && BN.isBN(val) ? util.toHex(val) : val
 }
 
 export function soliditySha3(...args: any[]): string {
 
     const abiCoder = new AbiCoder()
-    return toHex(keccak(abiCoder.encode(args.map(_ => {
+    return util.toHex(keccak(abiCoder.encode(args.map(_ => {
         switch (typeof (_)) {
             case 'number':
                 return _ < 0 ? 'int256' : 'uint256'
@@ -890,7 +889,7 @@ export function soliditySha3(...args: any[]): string {
 }
 
 function toHexBlock(b: any): string {
-    return typeof b === 'string' ? b : toMinHex(b)
+    return typeof b === 'string' ? b : util.toMinHex(b)
 }
 
 export function encodeFunction(signature: string, args: any[]): string {
@@ -915,5 +914,5 @@ export function decodeFunction(signature: string, args: Buffer | RPCResponse): a
 
     const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
 
-    return abiCoder.decode(typeArray, toBuffer(args))
+    return abiCoder.decode(typeArray, util.toBuffer(args))
 }

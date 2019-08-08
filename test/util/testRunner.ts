@@ -1,7 +1,7 @@
 import Client from '../../src/client/Client'
-import { toNumber } from '../../src/util/util'
 import { readFileSync } from 'fs'
-import { Transport, RPCRequest, RPCResponse } from '../../src'
+import {  RPCRequest, RPCResponse } from '../../src/types/types'
+import { Transport, util } from 'in3-common'
 
 const ignoreFuxxProps = ['id', 'error', 'currentBlock', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
 const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', 'standardV', 'transactionIndex']
@@ -140,8 +140,8 @@ async function runSingleTest(test: any, c: number) {
 function mockValidatorList(response, params?){
     const states = response.result.states
 
-    const startIndex: number = (params && params.length > 0)?toNumber(params[0]):0
-    const limit: number = (params && params.length > 1)?toNumber(params[1]):2
+    const startIndex: number = (params && params.length > 0)? util.toNumber(params[0]):0
+    const limit: number = (params && params.length > 1)? util.toNumber(params[1]):2
 
     return ({
       id: 0,

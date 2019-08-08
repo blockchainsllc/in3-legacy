@@ -20,10 +20,9 @@
 
 import { assert } from 'chai'
 import 'mocha'
-import { serialize, util } from '../src/index'
+import { serialize, util } from 'in3-common'
 import { checkBlockSignatures, getSigner, getChainSpec } from '../src/modules/eth/header'
 import * as ethUtil from 'ethereumjs-util'
-import { toNumber } from '../src/util/util';
 const BN = ethUtil.BN
 const toHex = util.toHex
 const conf = require('../src/client/defaultConfig.json')
