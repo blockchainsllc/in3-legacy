@@ -899,15 +899,10 @@ function toHexBlock(b: any): string {
 
 function fixTypeTest(input: string, type: string): any {
 
-    switch (type) {
-        case "bytes32":
-            return "0x" + toBuffer(input, 32).toString('hex')
-        case "bytes4":
-            return "0x" + toBuffer(input, 4).toString('hex')
-        default: return input
-
+    if (type.includes("bytes") && !type.includes("[")) {
+        return "0x" + toBuffer(input, toNumber(type.substr(5))).toString('hex')
     }
-
+    else return input
 }
 
 export function encodeFunction(signature: string, args: any[]): string {
