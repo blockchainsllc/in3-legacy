@@ -1,4 +1,4 @@
-import { bytes, bytes32, toBlockHeader, blockFromHex, rlp, Block, hash, address, BlockData, LogData, util } from 'in3-common'
+import { bytes, bytes32, toBlockHeader, blockFromHex, rlp, hash, address, BlockData, LogData, util, Block } from 'in3-common'
 import DeltaHistory from '../../util/DeltaHistory'
 import verifyMerkleProof from '../../util/merkleProof'
 import { recover } from 'secp256k1'

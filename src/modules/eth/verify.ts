@@ -136,7 +136,7 @@ export async function verifyTransactionProof(txHash: Buffer, headerProof: BlockH
     block.transactionsTrie, // expected merkle root
     util.rlp.encode(in3util.toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
     headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-    serialize(tx),
+    serialize.serialize(tx),
     'The Transaction can not be verified'
   )
 }
@@ -186,7 +186,7 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
       block.transactionsTrie, // expected merkle root
       util.rlp.encode(in3util.toNumber(txIndex)), // path, which is the transsactionIndex
       headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-      serialize(tx),
+      serialize.serialize(tx),
       'The Transaction can not be verified'
     )
   }
@@ -234,7 +234,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
       block.receiptTrie, // expected merkle root
       util.rlp.encode(in3util.toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
       headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-      serialize(toReceipt(receipt)),
+      serialize.serialize(toReceipt(receipt)),
       'The TransactionReceipt can not be verified'
     ),
     // prev
@@ -634,7 +634,7 @@ async function verifyAccount(accountProof: AccountProof, block: Block) {
       block.stateRoot, // expected merkle root
       util.keccak(accountProof.address), // path, which is the transsactionIndex
       accountProof.accountProof.map(bytes), // array of Buffer with the merkle-proof-data
-      emptyAccount ? null : serialize(toAccount(accountProof)),
+      emptyAccount ? null : serialize.serialize(toAccount(accountProof)),
       'The Account could not be verified'
     ),
 

@@ -840,6 +840,8 @@ export function decodeEvent(log: Log, d: ABI): any {
 }
 
 
+
+
 export class SimpleSigner implements Signer {
     accounts: { [ac: string]: Hash }
 

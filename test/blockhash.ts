@@ -25,7 +25,7 @@ import { checkBlockSignatures, getSigner, getChainSpec } from '../src/modules/et
 import * as ethUtil from 'ethereumjs-util'
 const BN = ethUtil.BN
 const toHex = util.toHex
-const conf = require('../src/client/defaultConfig.json')
+const conf = require('in3-common/js/defaultConfig.json')
 describe('Util-Functions', () => {
 
 

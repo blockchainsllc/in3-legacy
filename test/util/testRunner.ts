@@ -5,7 +5,7 @@ import { Transport, util } from 'in3-common'
 
 const ignoreFuxxProps = ['id', 'error', 'currentBlock', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
 const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', 'standardV', 'transactionIndex']
-const defaultConfig = require('../../src/client/defaultConfig.json')
+const defaultConfig = require('in3-common/js/defaultConfig.json')
 
 
 async function runFuzzTests(filter: number, test: any, allResults: any[], c: number, ob: any, prefix = ''): Promise<number> {
