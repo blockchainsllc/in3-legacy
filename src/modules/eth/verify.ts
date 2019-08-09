@@ -20,12 +20,11 @@
 import EthChainContext from './EthChainContext'
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../../types/types';
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64 } from './serialize';
-import { util as in3util } from 'in3-common'
+import { BlockData, Block , createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64 } from 'in3-common';
+import { util as in3util, storage } from 'in3-common'
 import { executeCall } from './call'
 import { createRandomIndexes } from '../../client/serverList'
 import verifyMerkleProof from '../../util/merkleProof'
-import { getStorageArrayKey, getStringValue } from './storage'
 import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util'
 import ChainContext from '../../client/ChainContext'
@@ -320,7 +319,7 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
     if (!logData[0].equals(address(l.address)))
       throw new Error('Wrong address in log ')
 
-    if (logData[1].map(toHex).join() !== l.topics.join())
+    if (logData[1].map(in3util.toHex).join() !== l.topics.join())
       throw new Error('Wrong Topics in log ')
 
     if (!logData[2].equals(bytes(l.data)))
@@ -498,7 +497,7 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
   if (!accountProof) throw new Error('Missing Account in Account-Proof')
 
   // check the total servercount
-  checkStorage(accountProof, getStorageArrayKey(0), bytes32(nl.totalServers), 'wrong number of servers ')
+  checkStorage(accountProof, storage.getStorageArrayKey(0), bytes32(nl.totalServers), 'wrong number of servers ')
 
   // check blocknumber
   if (in3util.toNumber(block.number) < nl.lastBlockNumber)
@@ -545,17 +544,17 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // verify the values of the proof
   for (const n of nl.nodes) {
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 1), bytes32(Buffer.concat([uint64(n.timeout ? n.timeout : 0), address(n.address)])), 'wrong owner ')
+    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 6, 1), bytes32(Buffer.concat([uint64(n.timeout ? n.timeout : 0), address(n.address)])), 'wrong owner ')
     // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals
-    const deposit = getStorageValue(accountProof, getStorageArrayKey(0, n.index, 6, 2))
+    const deposit = getStorageValue(accountProof, storage.getStorageArrayKey(0, n.index, 6, 2))
     if (parseInt(in3util.toBN(deposit).toString()) != parseInt(n.deposit as any))
       throw new Error('wrong deposit ')
-    //    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
+    //    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
     const props: Buffer = bytes32(n.props)
     if (n.capacity) props.writeUInt32BE(n.capacity, 12)
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 6, 3), props, 'wrong props ')
-    const urlKey = getStorageArrayKey(0, n.index, 6, 0)
-    const urlVal = getStringValue(getStorageValue(accountProof, urlKey), urlKey)
+    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 6, 3), props, 'wrong props ')
+    const urlKey = storage.getStorageArrayKey(0, n.index, 6, 0)
+    const urlVal = storage.getStringValue(getStorageValue(accountProof, urlKey), urlKey)
     if (typeof urlVal === 'string') {
       if (urlVal !== n.url)
         throw new Error('Wrong url in proof ' + n.url)
