@@ -897,10 +897,15 @@ function toHexBlock(b: any): string {
     return typeof b === 'string' ? b : toMinHex(b)
 }
 
-function fixTypeTest(input: string, type: string): any {
+function fixBytesValues(input: string, type: string): any {
 
-    if (type.includes("bytes") && !type.includes("[")) {
-        return "0x" + toBuffer(input, toNumber(type.substr(5))).toString('hex')
+    if (type.includes("bytes")) {
+        if (!type.includes("[")) {
+            return "0x" + toBuffer(input, toNumber(type.substr(5))).toString('hex')
+        }
+        else {
+            return (input as any).map(i => { return ("0x" + toBuffer(i, toNumber(type.substr(5))).toString('hex')) })
+        }
     }
     else return input
 }
@@ -916,7 +921,7 @@ export function encodeFunction(signature: string, args: any[]): string {
     const methodHash = (methodID(signature.substr(0, signature.indexOf('(')), typeArray)).toString('hex')
 
     for (let i = 0; i < args.length; i++) {
-        args[i] = fixTypeTest(args[i], typeArray[i])
+        args[i] = fixBytesValues(args[i], typeArray[i])
     }
     try {
         return methodHash + abiCoder.encode(typeArray, args.map(encodeEtheresBN)).substr(2)
