@@ -53,6 +53,7 @@ test-in3-parity:
     - rm -rf in3
     - ln -s ../../ in3
     - cd ..
+    - npm run updateContracts
     - npm run build
     - npm test
   
@@ -84,6 +85,7 @@ test-in3-geth:
     - rm -rf in3
     - ln -s ../../ in3
     - cd ..
+    - npm run updateContracts
     - npm run build
     - npm test
 
