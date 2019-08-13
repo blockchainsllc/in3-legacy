@@ -199,13 +199,24 @@ describes the chainspecific consensus params
 
 ```javascript
 import {types} from 'in3'
-const chainSpec:types.ChainSpec = {}
+const chainSpec:types.ChainSpec = {
+  engine: 'ethHash',
+  list: [
+    null
+  ],
+  requiresFinality: true,
+  bypassFinality: 'bypassFinality = 10960502 -> will skip the finality check and add the list at block 10960502'
+}
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
+*  **block** `number` - the blocknumnber when this configuration should apply   
 *  **engine** `string` - the engine type (like Ethhash, authorityRound, ... )   
-*  **validatorContract** `string` - the aura contract to get the validators   
-*  **validatorList** `array` - the list of validators   
+ Must be one of the these values : `'ethHash`', `'authorityRound`', `'clique`'
+*  **list** `string<address>[]` - The list of validators at the particular block   
+*  **contract** `string` - The validator contract at the block   
+*  **requiresFinality** `boolean` - indicates whether the transition requires a finality check   
+*  **bypassFinality** `number` - Bypass finality check for transition to contract based Aura Engines   
 
 ### IN3Config
 
@@ -274,7 +285,7 @@ const iN3Config:types.IN3Config = {
     each key in this object will structure its value like: 
     *  **verifier** `string` - name of the module responsible for handling the verification   
     *  **name** `string` - a alias for the chain   
-    *  **chainSpec** [ChainSpec](#chainspec) - chain definition   
+    *  **chainSpec** `ChainSpec[]` - chain definitions   
     *  **initAddresses** `string[]` - a list of addresses which should always be part of the nodelist when getting an update   
     *  **lastBlock** `integer` - the blockNumber of the last event in the registry   
     *  **contract** `string` - the address of the registry contract   

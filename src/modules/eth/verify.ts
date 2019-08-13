@@ -56,8 +56,10 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
   // if we don't expect signatures
   if (!proof.expectedSigners || proof.expectedSigners.length === 0) {
 
+    const spec = ctx && ctx.getChainSpec(toNumber(b.number))
+
     // for proof of authorities we can verify the signatures
-    if (ctx && ctx.chainSpec && (ctx.chainSpec.engine === 'authorityRound' || ctx.chainSpec.engine === 'clique')) {
+    if (spec && (spec.engine === 'authorityRound' || spec.engine === 'clique')) {
       const finality = await checkBlockSignatures([b, ...(proof.proof && proof.proof.finalityBlocks || [])], _ => getChainSpec(_, ctx))
       if (proof.finality && proof.finality > finality)
         throw new Error('we have only a finality of ' + finality + ' but expected was ' + proof.finality)
@@ -192,10 +194,10 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
 
 }
 
-function verifyLog(l: LogData, block: Block, blockHash: string, index: number, txIndex: number, txHash: string) {
+function verifyLog(l: LogData, block: Block, blockHash: string, index: number, txIndex: number, txHash: string, full: boolean) {
   if (l.blockHash !== blockHash) throw new Error('invalid blockhash')
   if (toNumber(l.blockNumber) !== toNumber(block.number)) throw new Error('invalid blocknumber')
-  if (toNumber(l.logIndex) !== index) throw new Error('invalid logIndex')
+  if (full && toNumber(l.logIndex) !== index) throw new Error('invalid logIndex') //TODO need different verification for full, since this only works for the first transaction.
   if (l.transactionHash != txHash) throw new Error('invalid txHash')
   if (toNumber(l.transactionIndex) != txIndex) throw new Error('invalid txIndex')
 
@@ -225,7 +227,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
   if (toNumber(receipt.transactionIndex) !== headerProof.proof.txIndex) throw new Error('Invalid txIndex')
 
   // make sure the data in the receipts are correct
-  receipt.logs.forEach((t, i) => verifyLog(t, block, receipt.blockHash, i, toNumber(receipt.transactionIndex), receipt.transactionHash))
+  receipt.logs.forEach((t, i) => verifyLog(t, block, receipt.blockHash, i, toNumber(receipt.transactionIndex), receipt.transactionHash, useFullProof))
 
   // verifiy the proof
   return Promise.all([
@@ -397,9 +399,16 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
   // verify the transactions
   if (block.transactions) {
     const trie = new Trie()
-    await Promise.all(block.transactions.map((tx, i) =>
-      promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
-    ))
+
+    for (let i = 0; i < block.transactions.length; i++) {
+      const tx = block.transactions[i]
+      await promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
+      console.log(i + " : " + trie.root.toString('hex'))
+
+    }
+    //    await Promise.all(block.transactions.map((tx, i) =>
+    //      promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
+    //    ))
     const thash: Buffer = block.transactions.length ? trie.root : util.KECCAK256_RLP
     if (!thash.equals(block.transactionsTrie))
       throw new Error('The Transactions do not match transactionRoot!')
@@ -407,7 +416,9 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 
   if (data && (data as any).transactions) {
     const rtransactions = (data as any).transactions as any[]
-    if (rtransactions.length != block.transactions.length) throw new Error('wrong number of transactions in block')
+    const blockTransactionLength = (block.transactions && block.transactions.length) || 0
+
+    if (rtransactions.length != blockTransactionLength) throw new Error('wrong number of transactions in block')
     if (request.params.length == 2 && request.params[1])
       rtransactions.forEach((t: TransactionData, i: number) => {
         if (t.blockHash && !bytes32(t.blockHash).equals(requiredHash || block.hash())) throw new Error('Invalid hash in tx')

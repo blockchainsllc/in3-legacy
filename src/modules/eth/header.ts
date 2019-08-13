@@ -2,12 +2,12 @@ import { bytes, bytes32, toBlockHeader, blockFromHex, rlp, Block, hash, address,
 import { toNumber, toHex } from '../../util/util'
 import DeltaHistory from '../../util/DeltaHistory'
 import verifyMerkleProof from '../../util/merkleProof'
-import { rawDecode, rawEncode } from 'ethereumjs-abi'
 import { recover } from 'secp256k1'
 import { publicToAddress } from 'ethereumjs-util'
 import ChainContext from '../../client/ChainContext'
 import { ChainSpec, Proof, AuraValidatoryProof } from '../../types/types'
 import { RPCRequest, RPCResponse } from '../..';
+import { AbiCoder } from '@ethersproject/abi';
 
 /** Authority specification for proof of authority chains */
 export interface AuthSpec {
@@ -132,39 +132,20 @@ function addCliqueValidators(history: DeltaHistory<string>, ctx: ChainContext, s
 
 }
 
-async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, states: HistoryEntry[]) {
+async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContext, states: HistoryEntry[], contract: string) {
   for (const s of states) {
     //skip the current block if already added in the delta
     const current = history.getData(s.block).map(h => address(h.startsWith('0x') ? h : '0x' + h))
     if (Buffer.concat(current).equals(Buffer.concat(s.validators.map(address)))) continue
 
-    const proof = s.proof as AuraValidatoryProof
     if (!s.proof) throw new Error('The validator list has no proof')
-    // decode the blockheader
+    const proof = s.proof as AuraValidatoryProof
+
     const block = blockFromHex(proof.block)
-    const finalitySigners = []
-
-    //verify blockheaders
-    if (toNumber(s.block) !== toNumber(block.number)) throw new Error("Block Number in validator Proof doesn't match")
-    let parentHash = block.parentHash
-    for (const b of [block, ...(proof.finalityBlocks || []).map(blockFromHex)]) {
-      if (!parentHash.equals(b.parentHash)) throw new Error('Invalid ParentHash')
-      const signer = getSigner(b)
-      const proposer = current[b.sealedFields[0].readUInt32BE(0) % current.length]
-      if (!Buffer.concat(current).includes(signer)) throw new Error('Block was signed by the wrong validator')
-
-      if (!finalitySigners.find(_ => _.equals(signer)))
-        finalitySigners.push(signer)
-
-      parentHash = b.hash()
-    }
-
     //get the required finality from the default config of the client
-    const reqFinality = (ctx.client && ctx.client.defConfig && ctx.client.defConfig.finality) || 0
-    //check if the finality of the response is greater than or equal to the required finality
-    if (Math.ceil(reqFinality * current.length / 100) > finalitySigners.length)
-      throw new Error('Not enough finality to accept the state (' +
-        finalitySigners.length + '/' + (Math.ceil(reqFinality * current.length / 100)) + ')')
+    const reqFinality = (ctx.client && ctx.client.defConfig && ctx.client.defConfig.finality)
+
+    checkForFinality(toNumber(s.block), proof, current, reqFinality)
 
     // now check the receipt
     const receipt = rlp.decode(await verifyMerkleProof(
@@ -178,7 +159,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
     if (!logData) throw new Error('Validator changeLog not found in Transaction')
 
     //check for contract address from chain spec
-    if (!logData[0].equals(address(ctx.chainSpec.validatorContract)))
+    if (!logData[0].equals(address(contract)))
       throw new Error('Wrong address in log ')
 
     //check for the standard topic "0x55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89"
@@ -186,42 +167,67 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
       throw new Error('Wrong Topics in log ')
 
     //check the list
-    if (!logData[2].equals(bytes(rawEncode(['address[]'], [s.validators.map(v => v.startsWith('0x') ? v : ('0x' + v))]))))
+    const abiCoder = new AbiCoder()
+
+    if (!logData[2].equals(bytes(abiCoder.encode(['address[]'], [s.validators.map(v => v.startsWith('0x') ? v : ('0x' + v))]))))
       throw new Error('Wrong data in log ')
 
-    history.addState(s.block, s.validators)
+    history.addState(toNumber(s.block), s.validators)
   }
 }
 
 
 async function checkForValidators(ctx: ChainContext, validators: DeltaHistory<string>) {
 
-  if (ctx.chainSpec.engine == 'clique') {
+
+  if (ctx.chainSpec && ctx.chainSpec.length) {
     const list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
-    addCliqueValidators(validators, ctx, list.result && list.result.states)
+    if (list && list.result && list.result.states)
+      for (const state of list.result.states as HistoryEntry[]) {
+        const spec = ctx.getChainSpec(state.block)
+        if (spec && spec.engine === 'authorityRound')
+          await addAuraValidators(validators, ctx, [state], spec.contract)
+        else if (spec && spec.engine === 'clique')
+          await addCliqueValidators(validators, ctx, [state])
+      }
+    else
+      throw new Error('Could not get the new validatorlist! ' + (list && JSON.stringify(list.error)))
+
+    ctx.putInCache('validators', JSON.stringify(validators.toDeltaStrings()))
   }
-  else if (ctx.chainSpec.engine == 'authorityRound') {
-    const list = await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
-    await addAuraValidators(validators, ctx, list.result && list.result.states)
+}
+
+function checkForFinality(stateBlockNumber: number, proof: AuraValidatoryProof, current: Buffer[], _finality: number) {
+
+  // decode the blockheader
+  const block = blockFromHex(proof.block)
+  const finalitySigners = []
+
+  let parentHash = block.parentHash
+  let lastFinalityBlock = null
+
+  for (const b of [block, ...(proof.finalityBlocks || []).map(blockFromHex)]) {
+    if (!parentHash.equals(b.parentHash)) throw new Error('Invalid ParentHash')
+    const signer = getSigner(b)
+    const proposer = current[b.sealedFields[0].readUInt32BE(0) % current.length]
+    if (!Buffer.concat(current).includes(signer)) throw new Error('Block was signed by the wrong validator')
+
+    if (!finalitySigners.find(_ => _.equals(signer)))
+      finalitySigners.push(signer)
+
+    parentHash = b.hash()
+    lastFinalityBlock = toNumber(b.number)
   }
 
-  ctx.putInCache('validators', JSON.stringify(validators.toDeltaStrings()))
+  if ((finalitySigners.length / current.length) < _finality)
+    throw new Error("Cannot reach finality. Required: " + _finality + " Reached: " + (finalitySigners.length / current.length))
+
+  //verify finality block number
+  if (stateBlockNumber !== (lastFinalityBlock + 1))
+    throw new Error("Block Number in state doesn't match with finality blocks")
 }
 
 export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpec> {
-
-  //handle POS chains with defined validator list
-  if (ctx.chainSpec.engine == 'authorityRound' && ctx.chainSpec.validatorList && !ctx.chainSpec.validatorContract) {
-    const res: any = {
-      authorities: ctx.chainSpec.validatorList.map(h => address(h.startsWith('0x') ? h : '0x' + h)),
-      spec: ctx.chainSpec,
-    }
-
-    // for now we do n ot specify a proposer which mean anyone of the validators could sign.
-    //    res.proposer = address(ctx.chainSpec.validatorList[b.sealedFields[0].readUInt32BE(0) % res.authorities.length])
-
-    return res
-  }
 
   let validators: DeltaHistory<string> = null
   const cache = ctx.getFromCache('validators')
@@ -233,23 +239,92 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
   }
 
   // no validators in the cache yet, so we have to find them.
-  if (!validators)
-    validators = new DeltaHistory<string>(ctx.chainSpec.validatorList, false)
+  if (!validators && ctx.chainSpec && ctx.chainSpec.length) {
+    validators = new DeltaHistory<string>([], false)
+    let list: any = null
+    for (const spec of ctx.chainSpec) {
+      if (spec.list && !spec.requiresFinality) validators.addState(spec.block, spec.list)
+      if (spec.contract || spec.engine == 'clique') {
+        if (!list) list = ctx.client
+          ? await ctx.client.sendRPC('in3_validatorlist', [validators.data.length, null], ctx.chainId, { proof: 'none' })
+          : { result: { states: [] } }
 
-  const lastKnownValidatorChange = validators.getLastIndex()
+        /* check if the transition also has a list if it does then we have to for
+        finality to add that list to the history. */
+        if (spec.list && spec.requiresFinality) {
+
+          if (spec.bypassFinality) {
+            validators.addState(spec.bypassFinality, spec.list)
+            continue
+          }
+
+          const transitionState = list.result &&
+            list.result.states &&
+            list.result.states.filter(s => {
+              if (s.block <= spec.block) {
+                return false
+              }
+
+              if (!s.proof) return false
+              const proof = s.proof as AuraValidatoryProof
+
+              const block = blockFromHex(proof.block)
+
+              if (toNumber(block.number) !== spec.block) {
+                return false
+              }
+
+              return true
+            })
+
+          if (!transitionState || !transitionState.length) continue
+
+          const current = validators.getData(transitionState[0].block).map(h => address(h.startsWith('0x') ? h : '0x' + h))
+          if (Buffer.concat(current).equals(Buffer.concat(transitionState[0].validators.map(address)))) continue
+
+          if (!transitionState[0].proof) throw new Error('The validator list has no proof')
+          const proof = transitionState[0].proof as AuraValidatoryProof
+
+          checkForFinality(toNumber(transitionState[0].block), proof, current, 0.51)
+
+          validators.addState(toNumber(transitionState[0].block), transitionState[0].validators)
+
+          continue
+        }
+
+        const nextBlock = (ctx.chainSpec[ctx.chainSpec.indexOf(spec) + 1] || { block: Number.MAX_VALUE }).block
+
+        const filteredList = list.result &&
+          list.result.states &&
+          list.result.states.filter(s => s.block < nextBlock && s.block >= spec.block)
+
+        if (spec.engine === 'authorityRound')
+          await addAuraValidators(validators, ctx, filteredList, spec.contract)
+        else if (spec.engine === 'clique')
+          await addCliqueValidators(validators, ctx, filteredList)
+      }
+    }
+
+    ctx.putInCache('validators', JSON.stringify(validators.toDeltaStrings()))
+  }
+  else if (!ctx.chainSpec || !ctx.chainSpec.length) return { authorities: [], proposer: null, spec: null }
+
+  const blockNumber = toNumber(b.number)
+  const spec = ctx.chainSpec && ctx.chainSpec.find(_ => _.block <= blockNumber)
+
+  if (!spec) return { authorities: [], proposer: null, spec: null }
 
   //if there is an update in the validator list then get it
-  if (ctx.lastValidatorChange > lastKnownValidatorChange)
+  if (ctx.lastValidatorChange > validators.getLastIndex())
     await checkForValidators(ctx, validators)
 
-
   // get the current validator-list for the block
-  const res: any = { authorities: validators.getData(toNumber(b.number)).map(h => address(h.startsWith('0x') ? h : '0x' + h)), spec: ctx.chainSpec }
+  const res: any = { authorities: validators.getData(toNumber(b.number)).map(h => address(h.startsWith('0x') ? h : '0x' + h)), spec }
 
   // find out who is able to sign with this nonce
-  res.proposer = res.authorities[(ctx.chainSpec.engine == 'clique' ? toNumber(b.number) : b.sealedFields[0].readUInt32BE(0)) % res.authorities.length]
+  res.proposer = res.authorities[(spec.engine == 'clique' ? toNumber(b.number) : b.sealedFields[0].readUInt32BE(0)) % res.authorities.length]
 
-  if (ctx.chainSpec.engine == 'clique' && toNumber(b.difficulty) === 1) res.proposer = null
+  if (spec.engine == 'clique' && toNumber(b.difficulty) === 1) res.proposer = null
 
   return res
 }

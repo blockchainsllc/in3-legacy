@@ -112,6 +112,50 @@ test-implementation:
     - npm run build-ts
 #    - npm test; echo "done"
 
+test-usn-lib:
+  stage: test
+  tags:
+    - short-jobs
+  variables:
+    RPCURL: http://parity:8545
+    USN_TESTMODE: parity
+    TEST_RESULTS: test/results/parity/
+    TEST_SCOPE: short
+  services:
+    - name: parity/parity:stable
+      command:
+        - --jsonrpc-experimental
+        - --jsonrpc-apis=all
+        - --logging=3
+        - --jsonrpc-interface=all
+        - --ws-interface=all
+        - --chain=dev
+        - --gas-cap=8000000
+        - --gasprice=0
+        - --reseal-min-period=0
+        - --gas-floor-target=8700000
+        - --tracing=on
+      alias: parity
+  script:
+    - sh /prepare.sh
+    - npm install
+    - npm run build
+    - cd ..
+    - rm -rf usn-testing
+    - mkdir usn-testing
+    - cd usn-testing
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/iotlayer/usn-lib.git -b 53-testing-in3-version-error --single-branch
+    - cd usn-lib
+    - npm install
+    - rm -rf node_modules/in3
+    - cd node_modules
+    - ln -s /builds/in3/ts/in3 in3
+    - cd ..
+    - npm run build
+    - npm test; echo "done"
+    - cd ..
+    - rm -rf usn-testing
+
 pages:
   stage: deploy
   tags:

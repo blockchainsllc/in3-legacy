@@ -57,8 +57,10 @@ export default class Client extends EventEmitter {
   public eth: EthAPI
   public ipfs: IpfsAPI
 
-
+  // config
   public defConfig: IN3Config
+
+  // private
   private transport: Transport
   private chains: { [key: string]: ChainContext }
 

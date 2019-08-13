@@ -8,7 +8,7 @@
     "test": "CI=true nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
     "updateTypes": "npm install slockit-generator; cd node_modules/slockit-generator; npm run build; cd ../..; slockit-types ",
     "changelog": "auto-changelog",
-    "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify --presets [ \"@babel/preset-es2015\" ] ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
+    "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; echo '{}' > node_modules/ethereumjs-vm/node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
     "cmd": "node --experimental-repl-await --inspect -e \"axios=require('axios').default;in3=require('./js/src/index');Client=in3.default;c=new Client()\" -i"
   },
@@ -43,9 +43,9 @@
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.49",
     "@babel/preset-env": "^7.0.0-beta.49",
-    "@babel/preset-es2015": "^7.0.0-beta.49",
+    "@babel/preset-es2015": "^7.0.0-beta.53",
     "@types/cbor": "^2.0.0",
-    "@types/chai": "^4.1.3",
+    "@types/chai": "4.1.7",
     "@types/koa": "^2.0.44",
     "@types/koa-bodyparser": "^4.2.0",
     "@types/koa-router": "^7.0.27",
@@ -56,16 +56,16 @@
     "browserify": "^16.2.3",
     "chai": "^4.1.2",
     "disc": "^1.3.3",
-    "dtsgenerator": "^0.9.9",
+    "handlebars": ">=4.1.2",
     "mocha": "^5.1.1",
     "nyc": "^11.8.0",
     "source-map-support": "^0.5.6",
     "ts-node": "^6.0.3",
     "typedoc": "^0.11.1",
-    "uglify-es": "^3.2.0",
-    "handlebars": ">=4.1.2"
+    "uglify-es": "^3.2.0"
   },
   "dependencies": {
+    "@ethersproject/abi": "^5.0.0-beta.133",
     "ajv": "^6.5.1",
     "axios": "^0.18.1",
     "bs58": "^4.0.1",

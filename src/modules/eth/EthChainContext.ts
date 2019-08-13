@@ -14,7 +14,7 @@ export default class EthChainContext extends ChainContext {
   blockCache: { number: number, header: Buffer, hash: Buffer }[]
   filters: Filters
 
-  constructor(client: Client, chainId: string, chainSpec: ChainSpec) {
+  constructor(client: Client, chainId: string, chainSpec: ChainSpec[]) {
     super(client, chainId, chainSpec)
     this.filters = new Filters()
   }

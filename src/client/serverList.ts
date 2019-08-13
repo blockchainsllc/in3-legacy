@@ -20,15 +20,39 @@
 import { IN3NodeConfig } from '../types/types'
 import { keccak256 } from 'ethereumjs-util'
 
-
+/**
+ * The node is able provide requested proof. 
+ * if not this node is a simple rpc-node without proof.
+ */
 export function canProof(node: IN3NodeConfig) {
-  return (node.props & 0x01) > 0
+  return !!(node.props & 0x01)
 }
 
+/**
+ * This node is able to handle multiple chains.
+ * If not set the chainId is optional, since it will only serve for the one chain.
+ */
 export function canMultiChain(node: IN3NodeConfig) {
-  return (node.props & 0x02) > 0
+  return !!(node.props & 0x02)
 }
 
+/**
+ * If true a archive node is running allowing proofs all the way down to the genesis block.
+ */
+export function canArchive(node: IN3NodeConfig) {
+  return !!(node.props & 0x04)
+}
+
+/**
+ * This node is able to handle requests through onion routing using the tor-network.
+ */
+export function canOnionRouting(node: IN3NodeConfig) {
+  return !!(node.props & 0x08)
+}
+
+/** 
+ * helper function creating deterministic random indexes used for limited nodelists
+ */
 export function createRandomIndexes(len: number, limit: number, seed: Buffer, result: number[] = []) {
   let step = seed.readUIntBE(0, 6) // first 6 bytes
   let pos = seed.readUIntBE(6, 6) % len// next 6 bytes

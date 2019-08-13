@@ -75,7 +75,7 @@ export class AxiosTransport implements Transport {
     // execute request
     try {
       //     requests.forEach(r=>console.log(' => req '+r.method+'('+r.params.map(_=>JSON.stringify(_)).join()+')'))
-      const res = await axios.post(url, requests, { ...conf, timeout: timeout || 5000 })
+      const res = await axios.post(url, requests, { ...conf, timeout: timeout || 50000 })
 
       // throw if the status is an error
       if (res.status > 200) throw new Error('Invalid status')
