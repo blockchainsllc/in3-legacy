@@ -194,10 +194,10 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
 
 }
 
-function verifyLog(l: LogData, block: Block, blockHash: string, index: number, txIndex: number, txHash: string) {
+function verifyLog(l: LogData, block: Block, blockHash: string, index: number, txIndex: number, txHash: string, full: boolean) {
   if (l.blockHash !== blockHash) throw new Error('invalid blockhash')
   if (toNumber(l.blockNumber) !== toNumber(block.number)) throw new Error('invalid blocknumber')
-  if (toNumber(l.logIndex) !== index) throw new Error('invalid logIndex')
+  if (full && toNumber(l.logIndex) !== index) throw new Error('invalid logIndex') //TODO need different verification for full, since this only works for the first transaction.
   if (l.transactionHash != txHash) throw new Error('invalid txHash')
   if (toNumber(l.transactionIndex) != txIndex) throw new Error('invalid txIndex')
 
@@ -227,7 +227,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
   if (toNumber(receipt.transactionIndex) !== headerProof.proof.txIndex) throw new Error('Invalid txIndex')
 
   // make sure the data in the receipts are correct
-  receipt.logs.forEach((t, i) => verifyLog(t, block, receipt.blockHash, i, toNumber(receipt.transactionIndex), receipt.transactionHash))
+  receipt.logs.forEach((t, i) => verifyLog(t, block, receipt.blockHash, i, toNumber(receipt.transactionIndex), receipt.transactionHash, useFullProof))
 
   // verifiy the proof
   return Promise.all([
@@ -399,9 +399,16 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
   // verify the transactions
   if (block.transactions) {
     const trie = new Trie()
-    await Promise.all(block.transactions.map((tx, i) =>
-      promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
-    ))
+
+    for (let i = 0; i < block.transactions.length; i++) {
+      const tx = block.transactions[i]
+      await promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
+      console.log(i + " : " + trie.root.toString('hex'))
+
+    }
+    //    await Promise.all(block.transactions.map((tx, i) =>
+    //      promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
+    //    ))
     const thash: Buffer = block.transactions.length ? trie.root : util.KECCAK256_RLP
     if (!thash.equals(block.transactionsTrie))
       throw new Error('The Transactions do not match transactionRoot!')
