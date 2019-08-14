@@ -399,16 +399,9 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
   // verify the transactions
   if (block.transactions) {
     const trie = new Trie()
-
-    for (let i = 0; i < block.transactions.length; i++) {
-      const tx = block.transactions[i]
-      await promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
-      console.log(i + " : " + trie.root.toString('hex'))
-
-    }
-    //    await Promise.all(block.transactions.map((tx, i) =>
-    //      promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
-    //    ))
+    await Promise.all(block.transactions.map((tx, i) =>
+      promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
+    ))
     const thash: Buffer = block.transactions.length ? trie.root : util.KECCAK256_RLP
     if (!thash.equals(block.transactionsTrie))
       throw new Error('The Transactions do not match transactionRoot!')
