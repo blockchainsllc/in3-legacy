@@ -80,7 +80,7 @@
     "merkle-patricia-tree": "^2.3.1",
     "multihashing-async": "^0.5.1",
     "protons": "^1.0.1",
-    "in3-common": "0.1.1"
+    "in3-common": "^1.1.2"
   },
   "optionalDependencies": {
     "koa": "^2.5.3",
