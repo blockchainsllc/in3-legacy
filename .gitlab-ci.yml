@@ -46,7 +46,7 @@ test-in3-parity:
     - npm install
     - npm run build
     - npm test
-    - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b 64-simplify-smart-contract --single-branch
+    - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b develop --single-branch
     - cd in3-server
     - npm install
     - cd node_modules
