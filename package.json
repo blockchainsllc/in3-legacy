@@ -4,9 +4,9 @@
   "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
   "scripts": {
-    "build": "tsc -p .; cp src/client/defaultConfig.json js/src/client/",
-    "test": "CI=true nyc mocha --timeout 5000 -R $(pwd)/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
-    "updateTypes": "npm install slockit-generator; cd node_modules/slockit-generator; npm run build; cd ../..; slockit-types ",
+    "build": "tsc -p .",
+    "test": "CI=true nyc mocha --timeout 5000 -R $(pwd)/node_modules/in3-common/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
+    "updateTypes": "npm install slockit-generator; slockit-types ; npm uninstall slockit-generator",
     "changelog": "auto-changelog",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; echo '{}' > node_modules/ethereumjs-vm/node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
@@ -77,10 +77,10 @@
     "ethereumjs-util": "6.1.0",
     "ethereumjs-vm": "2.3.5",
     "ethjs-util": "0.1.4",
+    "in3-common": "^1.1.4",
     "merkle-patricia-tree": "^2.3.1",
     "multihashing-async": "^0.5.1",
-    "protons": "^1.0.1",
-    "slockit-generator": "^1.0.8"
+    "protons": "^1.0.1"
   },
   "optionalDependencies": {
     "koa": "^2.5.3",

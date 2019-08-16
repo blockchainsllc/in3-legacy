@@ -20,12 +20,11 @@
 import EthChainContext from './EthChainContext'
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../../types/types';
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64, uint128 } from './serialize';
-import { toHex, toNumber, promisify, toMinHex, toBN, toBuffer } from '../../util/util'
+import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64, uint128 } from 'in3-common';
+import { util as in3util, storage } from 'in3-common'
 import { executeCall } from './call'
 import { createRandomIndexes } from '../../client/serverList'
 import verifyMerkleProof from '../../util/merkleProof'
-import { getStorageArrayKey, getStringValue } from './storage'
 import * as Trie from 'merkle-patricia-tree'
 import * as ethUtil from 'ethereumjs-util'
 import ChainContext from '../../client/ChainContext'
@@ -56,7 +55,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
   // if we don't expect signatures
   if (!proof.expectedSigners || proof.expectedSigners.length === 0) {
 
-    const spec = ctx && ctx.getChainSpec(toNumber(b.number))
+    const spec = ctx && ctx.getChainSpec(in3util.toNumber(b.number))
 
     // for proof of authorities we can verify the signatures
     if (spec && (spec.engine === 'authorityRound' || spec.engine === 'clique')) {
@@ -74,12 +73,12 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
   const existing = ctx && ctx instanceof EthChainContext && ctx.getBlockHeaderByHash(blockHash)
 
   // filter valid signatures for the current block
-  const signaturesForBlock = proof.proof.signatures.filter(_ => _ && toNumber(_.block) === toNumber(b.number) && (!_.blockHash || blockHash.equals(bytes32(_.blockHash))))
+  const signaturesForBlock = proof.proof.signatures.filter(_ => _ && in3util.toNumber(_.block) === in3util.toNumber(b.number) && (!_.blockHash || blockHash.equals(bytes32(_.blockHash))))
   if (signaturesForBlock.length === 0) {
     // if the blockhash is already verified, we don't need a signature
     if (existing) return
 
-    throw new BlackListError('No signatures found for block ', proof.expectedSigners.map(_ => ethUtil.toChecksumAddress(toHex(_))))
+    throw new BlackListError('No signatures found for block ', proof.expectedSigners.map(_ => ethUtil.toChecksumAddress(in3util.toHex(_))))
   }
 
 
@@ -88,10 +87,10 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
   if (!signaturesForBlock.reduce((p, signature, i) => {
 
     if (!messageHash.equals(bytes32(signature.msgHash)))
-      throw new BlackListError('The signature signed the wrong message!', proof.expectedSigners.map(_ => ethUtil.toChecksumAddress(toHex(_))))
+      throw new BlackListError('The signature signed the wrong message!', proof.expectedSigners.map(_ => ethUtil.toChecksumAddress(in3util.toHex(_))))
 
     // recover the signer from the signature
-    const signer: Buffer = util.pubToAddress(util.ecrecover(messageHash, toNumber(signature.v), bytes(signature.r), bytes(signature.s)))
+    const signer: Buffer = util.pubToAddress(util.ecrecover(messageHash, in3util.toNumber(signature.v), bytes(signature.r), bytes(signature.s)))
 
     // make sure the signer is the expected one
     if (!signer.equals(proof.expectedSigners[i]))
@@ -99,7 +98,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
 
     // we have at least one valid signature, so we can try to cache it.
     if (ctx && ctx instanceof EthChainContext && ctx.client.defConfig.maxBlockCache)
-      ctx.addBlockHeader(toNumber(b.number), b.serializeHeader())
+      ctx.addBlockHeader(in3util.toNumber(b.number), b.serializeHeader())
 
     // looks good ;-)
     return true
@@ -125,9 +124,9 @@ export async function verifyTransactionProof(txHash: Buffer, headerProof: BlockH
   const tx = toTransaction(txData)
   const txHashofData = hash(tx)
 
-  if (toNumber(block.number) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber')
+  if (in3util.toNumber(block.number) != in3util.toNumber(txData.blockNumber)) throw new Error('invalid blockNumber')
   if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
-  if (headerProof.proof.txIndex != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex')
+  if (headerProof.proof.txIndex != in3util.toNumber(txData.transactionIndex)) throw new Error('invalid txIndex')
 
   if (!txHashofData.equals(txHash))
     throw new Error('The transactiondata were manipulated')
@@ -135,9 +134,9 @@ export async function verifyTransactionProof(txHash: Buffer, headerProof: BlockH
   // verifiy the proof
   await verifyMerkleProof(
     block.transactionsTrie, // expected merkle root
-    util.rlp.encode(toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
+    util.rlp.encode(in3util.toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
     headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-    serialize(tx),
+    serialize.serialize(tx),
     'The Transaction can not be verified'
   )
 }
@@ -153,7 +152,7 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
   if (!txData) {
     await verifyMerkleProof(
       block.transactionsTrie, // expected merkle root
-      util.rlp.encode(toNumber(txIndex)), // path, which is the transsactionIndex
+      util.rlp.encode(in3util.toNumber(txIndex)), // path, which is the transsactionIndex
       headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
       null,
       'The Transaction can not be verified'
@@ -172,22 +171,22 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
       await verifyBlock(block, { ...headerProof, expectedBlockHash: bytes32(request.params[0]) }, ctx)
     }
     else if (request.method == "eth_getTransactionByBlockNumberAndIndex") {
-      if (toNumber(bytes32(request.params[0])) != toNumber(block.number))
+      if (in3util.toNumber(bytes32(request.params[0])) != in3util.toNumber(block.number))
         throw new Error('invalid blockNumber in request')
       await verifyBlock(block, { ...headerProof, expectedBlockHash: bytes32(txData.blockHash) }, ctx)
     }
 
-    if (toNumber(block.number) != toNumber(txData.blockNumber)) throw new Error('invalid blockNumber')
+    if (in3util.toNumber(block.number) != in3util.toNumber(txData.blockNumber)) throw new Error('invalid blockNumber')
     if (!bytes32(txData.hash).equals(txHashofData)) throw new Error('invalid txhash')
-    if (toNumber(txIndex) != toNumber(headerProof.proof.txIndex)) throw new Error('invalid txIndex in request')
-    if (toNumber(txIndex) != toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
+    if (in3util.toNumber(txIndex) != in3util.toNumber(headerProof.proof.txIndex)) throw new Error('invalid txIndex in request')
+    if (in3util.toNumber(txIndex) != in3util.toNumber(txData.transactionIndex)) throw new Error('invalid txIndex in transaction data')
 
     // verifiy the proof
     await verifyMerkleProof(
       block.transactionsTrie, // expected merkle root
-      util.rlp.encode(toNumber(txIndex)), // path, which is the transsactionIndex
+      util.rlp.encode(in3util.toNumber(txIndex)), // path, which is the transsactionIndex
       headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-      serialize(tx),
+      serialize.serialize(tx),
       'The Transaction can not be verified'
     )
   }
@@ -196,10 +195,10 @@ export async function verifyTransactionByBlockProof(request: RPCRequest, headerP
 
 function verifyLog(l: LogData, block: Block, blockHash: string, index: number, txIndex: number, txHash: string, full: boolean) {
   if (l.blockHash !== blockHash) throw new Error('invalid blockhash')
-  if (toNumber(l.blockNumber) !== toNumber(block.number)) throw new Error('invalid blocknumber')
-  if (full && toNumber(l.logIndex) !== index) throw new Error('invalid logIndex') //TODO need different verification for full, since this only works for the first transaction.
+  if (in3util.toNumber(l.blockNumber) !== in3util.toNumber(block.number)) throw new Error('invalid blocknumber')
+  if (full && in3util.toNumber(l.logIndex) !== index) throw new Error('invalid logIndex')
   if (l.transactionHash != txHash) throw new Error('invalid txHash')
-  if (toNumber(l.transactionIndex) != txIndex) throw new Error('invalid txIndex')
+  if (in3util.toNumber(l.transactionIndex) != txIndex) throw new Error('invalid txIndex')
 
 }
 
@@ -222,37 +221,37 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
   // since the blockhash is verified, we have the correct transaction root
   // we use the txIndex, so only if both (the transaction matches the hash and ther receiptproof is verified, we know it is the right receipt)
 
-  if (toNumber(receipt.blockNumber) != toNumber(block.number)) throw new Error('Invalid BlockNumber')
+  if (in3util.toNumber(receipt.blockNumber) != in3util.toNumber(block.number)) throw new Error('Invalid BlockNumber')
   if (!bytes32(receipt.transactionHash).equals(txHash)) throw new Error('Invalid txHash')
-  if (toNumber(receipt.transactionIndex) !== headerProof.proof.txIndex) throw new Error('Invalid txIndex')
+  if (in3util.toNumber(receipt.transactionIndex) !== headerProof.proof.txIndex) throw new Error('Invalid txIndex')
 
   // make sure the data in the receipts are correct
-  receipt.logs.forEach((t, i) => verifyLog(t, block, receipt.blockHash, i, toNumber(receipt.transactionIndex), receipt.transactionHash, useFullProof))
+  receipt.logs.forEach((t, i) => verifyLog(t, block, receipt.blockHash, i, in3util.toNumber(receipt.transactionIndex), receipt.transactionHash, useFullProof))
 
   // verifiy the proof
   return Promise.all([
     verifyMerkleProof(
       block.receiptTrie, // expected merkle root
-      util.rlp.encode(toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
+      util.rlp.encode(in3util.toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
       headerProof.proof.merkleProof.map(bytes), // array of Buffer with the merkle-proof-data
-      serialize(toReceipt(receipt)),
+      serialize.serialize(toReceipt(receipt)),
       'The TransactionReceipt can not be verified'
     ),
     // prev
     useFullProof && headerProof.proof.txIndex > 0 && verifyMerkleProof(
       block.receiptTrie, // expected merkle root
-      util.rlp.encode(toNumber(headerProof.proof.txIndex - 1)), // path, which is the transsactionIndex
+      util.rlp.encode(in3util.toNumber(headerProof.proof.txIndex - 1)), // path, which is the transsactionIndex
       headerProof.proof.merkleProof.map(bytes), undefined)
       .then(r => {
         const prevReceipt = rlp.decode(r) as Buffer
-        const gasUsed = toNumber(receipt.cumulativeGasUsed) - toNumber(prevReceipt[prevReceipt.length - 3])
-        if (toNumber(receipt.gasUsed) != gasUsed)
+        const gasUsed = in3util.toNumber(receipt.cumulativeGasUsed) - in3util.toNumber(prevReceipt[prevReceipt.length - 3])
+        if (in3util.toNumber(receipt.gasUsed) != gasUsed)
           throw new Error('The Transaction did consumed ' + gasUsed)
       })
     ,
     verifyMerkleProof(
       block.transactionsTrie, // expected merkle root
-      util.rlp.encode(toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
+      util.rlp.encode(in3util.toNumber(headerProof.proof.txIndex)), // path, which is the transsactionIndex
       headerProof.proof.txProof.map(bytes), // array of Buffer with the merkle-proof-data
       undefined,
       'The TransactionIndex can not be verified'
@@ -284,7 +283,7 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
     const block = blockFromHex(blockProof.block)
     blockHashes[bn] = block.hash()
 
-    if (toHex(blockProof.number) !== bn) throw new Error('wrong blocknumber')
+    if (in3util.toHex(blockProof.number) !== bn) throw new Error('wrong blocknumber')
 
     // verify the blockhash and the signatures
     await verifyBlock(block, headerProof, ctx)
@@ -314,29 +313,29 @@ export async function verifyLogProof(headerProof: BlockHeaderProof, logs: LogDat
     const receipt = receiptData[l.transactionHash]
     if (!receipt) throw new Error('The receipt ' + l.transactionHash + 'is missing in the proof')
 
-    const logData = receipt[receipt.length - 1][toNumber(l.transactionLogIndex)]
+    const logData = receipt[receipt.length - 1][in3util.toNumber(l.transactionLogIndex)]
     if (!logData) throw new Error('Log not found in Transaction')
 
     if (!logData[0].equals(address(l.address)))
       throw new Error('Wrong address in log ')
 
-    if (logData[1].map(toHex).join() !== l.topics.join())
+    if (logData[1].map(in3util.toHex).join() !== l.topics.join())
       throw new Error('Wrong Topics in log ')
 
     if (!logData[2].equals(bytes(l.data)))
       throw new Error('Wrong data in log ')
 
-    const bp = headerProof.proof.logProof[toHex(l.blockNumber)]
+    const bp = headerProof.proof.logProof[in3util.toHex(l.blockNumber)]
     if (!bp)
       throw new Error('wrong blockNumber')
 
-    if (!blockHashes[toHex(l.blockNumber)].equals(bytes32(l.blockHash)))
+    if (!blockHashes[in3util.toHex(l.blockNumber)].equals(bytes32(l.blockHash)))
       throw new Error('wrong blockhash')
 
     if (!bp.receipts[l.transactionHash])
       throw new Error('wrong transactionHash')
 
-    if (toNumber(bp.receipts[l.transactionHash].txIndex) !== toNumber(l.transactionIndex))
+    if (in3util.toNumber(bp.receipts[l.transactionHash].txIndex) !== in3util.toNumber(l.transactionIndex))
       throw new Error('wrong transactionIndex')
   })
 }
@@ -353,7 +352,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 
   if (request.method.endsWith('ByHash'))
     requiredHash = bytes32(request.params[0])
-  else if (parseInt(request.params[0]) && toNumber(request.params[0]) !== toNumber(block.number))
+  else if (parseInt(request.params[0]) && in3util.toNumber(request.params[0]) !== in3util.toNumber(block.number))
     throw new Error('The Block does not contain the required blocknumber')
   if (!requiredHash && request.method.indexOf('Count') < 0 && data)
     requiredHash = bytes32((data as BlockData).hash)
@@ -373,10 +372,10 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
       // we only verify uncles for full proof
       const trie = new Trie()
       await Promise.all(headerProof.proof.uncles.map((b, i) => {
-        const header = toBuffer(b)
-        if (!hash(header).equals(toBuffer(bd.uncles[i])))
+        const header = in3util.toBuffer(b)
+        if (!hash(header).equals(in3util.toBuffer(bd.uncles[i])))
           throw new Error('The uncle hash of uncle ' + i + ' is wrong')
-        return promisify(trie, trie.put, util.rlp.encode(i), header)
+        return in3util.promisify(trie, trie.put, util.rlp.encode(i), header)
       }))
       if (!trie.root.equals(block.uncleHash))
         throw new Error('The UncleRoot do not match uncles!')
@@ -399,16 +398,9 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
   // verify the transactions
   if (block.transactions) {
     const trie = new Trie()
-
-    for (let i = 0; i < block.transactions.length; i++) {
-      const tx = block.transactions[i]
-      await promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
-      console.log(i + " : " + trie.root.toString('hex'))
-
-    }
-    //    await Promise.all(block.transactions.map((tx, i) =>
-    //      promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
-    //    ))
+    await Promise.all(block.transactions.map((tx, i) =>
+      in3util.promisify(trie, trie.put, util.rlp.encode(i), tx.serialize())
+    ))
     const thash: Buffer = block.transactions.length ? trie.root : util.KECCAK256_RLP
     if (!thash.equals(block.transactionsTrie))
       throw new Error('The Transactions do not match transactionRoot!')
@@ -422,8 +414,8 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
     if (request.params.length == 2 && request.params[1])
       rtransactions.forEach((t: TransactionData, i: number) => {
         if (t.blockHash && !bytes32(t.blockHash).equals(requiredHash || block.hash())) throw new Error('Invalid hash in tx')
-        if (t.blockNumber && toNumber(t.blockNumber) != toNumber(block.number)) throw new Error('Invalid blocknumber')
-        if (toNumber(t.transactionIndex) != i) throw new Error('Wrong transactionIndex')
+        if (t.blockNumber && in3util.toNumber(t.blockNumber) != in3util.toNumber(block.number)) throw new Error('Invalid blocknumber')
+        if (in3util.toNumber(t.transactionIndex) != i) throw new Error('Wrong transactionIndex')
         verifyTransaction(t)
       })
     else
@@ -432,7 +424,7 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
       })
   }
 
-  if (request.method.indexOf('Count') > 0 && toHex(block.transactions.length) != toHex(data))
+  if (request.method.indexOf('Count') > 0 && in3util.toHex(block.transactions.length) != in3util.toHex(data))
     throw new Error('The number of transaction does not match')
 }
 
@@ -441,7 +433,7 @@ export function verifyTransaction(t: TransactionData) {
   let rawHash: Buffer, v = ethUtil.bufferToInt(bytes(t.v))
   if (t.chainId) {  // use  EIP155 spec
     rawHash = hash([...raw.slice(0, 6), uint(t.chainId), Buffer.allocUnsafe(0), Buffer.allocUnsafe(0)])
-    v -= toNumber(t.chainId) * 2 + 8
+    v -= in3util.toNumber(t.chainId) * 2 + 8
   }
   else
     rawHash = hash(raw.slice(0, 6))
@@ -452,7 +444,7 @@ export function verifyTransaction(t: TransactionData) {
   if (t.publicKey) if (!bytes(t.publicKey).equals(senderPubKey)) throw new Error('Invalid public key')
   if (!address(t.from).equals(ethUtil.publicToAddress(senderPubKey))) throw new Error('Invalid from')
   if (t.raw && !bytes(t.raw).equals(ethUtil.rlp.encode(raw))) throw new Error('Invalid Raw data')
-  if (t.standardV && toNumber(t.standardV) != v - 27) throw new Error('Invalid stanardV ')
+  if (t.standardV && in3util.toNumber(t.standardV) != v - 27) throw new Error('Invalid stanardV ')
 }
 
 /** verifies a TransactionProof */
@@ -476,7 +468,7 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
     throw new Error('The Account does not match the account in the proof')
   switch (request.method) {
     case 'eth_getBalance':
-      if (!toBN(value).eq(toBN(accountProof.balance))) throw new Error('The Balance does not match the one in the proof')
+      if (!in3util.toBN(value).eq(in3util.toBN(accountProof.balance))) throw new Error('The Balance does not match the one in the proof')
       break
     case 'eth_getStorageAt':
       checkStorage(accountProof, bytes32(request.params[1]), bytes32(value))
@@ -485,7 +477,7 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
       if (!bytes32(accountProof.codeHash).equals(util.keccak(value))) throw new Error('The codehash in the proof does not match the code')
       break
     case 'eth_getTransactionCount':
-      if (!toBN(accountProof.nonce).eq(toBN(value))) throw new Error('The nonce in the proof does not match the returned')
+      if (!in3util.toBN(accountProof.nonce).eq(in3util.toBN(value))) throw new Error('The nonce in the proof does not match the returned')
       break
     case 'in3_nodeList':
       verifyNodeListData(value as ServerList, headerProof.proof, block, request)
@@ -506,11 +498,11 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
   if (!accountProof) throw new Error('Missing Account in Account-Proof')
 
   // check the total servercount
-  checkStorage(accountProof, getStorageArrayKey(0), bytes32(nl.totalServers), 'wrong number of servers ')
-  checkStorage(accountProof, getStorageArrayKey(1), bytes32(nl.registryId), 'wrong registryId')
+  checkStorage(accountProof, storage.getStorageArrayKey(0), bytes32(nl.totalServers), 'wrong number of servers ')
+  checkStorage(accountProof, storage.getStorageArrayKey(1), bytes32(nl.registryId), 'wrong registryId')
 
   // check blocknumber
-  if (toNumber(block.number) < nl.lastBlockNumber)
+  if (in3util.toNumber(block.number) < nl.lastBlockNumber)
     throw new Error('The signature is based on older block!')
 
   // if we requested a limit, we need to find out if the correct nodes where send.
@@ -555,7 +547,7 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
   // verify the values of the proof
   for (const n of nl.nodes) {
 
-    checkStorage(accountProof, getStorageArrayKey(0, n.index, 5, 4), bytes32("0x" + (n as any).proofHash), 'wrong proof ')
+    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4), bytes32("0x" + (n as any).proofHash), 'wrong proof ')
 
     const calcProofHash = ethUtil.keccak(
       Buffer.concat([
@@ -573,14 +565,14 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
 function checkStorage(ap: AccountProof, key: Buffer, value: Buffer, msg?: string) {
   if (!getStorageValue(ap, key).equals(value))
-    throw new Error(msg + ('The key has the wrong value (expected: ' + toMinHex(value) + ' proven:' + toMinHex(getStorageValue(ap, key))))
+    throw new Error(msg + ('The key has the wrong value (expected: ' + in3util.toMinHex(value) + ' proven:' + in3util.toMinHex(getStorageValue(ap, key))))
 }
 
 
 
 export function getStorageValue(ap: AccountProof, storageKey: Buffer): Buffer {
 
-  let key = toMinHex(storageKey)
+  let key = in3util.toMinHex(storageKey)
   let entry = ap.storageProof.find(_ => _.key === key)
   if (!entry && key.length % 2) {
     key = '0x0' + key.substr(2)
@@ -607,7 +599,7 @@ export async function verifyCallProof(request: RPCRequest, value: Buffer, header
 
   // in case there are some missing codes, we fetch them with one unproved request through the cache, since they will be verified later anyway.
   if (missingCode.length && ctx && ctx instanceof EthChainContext)
-    await ctx.getCodeFor(missingCode.map(address), toHex(block.number)).then(_ => _.forEach((c, i) =>
+    await ctx.getCodeFor(missingCode.map(address), in3util.toHex(block.number)).then(_ => _.forEach((c, i) =>
       headerProof.proof.accounts[missingCode[i]].code = c as any
     ))
 
@@ -638,7 +630,7 @@ async function verifyAccount(accountProof: AccountProof, block: Block) {
       block.stateRoot, // expected merkle root
       util.keccak(accountProof.address), // path, which is the transsactionIndex
       accountProof.accountProof.map(bytes), // array of Buffer with the merkle-proof-data
-      emptyAccount ? null : serialize(toAccount(accountProof)),
+      emptyAccount ? null : serialize.serialize(toAccount(accountProof)),
       'The Account could not be verified'
     ),
 
@@ -648,7 +640,7 @@ async function verifyAccount(accountProof: AccountProof, block: Block) {
         bytes32(accountProof.storageHash),   // the storageRoot of the account
         util.keccak(bytes32(s.key)),  // the path, which is the hash of the key
         s.proof.map(bytes), // array of Buffer with the merkle-proof-data
-        toNumber(s.value) === 0 ? null : util.rlp.encode(s.value),
+        in3util.toNumber(s.value) === 0 ? null : util.rlp.encode(s.value),
         'The Storage could not be verified'
       ))
   ])
@@ -656,13 +648,13 @@ async function verifyAccount(accountProof: AccountProof, block: Block) {
 
 function isNotExistend(account: AccountProof) {
   // TODO how do I determine the default nonce? It is in the chain-config
-  return toNumber(account.balance) === 0 && account.codeHash == '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' && toNumber(account.nonce) === 0
+  return in3util.toNumber(account.balance) === 0 && account.codeHash == '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470' && in3util.toNumber(account.nonce) === 0
 }
 
 function checkBlock(block: string, ctx: ChainContext, blockNumber?: number): any {
   if (!block) return block
   if (typeof block === 'string' && !block.startsWith('0x') && ctx instanceof EthChainContext) {
-    const bh = ctx.getBlockHeader(toNumber(block))
+    const bh = ctx.getBlockHeader(in3util.toNumber(block))
     if (!bh) throw new Error('The server returned a not supported blockheader : ' + block)
     return bh
   }
@@ -676,7 +668,7 @@ function handleBlockCache(proof: Proof, ctx: ChainContext) {
   if (proof.logProof)
     Object.keys(proof.logProof).forEach(bn => {
       const v = proof.logProof[bn]
-      v.block = checkBlock(v.block, ctx, toNumber(bn))
+      v.block = checkBlock(v.block, ctx, in3util.toNumber(bn))
     })
 }
 
@@ -687,7 +679,7 @@ export async function verifyProof(request: RPCRequest, response: RPCResponse, al
   // make sure we ignore errors caused by sending a trnasaction to multiple servers.
   if (request.method === 'eth_sendRawTransaction' && response.error && ((response.error as any).code === -32010 || response.error.toString().indexOf('already imported') >= 0)) {
     delete response.error
-    response.result = toHex(hash(bytes(request.params[0])), 20)
+    response.result = in3util.toHex(hash(bytes(request.params[0])), 20)
   }
 
 

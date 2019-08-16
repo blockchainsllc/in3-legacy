@@ -3,8 +3,7 @@ import { ChainSpec, RPCRequest, RPCResponse } from '../../types/types';
 import Client from '../../client/Client';
 import Filters from './filter'
 
-import { address, bytes, hash, rlp, serialize } from './serialize';
-import { toHex, toMinHex } from '../../util/util'
+import {  serialize, util } from 'in3-common';
 import { keccak } from 'ethereumjs-util'
 const Buffer: any = require('buffer').Buffer
 
@@ -26,12 +25,12 @@ export default class EthChainContext extends ChainContext {
 
   async getCodeFor(addresses: Buffer[], block = 'latest'): Promise<Buffer[]> {
     const result = addresses.map(a => this.codeCache.get(a))
-    const missing: RPCRequest[] = result.map((_, i) => _ ? null : { method: 'eth_getCode', params: [toHex(addresses[i], 20), block[0] === 'l' ? block : toMinHex(block)], id: i + 1, jsonrpc: '2.0' as any }).filter(_ => _)
+    const missing: RPCRequest[] = result.map((_, i) => _ ? null : { method: 'eth_getCode', params: [util.toHex(addresses[i], 20), block[0] === 'l' ? block : util.toMinHex(block)], id: i + 1, jsonrpc: '2.0' as any }).filter(_ => _)
     if (missing.length) {
       for (const r of await this.client.send(missing, undefined, { proof: 'none', signatureCount: 0, chainId: this.chainId }) as RPCResponse[]) {
         const i = r.id as number - 1
         if (r.error) throw new Error(' could not get the code for address ' + addresses[i] + ' : ' + r.error)
-        this.codeCache.put(addresses[i], bytes(result[i] = r.result))
+        this.codeCache.put(addresses[i], serialize.bytes(result[i] = r.result))
       }
       if (this.client.defConfig.cacheStorage && this.chainId)
         this.client.defConfig.cacheStorage.setItem('in3.code.' + this.chainId, this.codeCache.toStorage())
@@ -42,7 +41,7 @@ export default class EthChainContext extends ChainContext {
   }
 
   getLastBlockHashes() {
-    return this.blockCache.map(_ => toHex(_.hash))
+    return this.blockCache.map(_ => util.toHex(_.hash))
   }
 
   getBlockHeader(blockNumber: number): Buffer {
@@ -145,11 +144,11 @@ export class CacheNode {
       entries.push(Buffer.from(key, 'hex'))
       entries.push(val.data)
     })
-    return rlp.encode(entries).toString('base64')
+    return serialize.rlp.encode(entries).toString('base64')
   }
 
   fromStorage(data: string) {
-    const entries: Buffer[] = rlp.decode(Buffer.from(data, 'base64')) as Buffer[]
+    const entries: Buffer[] = serialize.rlp.decode(Buffer.from(data, 'base64')) as Buffer[]
     for (let i = 0; i < entries.length; i += 2)
       this.put(entries[i], entries[i + 1])
   }

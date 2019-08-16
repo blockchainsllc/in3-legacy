@@ -1,5 +1,4 @@
-import { bytes, bytes32, toBlockHeader, blockFromHex, rlp, Block, hash, address, BlockData, LogData } from './serialize'
-import { toNumber, toHex } from '../../util/util'
+import { bytes, bytes32, toBlockHeader, blockFromHex, rlp, hash, address, BlockData, LogData, util, Block } from 'in3-common'
 import DeltaHistory from '../../util/DeltaHistory'
 import verifyMerkleProof from '../../util/merkleProof'
 import { recover } from 'secp256k1'
@@ -108,7 +107,7 @@ function addCliqueValidators(history: DeltaHistory<string>, ctx: ChainContext, s
       const signer = '0x' + getCliqueSigner(block).toString('hex')
       if (current.indexOf(signer) < 0) continue // this is no proof!
       if (block.sealedFields[1].toString('hex') !== (add ? 'ffffffffffffffff' : '0000000000000000')) continue // wrong proof
-      if (Math.floor(toNumber(block.number) / epoch) != ep) continue // wrong epoch
+      if (Math.floor(util.toNumber(block.number) / epoch) != ep) continue // wrong epoch
       if (block.coinbase.toString('hex') == '0000000000000000000000000000000000000000') continue // wrong validator
       if (!newValidator)
         newValidator = block.coinbase
@@ -145,7 +144,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
     //get the required finality from the default config of the client
     const reqFinality = (ctx.client && ctx.client.defConfig && ctx.client.defConfig.finality)
 
-    checkForFinality(toNumber(s.block), proof, current, reqFinality)
+    checkForFinality(util.toNumber(s.block), proof, current, reqFinality)
 
     // now check the receipt
     const receipt = rlp.decode(await verifyMerkleProof(
@@ -172,7 +171,7 @@ async function addAuraValidators(history: DeltaHistory<string>, ctx: ChainContex
     if (!logData[2].equals(bytes(abiCoder.encode(['address[]'], [s.validators.map(v => v.startsWith('0x') ? v : ('0x' + v))]))))
       throw new Error('Wrong data in log ')
 
-    history.addState(toNumber(s.block), s.validators)
+    history.addState(util.toNumber(s.block), s.validators)
   }
 }
 
@@ -216,7 +215,7 @@ function checkForFinality(stateBlockNumber: number, proof: AuraValidatoryProof, 
       finalitySigners.push(signer)
 
     parentHash = b.hash()
-    lastFinalityBlock = toNumber(b.number)
+    lastFinalityBlock = util.toNumber(b.number)
   }
 
   if ((finalitySigners.length / current.length) < _finality)
@@ -270,7 +269,7 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
 
               const block = blockFromHex(proof.block)
 
-              if (toNumber(block.number) !== spec.block) {
+              if (util.toNumber(block.number) !== spec.block) {
                 return false
               }
 
@@ -285,9 +284,9 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
           if (!transitionState[0].proof) throw new Error('The validator list has no proof')
           const proof = transitionState[0].proof as AuraValidatoryProof
 
-          checkForFinality(toNumber(transitionState[0].block), proof, current, 0.51)
+          checkForFinality(util.toNumber(transitionState[0].block), proof, current, 0.51)
 
-          validators.addState(toNumber(transitionState[0].block), transitionState[0].validators)
+          validators.addState(util.toNumber(transitionState[0].block), transitionState[0].validators)
 
           continue
         }
@@ -309,7 +308,7 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
   }
   else if (!ctx.chainSpec || !ctx.chainSpec.length) return { authorities: [], proposer: null, spec: null }
 
-  const blockNumber = toNumber(b.number)
+  const blockNumber = util.toNumber(b.number)
   const spec = ctx.chainSpec && ctx.chainSpec.find(_ => _.block <= blockNumber)
 
   if (!spec) return { authorities: [], proposer: null, spec: null }
@@ -319,12 +318,12 @@ export async function getChainSpec(b: Block, ctx: ChainContext): Promise<AuthSpe
     await checkForValidators(ctx, validators)
 
   // get the current validator-list for the block
-  const res: any = { authorities: validators.getData(toNumber(b.number)).map(h => address(h.startsWith('0x') ? h : '0x' + h)), spec }
+  const res: any = { authorities: validators.getData(util.toNumber(b.number)).map(h => address(h.startsWith('0x') ? h : '0x' + h)), spec }
 
   // find out who is able to sign with this nonce
-  res.proposer = res.authorities[(spec.engine == 'clique' ? toNumber(b.number) : b.sealedFields[0].readUInt32BE(0)) % res.authorities.length]
+  res.proposer = res.authorities[(spec.engine == 'clique' ? util.toNumber(b.number) : b.sealedFields[0].readUInt32BE(0)) % res.authorities.length]
 
-  if (spec.engine == 'clique' && toNumber(b.difficulty) === 1) res.proposer = null
+  if (spec.engine == 'clique' && util.toNumber(b.difficulty) === 1) res.proposer = null
 
   return res
 }
