@@ -17,7 +17,7 @@
 * For questions, please contact info@slock.it              *
 ***********************************************************/
 
-import * as _util from 'in3-common'
+import {util as _util} from 'in3-common'
 export const util = _util
 
 import Client, { aliases } from './client/Client'
