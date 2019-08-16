@@ -23,8 +23,7 @@ import * as Account from 'ethereumjs-account'
 import * as Block from 'ethereumjs-block'
 import * as Trie from 'merkle-patricia-tree'
 import { rlp } from 'ethereumjs-util'
-import { createTx, bytes32 } from './serialize'
-import { promisify, toBuffer, toHex } from '../../util/util'
+import { serialize, util} from 'in3-common'
 import { AccountProof } from '../../types/types'
 
 /** executes a transaction-call to a smart contract */
@@ -36,7 +35,7 @@ export async function executeCall(args: {
 }, accounts: { [adr: string]: AccountProof }, block: Buffer) {
 
   // fix account-keys, so all the addresses are formated the same way
-  Object.keys(accounts).forEach(a => accounts[toHex(a, 20).toLowerCase()] = accounts[a])
+  Object.keys(accounts).forEach(a => accounts[util.toHex(a, 20).toLowerCase()] = accounts[a])
 
   // create new state for a vm
   const state = new Trie()
@@ -46,7 +45,7 @@ export async function executeCall(args: {
   await setStorageFromProof(state, accounts)
 
   // create a transaction-object
-  const tx = createTx({ gas: '0x5b8d80', gasLimit: '0x5b8d80', from: '0x0000000000000000000000000000000000000000', ...args })
+  const tx = serialize.createTx({ gas: '0x5b8d80', gasLimit: '0x5b8d80', from: '0x0000000000000000000000000000000000000000', ...args })
 
   // keep track of each opcode in order to make sure, all storage-values are provided!
   let missingDataError: Error = null
@@ -60,7 +59,7 @@ export async function executeCall(args: {
       case 'BALANCE':
       case 'EXTCODESIZE':
       case 'EXTCODECOPY':
-        const balanceContract = toHex('0x' + ev.stack[ev.stack.length - 1].toString(16), 20)
+        const balanceContract = util.toHex('0x' + ev.stack[ev.stack.length - 1].toString(16), 20)
         if (!(accounts[balanceContract]))
           missingDataError = new Error('The contract ' + balanceContract + ' is used to get the balance but is missing in the proof!')
         break
@@ -69,15 +68,15 @@ export async function executeCall(args: {
       case 'CALLCODE':
       case 'DELEGATECALL':
       case 'STATICCALL':
-        const callContract = toHex('0x' + ev.stack[ev.stack.length - 2].toString(16), 20)
+        const callContract = util.toHex('0x' + ev.stack[ev.stack.length - 2].toString(16), 20)
         if (!(accounts[callContract]))
           missingDataError = new Error('The contract ' + callContract + ' is used to get the balance but is missing in the proof!')
 
         break
 
       case 'SLOAD':
-        const contract = toHex(ev.address, 20)
-        const key = bytes32(ev.stack[ev.stack.length - 1])
+        const contract = util.toHex(ev.address, 20)
+        const key = serialize.bytes32(ev.stack[ev.stack.length - 1])
         const ac = accounts[contract]
 
         // check if this key is part of the acountProof, if not the result can not be trusted
@@ -95,7 +94,7 @@ export async function executeCall(args: {
   })
 
   // run the tx
-  const result = await promisify(vm, vm.runTx, { tx, block: new Block([block, [], []]) })
+  const result = await util.promisify(vm, vm.runTx, { tx, block: new Block([block, [], []]) })
 
   // return the returnValue
   if (missingDataError) throw missingDataError
@@ -113,14 +112,14 @@ async function setStorageFromProof(trie, accounts: { [adr: string]: AccountProof
     if (ac.codeHash) account.codeHash = ac.codeHash
 
     // if we have a code, we will set the code
-    if (ac.code) await promisify(account, account.setCode, trie, toBuffer(ac.code))
+    if (ac.code) await util.promisify(account, account.setCode, trie, util.toBuffer(ac.code))
 
     // set all storage-values
     for (const s of ac.storageProof)
-      await promisify(account, account.setStorage, trie, toBuffer(s.key, 32), rlp.encode(toBuffer(s.value, 32)))
+      await util.promisify(account, account.setStorage, trie, util.toBuffer(s.key, 32), rlp.encode(util.toBuffer(s.value, 32)))
 
     // set the account data
-    await promisify(trie, trie.put, toBuffer(adr, 20), account.serialize())
+    await util.promisify(trie, trie.put, util.toBuffer(adr, 20), account.serialize())
   }
 }
 

@@ -17,33 +17,19 @@
 * For questions, please contact info@slock.it              *
 ***********************************************************/
 
+import {util as _util} from 'in3-common'
+export const util = _util
+
 import Client, { aliases } from './client/Client'
-import EthAPI from './modules/eth/api'
-import * as validateOb from './util/validate'
+import EthAPI_ from './modules/eth/api'
 export default Client
 
-export const eth = EthAPI
-
-import * as _util from './util/util'
-export const util = _util
+export const EthAPI = EthAPI_
 
 export type IN3Client = Client
 
-import * as _cbor from './util/cbor'
-export const cbor = _cbor
-
-import * as _serialize from './modules/eth/serialize'
-export const serialize = _serialize
-
 import * as _header from './modules/eth/header'
 export const header = _header
-
-import * as _storage from './modules/eth/storage'
-export const storage = _storage
-
-import * as _transport from './util/transport'
-export const transport = _transport
-
 
 import * as _chainData from './modules/eth/chainData'
 export const chainData = _chainData
@@ -63,19 +49,13 @@ export type IN3RPCRequestConfig = types.IN3RPCRequestConfig
 export type IN3ResponseConfig = types.IN3ResponseConfig
 export type LogProof = types.LogProof
 export type Proof = types.Proof
+export type AuraValidatoryProof = types.AuraValidatoryProof
 export type RPCResponse = types.RPCResponse
 export type Signature = types.Signature
-export type Transport = _transport.Transport
 export type ServerList = types.ServerList
-export type BlockData = _serialize.BlockData
-export type LogData = _serialize.LogData
-export type ReceiptData = _serialize.ReceiptData
-export type TransactionData = _serialize.TransactionData
 export type IN3RPCConfig = types.IN3RPCConfig
 export type IN3RPCHandlerConfig = types.IN3RPCHandlerConfig
 export type ChainSpec = types.ChainSpec
 
-export const AxiosTransport = transport.AxiosTransport
 export const typeDefs = types.validationDef
-export const validate = validateOb.validate
 export const chainAliases = aliases

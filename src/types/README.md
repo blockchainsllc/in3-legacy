@@ -12,6 +12,7 @@ configuration-data for the Incubed-client / server
 *  [IN3Config](#in3config)
 *  [RPCRequest](#rpcrequest)
 *  [RPCResponse](#rpcresponse)
+*  [AuraValidatoryProof](#auravalidatoryproof)
 *  [LogProof](#logproof)
 *  [Proof](#proof)
 *  [AccountProof](#accountproof)
@@ -194,13 +195,24 @@ describes the chainspecific consensus params
 
 ```javascript
 import {types} from 'in3'
-const chainSpec:types.ChainSpec = {}
+const chainSpec:types.ChainSpec = {
+  engine: 'ethHash',
+  list: [
+    null
+  ],
+  requiresFinality: true,
+  bypassFinality: 'bypassFinality = 10960502 -> will skip the finality check and add the list at block 10960502'
+}
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
 
+*  **block** `number` - the blocknumnber when this configuration should apply   
 *  **engine** `string` - the engine type (like Ethhash, authorityRound, ... )   
-*  **validatorContract** `string` - the aura contract to get the validators   
-*  **validatorList** `array` - the list of validators   
+ Must be one of the these values : `'ethHash`', `'authorityRound`', `'clique`'
+*  **list** `string<address>[]` - The list of validators at the particular block   
+*  **contract** `string` - The validator contract at the block   
+*  **requiresFinality** `boolean` - indicates whether the transition requires a finality check   
+*  **bypassFinality** `number` - Bypass finality check for transition to contract based Aura Engines   
 
 ### IN3Config
 
@@ -264,11 +276,12 @@ const iN3Config:types.IN3Config = {
 *  **autoUpdateList** `boolean` - if true the nodelist will be automaticly updated if the lastBlock is newer   
 *  **cacheStorage** [{"description":"a cache handler offering 2 functions ( setItem(string,string), getItem(string) )"}](#{"description":"a cache handler offering 2 functions ( setitem(string,string), getitem(string) )"}) - a cache handler offering 2 functions ( setItem(string,string), getItem(string) )   
 *  **loggerUrl** `string` - a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }   
+*  **rpc** `string` - url of one or more rpc-endpoints to use. (list can be comma seperated)   
 *  **servers** `object` - the nodelist per chain   
     each key in this object will structure its value like: 
     *  **verifier** `string` - name of the module responsible for handling the verification   
     *  **name** `string` - a alias for the chain   
-    *  **chainSpec** [ChainSpec](#chainspec) - chain definition   
+    *  **chainSpec** `ChainSpec[]` - chain definitions   
     *  **initAddresses** `string[]` - a list of addresses which should always be part of the nodelist when getting an update   
     *  **lastBlock** `integer` - the blockNumber of the last event in the registry   
     *  **contract** `string` - the address of the registry contract   
@@ -383,6 +396,30 @@ const rPCResponse:types.RPCResponse = {
 *  **result** [{"description":"the params","example":"0xa35bc"}](#{"description":"the params","example":"0xa35bc"}) - the params   
 *  **in3** [IN3ResponseConfig](#in3responseconfig) - the IN3-Result   
 *  **in3Node** [IN3NodeConfig](#in3nodeconfig) - the node handling this response (internal only)   
+
+### AuraValidatoryProof
+
+a Object holding proofs for validator logs. The key is the blockNumber as hex
+
+```javascript
+import {types} from 'in3'
+const auraValidatoryProof:types.AuraValidatoryProof = {
+  block: '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b',
+  proof: [
+    null
+  ],
+  finalityBlocks: [
+    '0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b'
+  ]
+}
+```
+ See [types.yaml](../blob/develop/src/types/types.yaml)
+
+*  **logIndex** `number` (required)  - the transaction log index   
+*  **block** `string` (required)  - the serialized blockheader   
+*  **txIndex** `integer` (required)  - the transactionIndex within the block   
+*  **proof** `string[]` (required)  - the merkleProof   
+*  **finalityBlocks** `array` - the serialized blockheader as hex, required in case of finality asked   
 
 ### LogProof
 
@@ -612,6 +649,7 @@ const iN3RPCHandlerConfig:types.IN3RPCHandlerConfig = {
 *  **watchdogInterval** `number` - average time between sending requests to the same node. 0 turns it off (default)   
 *  **freeScore** `number` - the score for requests without a valid signature   
 *  **minBlockHeight** `integer` - the minimal blockheight in order to sign   
+*  **maxThreads** `integer` - the maximal number of threads ofr running parallel processes   
 *  **persistentFile** `string` - the filename of the file keeping track of the last handled blocknumber   
 *  **startBlock** `number` - blocknumber to start watching the registry   
 *  **watchInterval** `integer` - the number of seconds of the interval for checking for new events   

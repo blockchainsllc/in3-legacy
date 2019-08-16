@@ -28,10 +28,14 @@ export default class DeltaHistory<T> {
       return res
   }
 
+  getLastIndex(): number {
+    return this.data.length && this.data[this.data.length - 1].block
+  }
+
   addState(start:number, data:T[]) {
       const prev = this.getData(start-1)
       const delta = createDelta(prev,data, start)
-      if (!delta) return 
+      if (!delta) return
       if (!this.data.length || this.data[this.data.length-1].block<start)
          this.data.push(delta)
       else {
@@ -58,7 +62,7 @@ export default class DeltaHistory<T> {
                     const nextDelta = createDelta(data,next,n.block)
                     if (!nextDelta)
                        n.block = start
-                    else 
+                    else
                         this.data.splice(i+1,1,delta,nextDelta)
                     return
                 }
@@ -79,7 +83,7 @@ export default class DeltaHistory<T> {
       this.data = deltas.map(_=>{
           const d = _.split(':')
           const [block, start, len ] = d.slice(0,3).map(_=>parseInt(_,16))
-          return { block, start, len, data:d.slice(3) as any as T[] } 
+          return { block, start, len, data:d.slice(3) as any as T[] }
       })
   }
 }
@@ -87,7 +91,7 @@ export default class DeltaHistory<T> {
 function createDelta<T>(a:T[],b:T[], block:number) {
     const first = firstChange(a,b,1)
     const last = firstChange(a,b,-1)
-    
+
     // no change
     if (a.length===b.length && first===a.length) return null
     return{

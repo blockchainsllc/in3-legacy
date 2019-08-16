@@ -20,20 +20,20 @@
 import { IN3Config, RPCRequest, RPCResponse, IN3NodeConfig, IN3NodeWeight, IN3RPCRequestConfig, ServerList } from '../types/types'
 import { verifyProof, getModule } from './modules'
 import { canMultiChain, canProof } from './serverList'
-import { Transport, AxiosTransport } from '../util/transport'
+import { Transport, AxiosTransport } from 'in3-common'
 import { getChainData } from '../modules/eth/chainData' // this is an exception, because if we don't know anything about the chain, we must use eth
 import { toChecksumAddress, keccak256, hashPersonalMessage, ecsign, toRpcSig } from 'ethereumjs-util'
-import { toHex, toNumber, toMinHex, toBuffer } from '../util/util'
-import { resolveRefs } from '../util/cbor'
+import {  util, cbor as in3cbor } from 'in3-common'
 import { EventEmitter } from 'events'
 import ChainContext from './ChainContext'
 import { adjustConfig } from './configHandler'
 import axios from 'axios'
-import { EthereumProvider } from './provider'
+import { HttpProvider } from './provider'
 
 import EthAPI from '../modules/eth/api'
+import IpfsAPI from '../modules/ipfs/api'
 
-const defaultConfig = require('./defaultConfig.json')
+const defaultConfig = require('in3-common/js/defaultConfig.json')
 const CACHEABLE = ['ipfs_get', 'web3_clientVersion', 'web3_sha3', 'net_version', 'eth_protocolVersion', 'eth_coinbase', 'eth_gasPrice', 'eth_accounts', 'eth_getBalance', 'eth_getStorageAt', 'eth_getTransactionCount', 'eth_getBlockTransactionCountByHash', 'eth_getBlockTransactionCountByNumber',
   'eth_getUncleCountByBlockHash', 'eth_getUncleCountByBlockNumber', 'eth_getCode', 'eth_sign', 'eth_call', 'eth_estimateGas', 'eth_getBlockByHash', 'eth_getBlockByNumber', 'eth_getTransactionByHash', 'eth_getTransactionByBlockHashAndIndex',
   'eth_getTransactionByBlockNumberAndIndex', 'eth_getTransactionReceipt', 'eth_getUncleByBlockHashAndIndex', 'eth_getUncleByBlockNumberAndIndex', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getLogs', 'eth_getProof']
@@ -54,10 +54,12 @@ export default class Client extends EventEmitter {
 
   // APIS
   public eth: EthAPI
+  public ipfs: IpfsAPI
 
-
-
+  // config
   public defConfig: IN3Config
+
+  // private
   private transport: Transport
   private chains: { [key: string]: ChainContext }
 
@@ -81,15 +83,34 @@ export default class Client extends EventEmitter {
         ...((config && config.servers) || {})
       }
     }
+    if (config && config.rpc) {
+      // if we have a rpc-endpoint, we create a local chain def.
+      this.defConfig.servers['0xffff'] = {
+        name: 'local rpc',
+        verifier: 'eth',
+        needsUpdate: false,
+        contractChain: '0xffff',
+        contract: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        nodeList: config.rpc.split(',').filter(_ => _).map(url => ({
+          deposit: 0,
+          chainIds: ['0xffff'],
+          address: '0x0000000000000000000000000000000000000000',
+          url, props: 0
+        }))
+      }
+      this.defConfig.proof = 'none'
+      this.defConfig.chainId = '0xffff'
+    }
     verifyConfig(this.defConfig)
     this.eth = new EthAPI(this)
+    this.ipfs = new IpfsAPI(this)
     this.chains = {}
   }
 
   //create a web3 Provider
   createWeb3Provider() {
-    const provider = new EthereumProvider(this, 'EthProvider')
-    return provider
+    const provider = new HttpProvider('EthProvider', {}, this)
+    return provider as any
   }
 
 
@@ -120,7 +141,7 @@ export default class Client extends EventEmitter {
   public async updateNodeList(chainId?: string, conf?: Partial<IN3Config>, retryCount = 5): Promise<void> {
     this.emit('nodeUpdateStarted', { chainId, conf, retryCount })
     const config = { ...this.defConfig, ...verifyConfig(conf) }
-    const chain = toMinHex(chainId || this.defConfig.chainId || '0x1')
+    const chain = util.toMinHex(chainId || this.defConfig.chainId || '0x1')
     if (!chain) throw new Error('No ChainId found to update')
 
     const servers = this.defConfig.servers[chain] || (this.defConfig.servers[chain] = {})
@@ -321,7 +342,7 @@ function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: 
   if (conf.autoUpdateList && responses.find(_ =>
     _.result && !(_.result.contract && _.result.totalServers && _.result.nodes) && _.in3 && _.in3.lastNodeList > 0)) {
 
-    const blockNumber = responses.reduce((p, c) => Math.max(toNumber(c.in3 && c.in3.lastNodeList), p), 0)
+    const blockNumber = responses.reduce((p, c) => Math.max(util.toNumber(c.in3 && c.in3.lastNodeList), p), 0)
     const lastUpdate = conf.servers[conf.chainId].lastBlock
     if (blockNumber > lastUpdate) {
       conf.servers[conf.chainId].lastBlock = blockNumber
@@ -449,14 +470,14 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         r.in3 = { ...in3, ...r.in3 }
 
       // sign it?
-      if (conf.key) {
-        const sig = ecsign(hashPersonalMessage(Buffer.from(JSON.stringify(r))), conf.key = toBuffer(conf.key), 1)
+      if (r.in3 && conf.key) {
+        const sig = ecsign(hashPersonalMessage(Buffer.from(JSON.stringify(r))), conf.key = util.toBuffer(conf.key), 1)
         r.in3.clientSignature = toRpcSig(sig.v, sig.r, sig.s, 1)
       }
 
       // prepare cache-entry
       if (conf.cacheTimeout && CACHEABLE.indexOf(r.method) >= 0) {
-        const key = r.method + r.params.map(_ => _.toString()).join()
+        const key = r.method + JSON.stringify(r.params).replace(/\"/g, '')
         const content = ctx.getFromCache(key)
         const json = content && JSON.parse(content)
         return { key, content: json && json.r, ts: json && json.t }
@@ -467,9 +488,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     // we will sennd all non cachable requests or the ones that timedout
     const toSend = request.filter((r, i) => !cacheEntries[i] || !cacheEntries[i].ts || cacheEntries[i].ts + conf.cacheTimeout * 1000 < start)
     let resultsFromCache = false
+    //    console.log(" send " + JSON.stringify(toSend) + ' to ' + node.url)
 
     // send the request to the server with a timeout
-    const responses = toSend.length == 0 ? [] : resolveRefs(await transport.handle(node.url, toSend, conf.timeout)
+    const responses = toSend.length == 0 ? [] : in3cbor.resolveRefs(await transport.handle(node.url, toSend, conf.timeout)
       .then(
         _ => Array.isArray(_) ? _ : [_],
         err => transport.isOnline().then(o => {
@@ -489,6 +511,9 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
           })
         })
       ))
+
+    //    console.log(" res : " + JSON.stringify(responses))
+    if (conf.cacheTimeout && toSend.find(_ => _.method === 'eth_sendRawTransaction')) ctx.clearCache('eth_')
 
     // update stats
     if (!resultsFromCache && responses.length) {
@@ -678,7 +703,7 @@ function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
   if (!conf.chainId) return conf
   if (conf.chainId.startsWith('0x')) {
     if (conf.chainId[2] === '0')
-      conf.chainId = toMinHex(conf.chainId)
+      conf.chainId = util.toMinHex(conf.chainId)
   }
   else if (aliases[conf.chainId])
     conf.chainId = aliases[conf.chainId]

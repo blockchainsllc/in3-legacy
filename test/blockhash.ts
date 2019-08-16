@@ -20,13 +20,12 @@
 
 import { assert } from 'chai'
 import 'mocha'
-import { serialize, util } from '../src/index'
-import { checkBlockSignatures, getSigner, getAuthorities, getChainSpec } from '../src/modules/eth/header'
+import { serialize, util } from 'in3-common'
+import { checkBlockSignatures, getSigner, getChainSpec } from '../src/modules/eth/header'
 import * as ethUtil from 'ethereumjs-util'
-import { toNumber } from '../src/util/util';
 const BN = ethUtil.BN
 const toHex = util.toHex
-const conf = require('../src/client/defaultConfig.json')
+const conf = require('in3-common/js/defaultConfig.json')
 describe('Util-Functions', () => {
 
 
@@ -322,7 +321,7 @@ async function verifyBlock(blockData: any, chainId?: string) {
   const hash = new serialize.Block(blockData).hash()
   assert.equal('0x' + hash.toString('hex'), blockData.hash)
 
-  if (chainId) {
+  if (chainId && conf.servers[chainId].chainSpec) {
     const spec = conf.servers[chainId].chainSpec
     const ctx = {
       chainSpec: spec,
@@ -331,11 +330,10 @@ async function verifyBlock(blockData: any, chainId?: string) {
       putInCache: (key, value) => ctx[key] = value
     } as any
     const chainSpec = await getChainSpec(b, ctx)
-    const authrities = await getAuthorities(spec, toNumber(b.number), () => null)
+    const authrities = chainSpec.authorities
     const signer = getSigner(b)
     assert.isDefined(authrities.find(_ => _.equals(signer)))
     const finality = await checkBlockSignatures([b], async (block) => chainSpec)
   }
 
 }
-

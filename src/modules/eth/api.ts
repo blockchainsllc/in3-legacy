@@ -1,14 +1,44 @@
 import Client from '../../client/Client'
-import { simpleDecode, simpleEncode, methodID } from 'ethereumjs-abi'
-import { toBuffer, toChecksumAddress, privateToAddress } from 'ethereumjs-util'
+import { methodID } from 'ethereumjs-abi'
+import { toChecksumAddress, privateToAddress, keccak, ecsign } from 'ethereumjs-util'
 import * as ETx from 'ethereumjs-tx'
-import { toHex } from '../../util/util'
+import { util, serialize } from 'in3-common'
+import BN = require('bn.js')
+import { AbiCoder, Interface, Fragment } from '@ethersproject/abi'
+import { RPCResponse } from '../../types/types';
 
 export type BlockType = number | 'latest' | 'earliest' | 'pending'
-export type Quantity = number | string
-export type Hash = string
-export type Address = string
-export type Data = string
+export type Hex = string
+export type Quantity = number | Hex
+export type Hash = Hex
+export type Address = Hex
+export type Data = Hex
+
+export type Signature = {
+    message: Data
+    messageHash: Hash
+    v: Hex
+    r: Hash
+    s: Hash
+    signature?: Data
+}
+
+export type ABIField = {
+    indexed?: boolean
+    name: string
+    type: string
+}
+export type ABI = {
+    anonymous?: boolean
+    constant?: boolean
+    payable?: boolean
+    stateMutability?: 'nonpayable' | 'payable' | 'view' | 'pure'
+
+    inputs?: ABIField[],
+    outputs?: ABIField[]
+    name?: string
+    type: 'event' | 'function' | 'constructor' | 'fallback'
+}
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
     from: Address
@@ -22,6 +52,10 @@ export type Transaction = {
     value: Quantity
     /** 4 byte hash of the method signature followed by encoded parameters. For details see Ethereum Contract ABI.*/
     data: string
+    /** nonce */
+    nonce: Quantity
+    /** optional chain id */
+    chainId?: any
 }
 export type TransactionReceipt = {
     /** 32 Bytes - hash of the block where this transaction was in. */
@@ -90,6 +124,8 @@ export type TransactionDetail = {
     creates: Address
     /** (optional) conditional submission, Block number in block or timestamp in time or null. (parity-feature)    */
     condition: any
+    /** optional: the private key to use for signing */
+    pk?: any
 }
 
 export type Block = {
@@ -172,36 +208,55 @@ export type LogFilter = {
 
 export type TxRequest = {
     /** contract */
-    to: Address
+    to?: Address
+
+    /** address of the account to use */
+    from?: Address
+
+    /** the data to send */
+    data?: Data
 
     /** the gas needed */
-    gas: number
+    gas?: number
 
     /** the gasPrice used */
-    gasPrice: number
+    gasPrice?: number
 
     /** the nonce */
-    nonce: number
+    nonce?: number
 
     /** the value in wei */
-    value: Quantity
+    value?: Quantity
 
     /** the ABI of the method to be used */
-    method: string
+    method?: string
 
     /** the argument to pass to the method */
-    args: any[]
+    args?: any[]
 
     /**raw private key in order to sign */
-    pk: Hash
+    pk?: Hash
 
     /**  number of block to wait before confirming*/
-    confirmations: number
+    confirmations?: number
+}
+
+export interface Signer {
+    /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
+    prepareTransaction?: (client: Client, tx: Transaction) => Promise<Transaction>
+
+    /** returns true if the account is supported (or unlocked) */
+    hasAccount(account: Address): Promise<boolean>
+
+    /** signing of any data. */
+    sign: (data: Buffer, account: Address) => Promise<Signature>
 }
 
 
-export default class API {
+export default class EthAPI {
     client: Client
+    signer?: Signer
+
     constructor(client: Client) { this.client = client }
 
     private send<T>(name: string, ...params: any[]): Promise<T> {
@@ -229,7 +284,7 @@ export default class API {
      * Executes a new message call immediately without creating a transaction on the block chain.
      */
     call(tx: Transaction, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_call', tx, block)
+        return this.send<string>('eth_call', tx, toHexBlock(block))
     }
 
     /**
@@ -250,15 +305,15 @@ export default class API {
     /**
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
      */
-    estimateGas(tx: Transaction, block: BlockType = 'latest'): Promise<number> {
-        return this.send<string>('eth_estimateGas', tx, block).then(parseInt)
+    estimateGas(tx: Transaction/*, block: BlockType = 'latest'*/): Promise<number> {
+        return this.send<string>('eth_estimateGas', tx/*, toHexBlock(block)*/).then(parseInt)
     }
 
     /**
      * Returns the balance of the account of given address in wei (as hex).
      */
-    getBalance(address: Address, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_getBalance', address, block)
+    getBalance(address: Address, block: BlockType = 'latest'): Promise<BN> {
+        return this.send<string>('eth_getBalance', address, toHexBlock(block)).then(util.toBN)
     }
 
     /**
@@ -273,7 +328,7 @@ export default class API {
      * Returns the value from a storage position at a given address.
      */
     getStorageAt(address: Address, pos: Quantity, block: BlockType = 'latest'): Promise<string> {
-        return this.send<string>('eth_getStorageAt', address, pos, block)
+        return this.send<string>('eth_getStorageAt', address, pos, toHexBlock(block))
     }
 
 
@@ -288,7 +343,7 @@ export default class API {
      * Returns information about a block by block number.
      */
     getBlockByNumber(block: BlockType = 'latest', includeTransactions = false): Promise<Block> {
-        return this.send<Block>('eth_getBlockByNumber', block, includeTransactions)
+        return this.send<Block>('eth_getBlockByNumber', toHexBlock(block), includeTransactions)
     }
 
 
@@ -325,6 +380,9 @@ export default class API {
      * Returns an array of all logs matching a given filter object.
      */
     getLogs(filter: LogFilter): Promise<Log[]> {
+        if (filter.fromBlock) filter.fromBlock = toHexBlock(filter.fromBlock) as BlockType
+        if (filter.toBlock) filter.toBlock = toHexBlock(filter.toBlock) as BlockType
+        if (filter.limit) filter.limit = util.toNumber(filter.limit)
         return this.send<Log[]>('eth_getLogs', filter)
     }
 
@@ -343,7 +401,7 @@ export default class API {
      * Returns information about a transaction by block number and transaction index position.
      */
     getTransactionByBlockNumberAndIndex(block: BlockType, pos: Quantity): Promise<TransactionDetail> {
-        return this.send<TransactionDetail>('eth_getTransactionByBlockNumberAndIndex', block, pos)
+        return this.send<TransactionDetail>('eth_getTransactionByBlockNumberAndIndex', toHexBlock(block), pos)
     }
 
     /**
@@ -365,7 +423,11 @@ export default class API {
      * Note That the receipt is available even for pending transactions.
      */
     getTransactionReceipt(hash: Hash): Promise<TransactionReceipt> {
-        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash)
+        return this.send<TransactionReceipt>('eth_getTransactionReceipt', hash).then(_ => !_ ? null : ({
+            ..._,
+            contractAddress: _.contractAddress && toChecksumAddress(_.contractAddress),
+            from: _.from && toChecksumAddress(_.from)
+        }))
     }
 
     /**
@@ -452,12 +514,12 @@ export default class API {
       * Returns the current ethereum protocol version.
       */
     syncing(): Promise<boolean | {
-        startingBlock: string,
-        currentBlock: string,
-        highestBlock: string
-        blockGap: string[][]
-        warpChunksAmount: string
-        warpChunksProcessed: string
+        startingBlock: Hex,
+        currentBlock: Hex,
+        highestBlock: Hex
+        blockGap: Hex[][]
+        warpChunksAmount: Hex
+        warpChunksProcessed: Hex
     }> {
         return this.send<boolean | {
             startingBlock: string,
@@ -477,33 +539,157 @@ export default class API {
         return this.send<string>('eth_sendRawTransaction', data)
     }
 
+    /**
+     * signs any kind of message using the `\x19Ethereum Signed Message:\n`-prefix
+     * @param account the address to sign the message with (if this is a 32-bytes hex-string it will be used as private key)
+     * @param data the data to sign (Buffer, hexstring or utf8-string)
+     */
+    async sign(account: Address, data: Data): Promise<Signature> {
+        // prepare data
+        const d = util.toBuffer(data)
+        const hash = keccak(Buffer.concat([Buffer.from('\x19Ethereum Signed Message:\n' + d.length, 'utf8'), d]))
+        let s: any = {
+            message: data,
+            messageHash: util.toHex(hash)
+        }
+
+        if (account && account.length == 66) // use direct pk
+            s = { ...s, ...ecsign(hash, util.toBuffer(account)) }
+        else if (this.signer && await this.signer.hasAccount(account)) // use signer
+            s = { ...s, ...(await this.signer.sign(hash, account)) }
+        s.signature = util.toHex(s.r) + util.toHex(s.s).substr(2) + util.toHex(s.v).substr(2)
+        return s
+    }
+
     /** sends a Transaction */
     async sendTransaction(args: TxRequest): Promise<string | TransactionReceipt> {
-        if (!args.pk) throw new Error('missing private key!')
+        if (!args.pk && (!this.signer || !(await this.signer.hasAccount(args.from)))) throw new Error('missing private key!')
 
         // prepare
         const tx = await prepareTransaction(args, this)
+        let etx: any = null
 
-        // sign it
-        const etx = new ETx({ ...tx, gasLimit: tx.gas })
-        etx.sign(toBuffer(args.pk))
-        const txHash = await this.sendRawTransaction(toHex(etx.serialize()))
+        if (args.pk) {
+            // sign it with the raw keyx
+            etx = new ETx({ ...tx, gasLimit: tx.gas })
+            etx.sign(util.toBuffer(args.pk))
+        }
+        else if (this.signer && args.from) {
+            const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(this.client, tx) : tx
+            etx = new ETx({ ...t, gasLimit: t.gas })
+            const signature = await this.signer.sign(etx.hash(false), args.from)
+            if (etx._chainId > 0) signature.v = util.toHex(util.toNumber(signature.v) + etx._chainId * 2 + 8)
+            Object.assign(etx, signature)
+        }
+        else throw new Error('Invalid transaction-data')
+        const txHash = await this.sendRawTransaction(util.toHex(etx.serialize()))
+
+        if (args.confirmations === undefined) args.confirmations = 1
 
         // send it
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas as string), args.confirmations) : txHash
     }
 
+    contractAt(abi: ABI[], address: Address): {
+        [methodName: string]: any,
+        _address: Address, _eventHashes: any, events: {
+            [event: string]: {
+                getLogs: (options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } }) => Promise<{ [key: string]: any, event: string, log: Log }[]>
+            }
+            all: {
+                getLogs: (options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } }) => Promise<{ [key: string]: any, event: string, log: Log }[]>
+            }
+            decode: any
+        }, _abi: ABI[], _in3: Client
+    } {
+        const api = this, ob = { _address: address, _eventHashes: {} as any, events: {} as any, _abi: abi, _in3: this.client }
+        for (const def of abi.filter(_ => _.type == 'function')) {
+            const method = def.name + createSignature(def.inputs)
+            if (def.constant) {
+                const signature = method + ':' + createSignature(def.outputs)
+                ob[def.name] = function (...args: any[]) {
+                    return api.callFn(address, signature, ...args)
+                        .then(r => {
+                            if (def.outputs.length > 1) {
+                                let o = {}
+                                def.outputs.forEach((d, i) => o[i] = o[d.name] = r[i])
+                                return o;
+                            }
+                            return r
+                        })
+                }
+            }
+            else {
+                ob[def.name] = function (...args: any[]) {
+                    let tx: TxRequest = {} as any
+                    if (args.length > def.inputs.length) tx = args.pop()
+                    tx.method = method
+                    tx.args = args.slice(0, def.name.length);
+                    tx.confirmations = tx.confirmations || 1
+                    tx.to = address
+                    return api.sendTransaction(tx)
+                }
+            }
+            ob[def.name].encode = (...args: any[]) => createCallParams(method, args.slice(0, def.name.length)).txdata
+        }
+
+        for (const def of abi.filter(_ => _.type == 'event')) {
+            const eHash = '0x' + keccak(Buffer.from(def.name + createSignature(def.inputs), 'utf8')).toString('hex')
+            ob._eventHashes[def.name] = eHash
+            ob._eventHashes[eHash] = def
+            ob.events[def.name] = {
+                getLogs(options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[], filter?: { [key: string]: any } } = {}) {
+                    return api.getLogs({
+                        address,
+                        fromBlock: options.fromBlock || 'latest',
+                        toBlock: options.toBlock || 'latest',
+                        topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + serialize.bytes32(options.filter[d.name]).toString('hex') : null))],
+                        limit: options.limit || 50
+                    }).then((logs: Log[]) => logs.map(_ => {
+                        const event = ob.events.decode(_)
+                        return { ...event, log: _, event }
+                    }))
+                }
+            }
+        }
+        ob.events.decode = function (log: Log) { return decodeEventData(log, ob) }
+        ob.events.all = {
+            getLogs(options: { limit?: number, fromBlock?: BlockType, toBlock?: BlockType, topics?: any[] } = {}) {
+                return api.getLogs({
+                    address,
+                    fromBlock: options.fromBlock || 'latest',
+                    toBlock: options.toBlock || 'latest',
+                    topics: options.topics || [],
+                    limit: options.limit || 50
+                }).then((logs: Log[]) => logs.map(_ => {
+                    const event = ob.events.decode(_)
+                    return { ...event, log: _, event }
+                }))
+            }
+        }
+
+        return ob as any
+    }
+
+    decodeEventData(log: Log, d: ABI): any {
+        return decodeEvent(log, d)
+    }
+    hashMessage(data: Data | Buffer): Buffer {
+        const d = util.toBuffer(data)
+        return keccak(Buffer.concat([Buffer.from('\x19Ethereum Signed Message:\n' + d.length, 'utf8'), d]))
+    }
+
+
 }
 
-
-async function confirm(txHash: string, api: API, gasPaid: number, confirmations: number, timeout = 10) {
+async function confirm(txHash: Hash, api: EthAPI, gasPaid: number, confirmations: number, timeout = 10) {
     let steps = 200
     const start = Date.now()
     while (Date.now() - start < timeout * 1000) {
         const receipt = await api.getTransactionReceipt(txHash)
         if (receipt) {
-            if (receipt.status !== '0x1' && gasPaid && gasPaid === parseInt(receipt.gasUsed as any))
-                throw new Error('Transaction failed and all gas was used up')
+            if (!receipt.status && gasPaid && gasPaid === parseInt(receipt.gasUsed as any))
+                throw new Error('Transaction failed and all gas was used up gasPaid=' + gasPaid)
             if (receipt.status && receipt.status == '0x0')
                 throw new Error('The Transaction failed because it returned status=0')
 
@@ -524,25 +710,66 @@ async function confirm(txHash: string, api: API, gasPaid: number, confirmations:
     throw new Error('Error waiting for the transaction to confirm')
 }
 
-async function prepareTransaction(args: TxRequest, api?: API): Promise<Transaction> {
-    const sender = args.pk && toChecksumAddress(privateToAddress(toBuffer(args.pk)).toString('hex'))
+async function prepareTransaction(args: TxRequest, api?: EthAPI): Promise<Transaction> {
+    const sender = args.from || (args.pk && toChecksumAddress(privateToAddress(util.toBuffer(args.pk)).toString('hex')))
 
     const tx: any = {}
-    if (args.to) tx.to = toHex(args.to)
-    if (args.method)
+    if (args.to) tx.to = util.toHex(args.to)
+    if (args.method) {
         tx.data = createCallParams(args.method, args.args).txdata
+        if (args.data) tx.data = args.data + tx.data.substr(10) // this is the case  for deploying contracts
+    }
+    else if (args.data)
+        tx.data = util.toHex(args.data)
     if (sender || args.nonce)
-        tx.nonce = toHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
+        tx.nonce = util.toMinHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
     if (api)
-        tx.gasPrice = toHex(args.gasPrice || await api.gasPrice())
-    tx.value = toHex(args.value || 0)
+        tx.gasPrice = util.toMinHex(args.gasPrice || Math.round(1.3 * util.toNumber(await api.gasPrice())))
+    tx.value = util.toMinHex(args.value || 0)
     if (sender) tx.from = sender
-    tx.gas = toHex(args.gas || (api && await api.estimateGas(tx) || 3000000))
+    try {
+        tx.gas = util.toMinHex(args.gas || (api && (util.toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
+    }
+    catch (ex) {
+        throw new Error('The Transaction ' + JSON.stringify(args, null, 2) + ' will not be succesfully executed, since estimating gas failed with: ' + ex)
+    }
 
 
     return tx
 }
 
+function convertToType(solType: string, v: any): any {
+    // check for arrays
+    const list = solType.lastIndexOf('[')
+    if (list >= 0) {
+        if (!Array.isArray(v)) throw new Error('Invalid result for type ' + solType + '. Value must be an array, but is not!')
+        solType = solType.substr(0, list)
+        return v.map(_ => convertToType(solType, _))
+    }
+
+    // convert integers
+    if (solType.startsWith('uint')) return parseInt(solType.substr(4)) <= 32 ? util.toNumber(v) : util.toBN(v)
+    if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? util.toNumber(v) : util.toBN(v) // TODO handle negative values
+    if (solType === 'bool') return typeof (v) === 'boolean' ? v : (util.toNumber(v) ? true : false)
+    if (solType === 'string') return v.toString('utf8')
+    if (solType === 'address') return toChecksumAddress(util.toHex(v))
+    //    if (solType === 'bytes') return toBuffer(v)
+
+    // everything else will be hexcoded string
+    if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
+    if (v && v.ixor) return '0x' + v.toString(16)
+    return v[1] !== 'x' ? '0x' + v : v
+}
+
+function decodeResult(types: string[], result: Buffer): any {
+    const abiCoder = new AbiCoder()
+
+    try {
+        return abiCoder.decode(types, result).map((v, i) => convertToType(types[i], v))
+    } catch (e) {
+        throw new Error(`Error trying to decode ${types} with the params ${result}: ${e}`)
+    }
+}
 
 function createCallParams(method: string, values: any[]): { txdata: string, convert: (a: any) => any } {
     if (!method) throw new Error('method needs to be a valid contract method signature')
@@ -554,15 +781,8 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
         const srcFullMethod = method;
         const retTypes = method.split(':')[1].substr(1).replace(')', ' ').trim().split(',');
         convert = result => {
-            if (result)
-                result = simpleDecode(method.replace('()', '(uint)') + ':(' + retTypes.join() + ')', Buffer.from(result.substr(2), 'hex')).map((v, i) => {
-                    if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
-                    if (v && v.ixor) return v.toString()
-                    if (retTypes[i] !== 'string' && typeof v === 'string' && v[1] !== 'x')
-                        return '0x' + v
-                    return v
-                })
-            if (Array.isArray(result) && !srcFullMethod.endsWith(')'))
+            if (result) result = decodeResult(retTypes, Buffer.from(result.substr(2), 'hex'))
+            if (Array.isArray(result) && (!srcFullMethod.endsWith(')') || result.length == 1))
                 result = result[0]
             return result
         }
@@ -573,11 +793,156 @@ function createCallParams(method: string, values: any[]): { txdata: string, conv
     if (!m) throw new Error('No valid method signature for ' + method)
     const types = m[1].split(',').filter(_ => _)
     if (values.length < types.length) throw new Error('invalid number of arguments. Must be at least ' + types.length)
+    values.forEach((v, i) => {
+        if (types[i] === 'bytes') values[i] = util.toBuffer(v)
+    })
 
     return {
         txdata: '0x' + (values.length
-            ? simpleEncode(method, ...values).toString('hex')
+            ? encodeFunction(method, values)
             : methodID(method.substr(0, method.indexOf('(')), []).toString('hex'))
         , convert
+    }
+}
+
+export function createSignatureHash(def: ABI) {
+    return keccak(def.name + createSignature(def.inputs))
+}
+
+export function createSignature(fields: ABIField[]): string {
+    return '(' + fields.map(f => {
+        let baseType = f.type
+        const t = baseType.indexOf('[')
+        if (t > 0) baseType = baseType.substr(0, t)
+        if (baseType === 'uint' || baseType === 'int') baseType += '256'
+        return baseType + (t < 0 ? '' : f.type.substr(t))
+    }).join(',') + ')'
+}
+function parseABIString(def: string): ABI {
+    const [name, args] = def.split(/[\(\)]/)
+    return {
+        name, type: 'event', inputs: args.split(',').filter(_ => _).map(_ => _.split(' ').filter(z => z)).map(_ => ({
+            type: _[0],
+            name: _[_.length - 1],
+            indexed: _[1] == 'indexed'
+        }))
+    }
+}
+
+function decodeEventData(log: Log, def: string | { _eventHashes: any }): any {
+    let d: ABI = (typeof def === 'object') ? def._eventHashes[log.topics[0]] : parseABIString(def)
+    if (!d) return null//throw new Error('Could not find the ABI')
+    return decodeEvent(log, d)
+}
+export function decodeEvent(log: Log, d: ABI): any {
+    const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed), r: any = { event: d && d.name }
+    if (indexed.length)
+        decodeResult(indexed.map(_ => _.type), Buffer.concat(log.topics.slice(1).map(serialize.bytes))).forEach((v, i) => r[indexed[i].name] = v)
+    if (unindexed.length)
+        decodeResult(unindexed.map(_ => _.type), serialize.bytes(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
+    return r
+}
+
+
+
+
+export class SimpleSigner implements Signer {
+    accounts: { [ac: string]: Hash }
+
+    constructor(...pks: Hash[]) {
+        this.accounts = {}
+        if (pks) pks.forEach(_ => this.addAccount(_))
+    }
+
+    addAccount(pk: Hash) {
+        const adr: Address = toChecksumAddress(util.toHex(privateToAddress(util.toBuffer(pk))))
+        this.accounts[adr] = pk
+        return adr
+    }
+
+
+    async hasAccount(account: string): Promise<boolean> {
+        return !!this.accounts[toChecksumAddress(account)]
+    }
+
+    async sign(data: Buffer, account: string): Promise<Signature> {
+        const pk = util.toBuffer(this.accounts[toChecksumAddress(account)])
+        if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
+        const sig = ecsign(data, pk)
+        return { messageHash: util.toHex(data), v: util.toHex(sig.v), r: util.toHex(sig.r), s: util.toHex(sig.s), message: util.toHex(data) }
+    }
+
+}
+function encodeEtheresBN(val: any) {
+    return val && BN.isBN(val) ? util.toHex(val) : val
+}
+
+export function soliditySha3(...args: any[]): string {
+
+    const abiCoder = new AbiCoder()
+    return util.toHex(keccak(abiCoder.encode(args.map(_ => {
+        switch (typeof (_)) {
+            case 'number':
+                return _ < 0 ? 'int256' : 'uint256'
+            case 'string':
+                return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
+            case 'boolean':
+                return 'bool'
+            default:
+                return BN.isBN(_) ? 'uint256' : 'bytes'
+        }
+    }), args.map(encodeEtheresBN))))
+}
+
+function toHexBlock(b: any): string {
+    return typeof b === 'string' ? b : util.toMinHex(b)
+}
+
+function fixBytesValues(input: string, type: string): any {
+
+    if (type.includes("bytes")) {
+        if (!type.includes("[")) {
+            return "0x" + util.toBuffer(input, util.toNumber(type.substr(5))).toString('hex')
+        }
+        else {
+            return (input as any).map(i => { return ("0x" + util.toBuffer(i, util.toNumber(type.substr(5))).toString('hex')) })
+        }
+    }
+    else return input
+}
+
+export function encodeFunction(signature: string, args: any[]): string {
+    const inputParams = signature.split(':')[0]
+
+    const abiCoder = new AbiCoder()
+
+    const typeTemp = inputParams.substring(inputParams.indexOf('(') + 1, (inputParams.indexOf(')')))
+
+    const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
+    const methodHash = (methodID(signature.substr(0, signature.indexOf('(')), typeArray)).toString('hex')
+
+    for (let i = 0; i < args.length; i++) {
+        args[i] = fixBytesValues(args[i], typeArray[i])
+    }
+    try {
+        return methodHash + abiCoder.encode(typeArray, args.map(encodeEtheresBN)).substr(2)
+    } catch (e) {
+        throw new Error(`Error trying to encode ${signature} with the params ${args}: ${e}`)
+    }
+}
+
+export function decodeFunction(signature: string, args: Buffer | RPCResponse): any {
+    const outputParams = signature.split(':')[1]
+
+    const abiCoder = new AbiCoder()
+
+    const typeTemp = outputParams.substring(outputParams.indexOf('(') + 1, (outputParams.indexOf(')')))
+
+    const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
+
+    try {
+        return abiCoder.decode(typeArray, util.toBuffer(args))
+    } catch (e) {
+        throw new Error(`Error trying to decode ${signature} with the params ${args}: ${e}`)
     }
 }
