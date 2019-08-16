@@ -20,7 +20,7 @@
 import EthChainContext from './EthChainContext'
 import * as util from 'ethereumjs-util'
 import { AccountProof, Proof, RPCRequest, RPCResponse, ServerList, Signature, ChainSpec } from '../../types/types';
-import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64 } from 'in3-common';
+import { BlockData, Block, createTx, blockFromHex, toAccount, toReceipt, hash, serialize, LogData, bytes32, bytes8, uint, address, bytes, Receipt, TransactionData, toTransaction, ReceiptData, Transaction, rlp, uint64, uint128 } from 'in3-common';
 import { util as in3util, storage } from 'in3-common'
 import { executeCall } from './call'
 import { createRandomIndexes } from '../../client/serverList'
@@ -83,7 +83,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
 
 
   // verify the signatures for only the blocks matching the given
-  const messageHash: Buffer = util.keccak(Buffer.concat([blockHash, bytes32(b.number)]))
+  const messageHash: Buffer = util.keccak(Buffer.concat([blockHash, bytes32(b.number), ctx.registryId ? bytes32(ctx.registryId) : Buffer.allocUnsafe(0)]))
   if (!signaturesForBlock.reduce((p, signature, i) => {
 
     if (!messageHash.equals(bytes32(signature.msgHash)))
@@ -440,7 +440,8 @@ export function verifyTransaction(t: TransactionData) {
 
   if (new BN(t.s).cmp(N_DIV_2) === 1) throw new Error('Invalid signature')
   const senderPubKey = ethUtil.ecrecover(rawHash, v, bytes(t.r), bytes(t.s))
-  if (!bytes(t.publicKey).equals(senderPubKey)) throw new Error('Invalid public key')
+
+  if (t.publicKey) if (!bytes(t.publicKey).equals(senderPubKey)) throw new Error('Invalid public key')
   if (!address(t.from).equals(ethUtil.publicToAddress(senderPubKey))) throw new Error('Invalid from')
   if (t.raw && !bytes(t.raw).equals(ethUtil.rlp.encode(raw))) throw new Error('Invalid Raw data')
   if (t.standardV && in3util.toNumber(t.standardV) != v - 27) throw new Error('Invalid stanardV ')
@@ -498,6 +499,7 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // check the total servercount
   checkStorage(accountProof, storage.getStorageArrayKey(0), bytes32(nl.totalServers), 'wrong number of servers ')
+  checkStorage(accountProof, storage.getStorageArrayKey(1), bytes32(nl.registryId), 'wrong registryId')
 
   // check blocknumber
   if (in3util.toNumber(block.number) < nl.lastBlockNumber)
@@ -544,26 +546,20 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // verify the values of the proof
   for (const n of nl.nodes) {
-    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 6, 1), bytes32(Buffer.concat([uint64(n.timeout ? n.timeout : 0), address(n.address)])), 'wrong owner ')
-    // when checking the deposit we have to take into account the fact, that anumber only support 53bits and may not be able to hit the exact ammount, but it should always be equals
-    const deposit = getStorageValue(accountProof, storage.getStorageArrayKey(0, n.index, 6, 2))
-    if (parseInt(in3util.toBN(deposit).toString()) != parseInt(n.deposit as any))
-      throw new Error('wrong deposit ')
-    //    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 6, 2), bytes32(n.deposit), 'wrong deposit ')
-    const props: Buffer = bytes32(n.props)
-    if (n.capacity) props.writeUInt32BE(n.capacity, 12)
-    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 6, 3), props, 'wrong props ')
-    const urlKey = storage.getStorageArrayKey(0, n.index, 6, 0)
-    const urlVal = storage.getStringValue(getStorageValue(accountProof, urlKey), urlKey)
-    if (typeof urlVal === 'string') {
-      if (urlVal !== n.url)
-        throw new Error('Wrong url in proof ' + n.url)
-    }
-    else {
-      const url = Buffer.concat(urlVal.storageKeys.map(_ => getStorageValue(accountProof, _))).slice(0, urlVal.len).toString('utf8')
-      if (url !== n.url)
-        throw new Error('Wrong url in proof ' + n.url)
-    }
+
+    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4), bytes32("0x" + (n as any).proofHash), 'wrong proof ')
+
+    const calcProofHash = ethUtil.keccak(
+      Buffer.concat([
+        bytes32(n.deposit),
+        uint64(n.timeout),
+        uint64(n.registerTime),
+        uint128(n.props),
+        address(n.address),
+        bytes(n.url)
+      ])
+    )
+    if (Buffer.compare(calcProofHash, bytes32("0x" + (n as any).proofHash)) !== 0) throw new Error("Wrong ProofHash")
   }
 }
 
@@ -583,7 +579,7 @@ export function getStorageValue(ap: AccountProof, storageKey: Buffer): Buffer {
     entry = ap.storageProof.find(_ => _.key === key)
   }
 
-  if (!entry) throw new Error(' There is no storrage key ' + key + ' in the storage proof!')
+  if (!entry) throw new Error(' There is no storage key ' + key + ' in the storage proof!')
   return bytes32(entry.value)
 }
 

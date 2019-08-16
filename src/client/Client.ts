@@ -122,7 +122,9 @@ export default class Client extends EventEmitter {
     const chainConf = this.defConfig.servers[chainId]
     if (!chainConf) throw new Error('chainid ' + chainId + ' does not exist in config!')
 
-    return this.chains[chainId] = getModule(chainConf.verifier || 'eth').createChainContext(this, chainId, chainConf.chainSpec)
+    this.chains[chainId] = getModule(chainConf.verifier || 'eth').createChainContext(this, chainId, chainConf.chainSpec)
+    this.chains[chainId].registryId = (chainConf as any).registryId
+    return this.chains[chainId]
   }
 
   get config() {
@@ -177,7 +179,6 @@ export default class Client extends EventEmitter {
       [this.defConfig.nodeLimit || 0, seed, servers.initAddresses || []],
       chain, conf)
     const nl = nlResponse.result as ServerList
-
 
     if (config.proof && config.proof != 'none' && nl.contract.toLowerCase() !== servers.contract.toLowerCase()) {
       // the server gave us the wrong contract!

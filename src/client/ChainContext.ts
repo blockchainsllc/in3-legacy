@@ -31,6 +31,7 @@ export default class ChainContext {
   chainId: string
   lastValidatorChange: number
   genericCache: { [key: string]: string }
+  registryId?: string
 
   constructor(client: Client, chainId: string, chainSpec: ChainSpec[]) {
     this.client = client
@@ -65,8 +66,8 @@ export default class ChainContext {
   /**
    * returns the chainspec for th given block number
    */
-  getChainSpec(block:number):ChainSpec {
-    return this.chainSpec && this.chainSpec.filter(_=>_.block<=block).pop()
+  getChainSpec(block: number): ChainSpec {
+    return this.chainSpec && this.chainSpec.filter(_ => _.block <= block).pop()
   }
 
 

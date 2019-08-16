@@ -20,7 +20,7 @@
 import Client from '../src/client/Client'
 import * as Koa from 'koa'
 import * as bodyParser from 'koa-bodyparser'
-import { IN3ConfigDefinition } from '../src/types/types'
+import { IN3Config } from '../src/types/types'
 import * as fs from 'fs'
 
 const app = new Koa()
@@ -108,7 +108,7 @@ function handleArgs(params?: string[], clientConf: any = {}) {
       }
 
     }
-    show(IN3ConfigDefinition, '')
+    //    show(IN3ConfigDefinition, '')
 
     process.exit(0)
   }

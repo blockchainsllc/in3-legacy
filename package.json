@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p .",
     "test": "CI=true nyc mocha --timeout 5000 -R $(pwd)/node_modules/in3-common/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
-    "updateTypes": "npm install slockit-generator; cd node_modules/slockit-generator; npm run build; cd ../..; slockit-types ",
+    "updateTypes": "npm install slockit-generator; slockit-types ; npm uninstall slockit-generator",
     "changelog": "auto-changelog",
     "browserify": "echo '{}' > node_modules/ethereum-common/genesisState.json; echo '{}' > node_modules/ethereumjs-vm/node_modules/ethereum-common/genesisState.json; cd js; browserify --full-paths -r ./src/client/Client.js:in3 -t [ babelify ] -o in3.js; uglifyjs --compress --source-map --output  in3.min.js  --  in3.js; cd ..",
     "disc": "cd js; discify in3.js > in3.html; cd ..",
@@ -45,7 +45,7 @@
     "@babel/preset-env": "^7.0.0-beta.49",
     "@babel/preset-es2015": "^7.0.0-beta.53",
     "@types/cbor": "^2.0.0",
-    "@types/chai": "^4.1.3",
+    "@types/chai": "4.1.7",
     "@types/koa": "^2.0.44",
     "@types/koa-bodyparser": "^4.2.0",
     "@types/koa-router": "^7.0.27",
@@ -77,10 +77,10 @@
     "ethereumjs-util": "6.1.0",
     "ethereumjs-vm": "2.3.5",
     "ethjs-util": "0.1.4",
+    "in3-common": "^1.1.5",
     "merkle-patricia-tree": "^2.3.1",
     "multihashing-async": "^0.5.1",
-    "protons": "^1.0.1",
-    "in3-common": "^1.1.2"
+    "protons": "^1.0.1"
   },
   "optionalDependencies": {
     "koa": "^2.5.3",
