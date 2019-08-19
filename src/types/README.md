@@ -179,7 +179,8 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
     ]
   },
   lastNodeList: 326478,
-  currentBlock: 320126478
+  currentBlock: 320126478,
+  version: '2.0'
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
