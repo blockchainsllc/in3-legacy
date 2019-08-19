@@ -13,36 +13,36 @@
 # For information about liability, maintenance etc. also   *
 # refer to the contract concluded with Slock.it GmbH.      *
 #***********************************************************
-# For more information, please refer to https://slock.it    *
+# For more information, please refer to https://slock.it   *
 # For questions, please contact info@slock.it              *
 #**********************************************************/
 $schema: http://json-schema.org/schema#
 description: configuration-data for the Incubed-client / server
 definitions:
     RPCRequest:
-    type: object
-    description: a JSONRPC-Request with N3-Extension
-    required: [jsonrpc, method]
-    properties:
-        jsonrpc:
-            description: the version
-            type: string
-            enum: ["2.0"]
-        method:
-            description: the method to call
-            type: string
-            example: eth_getBalance
-        id:
-            description: the identifier of the request
-            type: [number, string]
-            example: 2
-        params:
-            description: the params
-            type: array
-            example: ["0xe36179e2286ef405e929C90ad3E70E649B22a945", latest]
-        in3:
-            description: the IN3-Config
-            $ref: "#/definitions/IN3RPCRequestConfig"
+        type: object
+        description: a JSONRPC-Request with N3-Extension
+        required: [jsonrpc, method]
+        properties:
+            jsonrpc:
+                description: the version
+                type: string
+                enum: ["2.0"]
+            method:
+                description: the method to call
+                type: string
+                example: eth_getBalance
+            id:
+                description: the identifier of the request
+                type: [number, string]
+                example: 2
+            params:
+                description: the params
+                type: array
+                example: ["0xe36179e2286ef405e929C90ad3E70E649B22a945", latest]
+            in3:
+                description: the IN3-Config
+                $ref: "#/definitions/IN3RPCRequestConfig"
 
     IN3RPCRequestConfig:
         description: additional config for a IN3 RPC-Request
@@ -185,6 +185,14 @@ definitions:
                 description: the properties of the node.
                 type: integer
                 example: 3
+            registerTime:
+                description: the UNIX-timestamp when the node was registered
+                type: integer
+                example: 1563279168
+            unregisterTime:
+                description: the UNIX-timestamp when the node is allowed to be deregister
+                type: integer
+                example: 1563279168
 
     Proof:
         type: object
@@ -657,7 +665,7 @@ definitions:
                 type: integer
                 example: 1529074639623
 
-   ServerList:
+    ServerList:
         type: object
         description: a List of nodes
         required: [nodes]
@@ -674,6 +682,9 @@ definitions:
                 type: string
                 description: IN3 Registry
                 pattern: ^0x[0-9a-fA-F]+$
+            registryId:
+                type: string
+                description: registry id of the contract
             totalServers:
                 type: integer
                 description: number of servers
@@ -873,5 +884,3 @@ definitions:
                                 type: boolean
                                 description: if true, this node is able to deliver multiple chains
                                 flag: 2
-
-

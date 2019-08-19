@@ -17,6 +17,9 @@
 * For questions, please contact info@slock.it              *
 ***********************************************************/
 
+import { util as _util } from 'in3-common'
+export const util = _util
+
 import Client, { aliases } from './client/Client'
 import EthAPI_ from './modules/eth/api'
 export default Client
