@@ -32,18 +32,23 @@ npm install --save in3
 
 // import in3-Module
 import In3Client from 'in3'
-import * as web3 from 'web3'
+const Web3 = require('web3');
 
 // use the In3Client as Http-Provider
 const web3 = new Web3(new In3Client({
-    proof         : 'standard',
-    signatureCount: 1,
-    requestCount  : 2,
-    chainId       : 'mainnet'
+  proof: 'standard',
+  signatureCount: 1,
+  requestCount: 2,
+  chainId: 'mainnet'
 }).createWeb3Provider())
 
 // use the web3
-const block = await web.eth.getBlockByNumber('latest')
+async function main() {
+  const block = await web3.eth.getBlock('latest');
+  console.log(block);
+}
+
+main();
 ...
 
 
