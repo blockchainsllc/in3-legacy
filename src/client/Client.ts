@@ -441,6 +441,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       if (conf.replaceLatestBlock)
         in3.latestBlock = conf.replaceLatestBlock
 
+      //tell server that IN3 Client want to talk on in3 protocol version level 2.0.0
+      //hardcoding , needs discussion, if we want to move this to defaultconfig, but that is in in3-common
+      in3.version = "2.0.0"
+
       // if we request proof and the node can handle it ...
       if (conf.proof && conf.proof != 'none' && canProof(node) && r.params.indexOf('pending') < 0) {
 

@@ -93,6 +93,11 @@ definitions:
                 items:
                     type: string
                     format: address
+            version:
+                description: IN3 protocol version that client can specify explicitly in request
+                type: string
+                example: "1.0.0"
+                
     RPCResponse:
         type: object
         description: a JSONRPC-Responset with N3-Extension

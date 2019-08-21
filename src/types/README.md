@@ -52,7 +52,8 @@ const rPCRequest:types.RPCRequest = {
     verification: 'proof',
     signatures: [
       '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
-    ]
+    ],
+    version: '1.0.0'
   }
 }
 ```
@@ -81,7 +82,8 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
   verification: 'proof',
   signatures: [
     '0x6C1a01C2aB554930A937B0a2E8105fB47946c679'
-  ]
+  ],
+  version: '1.0.0'
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -98,6 +100,7 @@ const iN3RPCRequestConfig:types.IN3RPCRequestConfig = {
  Must be one of the these values : `'never`', `'proof`', `'proofWithSignature`'
 *  **clientSignature** [{"description":"the signature of the client"}](#{"description":"the signature of the client"}) - the signature of the client   
 *  **signatures** `string<address>[]` - a list of addresses requested to sign the blockhash   
+*  **version** `string` - IN3 protocol version that client can specify explicitly in request   
 
 ### RPCResponse
 
@@ -141,7 +144,8 @@ const rPCResponse:types.RPCResponse = {
       ]
     },
     lastNodeList: 326478,
-    currentBlock: 320126478
+    currentBlock: 320126478,
+    version: '1.0.0'
   },
   in3Node: {
     index: 13,
@@ -208,7 +212,7 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
   },
   lastNodeList: 326478,
   currentBlock: 320126478,
-  version: '2.0.0'
+  version: '1.0.0'
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -217,6 +221,7 @@ const iN3ResponseConfig:types.IN3ResponseConfig = {
 *  **lastNodeList** `number` - the blocknumber for the last block updating the nodelist. If the client has a smaller blocknumber he should update the nodeList.   
 *  **lastValidatorChange** `number` - the blocknumber of gthe last change of the validatorList   
 *  **currentBlock** `number` - the current blocknumber.   
+*  **version** `string` - the in3 protocol version.   
 
 ### IN3NodeConfig
 
