@@ -46,7 +46,7 @@ test-in3-parity:
     - npm install
     - npm run build
     - npm test
-    - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b develop --single-branch
+    - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b 81-include-server-version-and-check-the-client-version-in-the-in3-section --single-branch
     - cd in3-server
     - npm install
     - cd node_modules
@@ -76,7 +76,7 @@ test-in3-geth:
     - npm install
     - npm run build
     - npm test
-    - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b develop --single-branch
+    - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b 81-include-server-version-and-check-the-client-version-in-the-in3-section --single-branch
     - cd in3-server
     - npm install
     - cd node_modules
