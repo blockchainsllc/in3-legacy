@@ -22,3 +22,4 @@
 
 
 export const In3ProtocolVersion = '2.0.0'
+//in3 client will talk with in3 server by using above mentioned in3 protocol version 
