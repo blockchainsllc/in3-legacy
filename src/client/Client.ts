@@ -32,6 +32,7 @@ import { HttpProvider } from './provider'
 
 import EthAPI from '../modules/eth/api'
 import IpfsAPI from '../modules/ipfs/api'
+import { In3ProtocolVersion } from '../types/Constants'
 
 const defaultConfig = require('in3-common/js/defaultConfig.json')
 const CACHEABLE = ['ipfs_get', 'web3_clientVersion', 'web3_sha3', 'net_version', 'eth_protocolVersion', 'eth_coinbase', 'eth_gasPrice', 'eth_accounts', 'eth_getBalance', 'eth_getStorageAt', 'eth_getTransactionCount', 'eth_getBlockTransactionCountByHash', 'eth_getBlockTransactionCountByNumber',
@@ -470,7 +471,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       if (Object.keys(in3).length){
         //tell server that IN3 Client want to talk on in3 protocol version level 2.0.0
         //hardcoding , needs discussion, if we want to move this to defaultconfig, but that is in in3-common
-        in3.version = "2.0.0"
+        in3.version = In3ProtocolVersion
         
         r.in3 = { ...in3, ...r.in3 }}
 
