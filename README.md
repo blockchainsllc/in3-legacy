@@ -224,14 +224,14 @@ The application would then accept the following arguments:
 
 The following documentations are available:
 
-- [ReadTheDocs](https://in3.readthedocs.io/en/latest/) - Complete Inubed Documentation on ReadTheDocs.
+- [ReadTheDocs](https://in3.readthedocs.io/en/latest/) - Complete Incubed Documentation on ReadTheDocs.
 - [API](https://github.com/slockit/in3/blob/master/doc/README.md) - Definition of Classes and available functions.
 - [DataTypes](https://github.com/slockit/in3/blob/master/src/types/README.md) - Definition of datastructures used inside the client.
 - [Verification](https://github.com/slockit/in3/wiki/Ethereum-Verification-and-MerkleProof). A documentation about the verification of proofs send by a IN3-Server.
 - [Incubed concept explained by Chrisptoph Jentzsch (CEO) (youtube)](https://www.youtube.com/watch?v=_vodQubed2A)
 - [Ethereum Verification explained by Simon Jentzsch (CTO) (youtube)](https://www.youtube.com/watch?v=wlUlypmt6Oo)
 - [Wiki](https://github.com/slockit/in3/wiki). A wiki with examples and explanations of the protocol.
-- [Whitepaper](https://download.slock.it/whitepaper_incubed_draft.pdf). The whitepaper describing the vision and idea.
+- [Whitepaper](https://in3.readthedocs.io/en/develop/intro.html). The whitepaper describing the vision and idea.
 
 # Chains
 

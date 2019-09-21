@@ -13,18 +13,19 @@ cache:
   paths:
     - node_modules/
 
+before_script:
+  - sh /prepare.sh
+  - npm install
+
 build-in3:
   stage: build
   tags:
     - short-jobs
   script:
-    - sh /prepare.sh
-    - npm install
     - npm run build
   artifacts:
     paths:
       - js/
-
 
 test-in3-parity:
   stage: test
@@ -55,7 +56,7 @@ test-in3-parity:
     - cd ..
     - npm run build
     - npm test
-  
+
 test-in3-geth:
   stage: test
   tags:
