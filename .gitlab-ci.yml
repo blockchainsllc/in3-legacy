@@ -152,22 +152,22 @@ test-usn-lib:
     - cd ..
     - rm -rf usn-testing
 
-pages:
-  stage: deploy
-  tags:
-    - short-jobs
-  environment:
-    name: test-results
-    url: http://in3.git-pages.slock.it/in3
-  dependencies:
-    - test-in3-parity
-    - test-in3-geth
-  script:
-    - mkdir -p public/
-    - cp -r test/report/* public/
-  artifacts:
-    paths:
-      - public
+# pages:
+#   stage: deploy
+#   tags:
+#     - short-jobs
+#   environment:
+#     name: test-results
+#     url: http://in3.git-pages.slock.it/in3
+#   dependencies:
+#     - test-in3-parity
+#     - test-in3-geth
+#   script:
+#     - mkdir -p public/
+#     - cp -r test/report/* public/
+#   artifacts:
+#     paths:
+#       - public
 
 deploy-to-slockit-npm:
   stage: deploy
