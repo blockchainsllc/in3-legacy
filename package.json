@@ -44,6 +44,7 @@
     "@babel/core": "^7.0.0-beta.49",
     "@babel/preset-env": "^7.0.0-beta.49",
     "@babel/preset-es2015": "^7.0.0-beta.53",
+    "@types/bn.js": "^4.11.5",
     "@types/cbor": "^2.0.0",
     "@types/chai": "4.1.7",
     "@types/koa": "^2.0.44",
@@ -66,9 +67,9 @@
   },
   "dependencies": {
     "@ethersproject/abi": "^5.0.0-beta.133",
-    "@types/bn.js": "^4.11.5",
     "ajv": "^6.5.1",
     "axios": "^0.18.1",
+    "bn.js": "^5.0.0",
     "bs58": "^4.0.1",
     "buffer": "^5.2.1",
     "cbor": "^4.0.0",
