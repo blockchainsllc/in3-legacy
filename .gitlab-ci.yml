@@ -13,15 +13,13 @@ cache:
   paths:
     - node_modules/
 
-before_script:
-  - sh /prepare.sh
-  - npm install
-
 build-in3:
   stage: build
   tags:
     - short-jobs
   script:
+    - sh /prepare.sh
+    - npm install
     - npm run build
   artifacts:
     paths:
