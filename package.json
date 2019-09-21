@@ -66,6 +66,7 @@
   },
   "dependencies": {
     "@ethersproject/abi": "^5.0.0-beta.133",
+    "@types/bn.js": "^4.11.5",
     "ajv": "^6.5.1",
     "axios": "^0.18.1",
     "bs58": "^4.0.1",

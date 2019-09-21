@@ -313,7 +313,7 @@ export default class EthAPI {
      * Returns the balance of the account of given address in wei (as hex).
      */
     getBalance(address: Address, block: BlockType = 'latest'): Promise<BN> {
-        return this.send<string>('eth_getBalance', address, toHexBlock(block)).then(util.toBN)
+        return this.send<string>('eth_getBalance', address, toHexBlock(block)).then(util.toBN) as Promise<any>
     }
 
     /**

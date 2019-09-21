@@ -31,7 +31,8 @@ import ChainContext from '../../client/ChainContext'
 import { verifyIPFSHash } from '../ipfs/ipfs'
 import { checkBlockSignatures, getChainSpec } from './header'
 import { BlackListError } from '../../client/Client'
-import * as BN from 'bn.js'
+import BN = require('bn.js')
+import { toBN } from 'in3-common/js/src/util/util';
 
 // these method are accepted without proof
 const allowedWithoutProof = ['ipfs_get', 'ipfs_put', 'eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
@@ -438,7 +439,7 @@ export function verifyTransaction(t: TransactionData) {
   else
     rawHash = hash(raw.slice(0, 6))
 
-  if (new BN(t.s).cmp(N_DIV_2) === 1) throw new Error('Invalid signature')
+  if (toBN(t.s).cmp(N_DIV_2) === 1) throw new Error('Invalid signature')
   const senderPubKey = ethUtil.ecrecover(rawHash, v, bytes(t.r), bytes(t.s))
 
   if (t.publicKey) if (!bytes(t.publicKey).equals(senderPubKey)) throw new Error('Invalid public key')
