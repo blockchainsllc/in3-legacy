@@ -1,0 +1,17 @@
+{
+  "name": "in3-examples",
+  "version": "1.0.0",
+  "description": "Incubed Examples",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "npm run build; node js/index.js"
+  },
+  "author": "Slock.it Developer",
+  "license": "in3",
+  "dependencies": {
+    "in3": "^1.1.48",
+    "typescript": "^3.6.3",
+    "web3": "^1.2.0"
+  }
+}
