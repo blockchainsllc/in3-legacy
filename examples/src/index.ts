@@ -77,8 +77,8 @@ async function in3DirectAPI() {
     console.log(log)*/
 
     //> getting balance
-    //const bal = await in3.eth.getBalance('0x2819c144d5946404c0516b6f817a960db37d4929')
-    //console.log(bal.toString())
+    /*const bal = await in3.eth.getBalance('0x2819c144d5946404c0516b6f817a960db37d4929')
+    console.log(bal.toString())*/
 
     // use the api to call a funnction
     const tokenContractAddr = '0xdac17f958d2ee523a2206206994597c13d831ec7'
@@ -97,18 +97,31 @@ async function in3DirectAPI() {
     var sender = '0x71c24b85086928930f5dC2a6690574E7016C1A7F'
     var toAddress = '0x41d8A416301f53a3EBa3c85B2b88270f636DBd5C'
     var privateKey = '0xD9210C20A0ED0F78F250FE94B38F34D90ACEFC391A0718FFB5EBE0B3C282C1A6'
-    const receipt = await in3Goerli.eth.sendTransaction({
+   /* const receipt = await in3Goerli.eth.sendTransaction({
         to: toAddress,
         from: sender,
         value: '0x3E8',
         pk: privateKey
     })
-    console.log(receipt)
+    console.log(receipt)*/
 
 }
 
-//first calling in3
-in3DirectAPI()
+async function invokeExamples() {
 
-//using in3 as HTTP Provider of web3
-in3AsHttpProvider()
+    try {
+        //calling in3 examples
+        await in3DirectAPI()
+
+        //using in3 as HTTP Provider of web3
+        await in3AsHttpProvider()
+        
+    }
+    catch (err) {
+
+        console.log("Error " + err.toString())
+        process.exit(1);
+    }
+}
+
+invokeExamples();

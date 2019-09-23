@@ -109,6 +109,16 @@ test-implementation:
     - npm run build-ts
 #    - npm test; echo "done"
 
+test-in3-examples:
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - sh /prepare.sh
+    - cd examples/
+    - npm install
+    - npm run start
+
 test-usn-lib:
   stage: test
   tags:

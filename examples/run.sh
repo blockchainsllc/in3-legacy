@@ -3,6 +3,7 @@
 rm -rf node_modules
 npm i
 npm start
+#echo $?
 
 # cd ../
 # npm i && npm run build
