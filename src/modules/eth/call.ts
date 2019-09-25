@@ -18,12 +18,12 @@
 ***********************************************************/
 
 import { getStorageValue } from './verify'
-import * as VM from 'ethereumjs-vm'
+import VM from 'ethereumjs-vm'
 import * as Account from 'ethereumjs-account'
 import * as Block from 'ethereumjs-block'
 import * as Trie from 'merkle-patricia-tree'
 import { rlp } from 'ethereumjs-util'
-import { serialize, util} from 'in3-common'
+import { serialize, util } from 'in3-common'
 import { AccountProof } from '../../types/types'
 
 /** executes a transaction-call to a smart contract */
@@ -94,11 +94,14 @@ export async function executeCall(args: {
   })
 
   // run the tx
-  const result = await util.promisify(vm, vm.runTx, { tx, block: new Block([block, [], []]) })
+  const result = await vm.runTx({ tx, block: new Block([block, [], []]) })
 
   // return the returnValue
   if (missingDataError) throw missingDataError
-  return result.vm.return as Buffer
+
+  if (!result.execResult) throw new Error('no result')
+  if (result.execResult.exceptionError) throw result.execResult.exceptionError
+  return result.execResult.returnValue
 }
 
 async function setStorageFromProof(trie, accounts: { [adr: string]: AccountProof }) {

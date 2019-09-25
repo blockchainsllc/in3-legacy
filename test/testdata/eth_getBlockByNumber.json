@@ -218,6 +218,7 @@
     {
         "descr": "kovan block with wrong transaction hashes",
         "success": false,
+        "chainId": "0x2a",
         "request": {
             "method": "eth_getBlockByNumber",
             "params": [
@@ -320,6 +321,7 @@
     {
         "descr": "kovan block",
         "success": true,
+        "chainId": "0x2a",
         "fuzzer": true,
         "request": {
             "method": "eth_getBlockByNumber",
