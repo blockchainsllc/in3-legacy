@@ -1,7 +1,7 @@
 # INCUBED Client
  [![Forks](https://img.shields.io/github/forks/slockit/in3)](https://github.com/slockit/in3/forks)
  [![Stars](https://img.shields.io/github/stars/slockit/in3)](https://github.com/slockit/in3/watchers)
- [![License](https://img.shields.io/github/license/slockit/in3)](NEED TO UPDATE)
+  [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://github.com/slockit/in3/blob/master/LICENSE.AGPL)
 
 INCUBED (in3) is a minimal verification client for blockchain networks. 
 
@@ -17,13 +17,16 @@ of low-performance IoT and mobile devices.
 
 A more detailed explanation of in3 can be found [here](https://in3.readthedocs.io/en/develop/intro.html).
 
+ For information on the in3-node, please go [here](https://github.com/slockit/in3-server).
+
+For information on the in3 C client, please go [here](https://github.com/slockit/in3-c).
 Topics to include:
 1. image of how in3 works
 
 
 ## Installation and Usage
 |         | package manager           | Link  | Use case |
-| ------------- |:-------------:| -----:| ----:|
+| ------------- |:-------------:| -----:| :----:|
 | in3(ts)| npm | https://www.npmjs.com/package/in3 | WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications
 
 Installing the in3-client is as easy as installing other modules:
@@ -73,6 +76,8 @@ Detailed examples with usage of in3 in typescript programs can be found [here](h
 
 * [TypeScript API reference](https://in3.readthedocs.io/en/develop/api-ts.html)
 * [TypeScript examples](https://in3.readthedocs.io/en/develop/api-ts.html#examples)
+* [in3-node](https://github.com/slockit/in3-server)
+* [in3 C client](https://github.com/slockit/in3-c)
 * [Website](https://slock.it/incubed/) 
 * [ReadTheDocs](https://in3.readthedocs.io/en/develop/)
 * [Blog](https://blog.slock.it/)
@@ -80,8 +85,6 @@ Detailed examples with usage of in3 in typescript programs can be found [here](h
 * [Ethereum verification explained by Simon Jentzsch](https://www.youtube.com/watch?v=wlUlypmt6Oo)
 
 ## Contributors welcome!
-[![GitHub issues](https://img.shields.io/github/issues/slockit/in3)](https://github.com/slockit/in3/issues)
-[![GitHub contributors](https://img.shields.io/github/contributors/slockit/in3)](https://github.com/slockit/in3/graph/contributors)
 
 We at Slock.it believe in the power of the open source community. Feel free to open any issues you may come across, fork the repository and integrate in your own projects. You can reach us on various social media platforms for questions.  
 
