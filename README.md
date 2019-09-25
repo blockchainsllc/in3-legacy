@@ -28,7 +28,7 @@ For information on the in3 C client, please go [here](https://github.com/slockit
 ## Installation and Usage
 |         | package manager           | Link  | Use case |
 | ------------- |:-------------:| -----:| :----:|
-| in3(ts)| npm | https://www.npmjs.com/package/in3 | WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications
+| in3(ts)| npm | [![npm](https://img.shields.io/badge/npm-package-blue)](https://www.npmjs.com/package/in3 ) | WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications
 
 Installing the in3-client is as easy as installing other modules:
 
