@@ -1,3 +1,5 @@
+[![Gitter](https://badges.gitter.im/slockit-in3/community.svg)](https://gitter.im/slockit-in3/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 # INCUBED
 
 The Minimal Verification Client
