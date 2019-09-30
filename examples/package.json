@@ -10,6 +10,7 @@
   "author": "Slock.it Developer",
   "license": "in3",
   "dependencies": {
+    "ethereumjs-util": "^6.1.0",
     "in3": "^1.1.48",
     "typescript": "^3.6.3",
     "web3": "^1.2.0"
