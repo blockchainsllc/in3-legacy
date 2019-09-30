@@ -1,6 +1,40 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 import Client from '../../src/client/Client'
 import { readFileSync } from 'fs'
-import {  RPCRequest, RPCResponse } from '../../src/types/types'
+import { RPCRequest, RPCResponse } from '../../src/types/types'
 import { Transport, util } from 'in3-common'
 
 const ignoreFuxxProps = ['id', 'error', 'currentBlock', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
@@ -81,28 +115,28 @@ async function runSingleTest(test: any, c: number) {
         maxAttempts: 1,
         loggerUrl: ''
     }, {
-            handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]> {
-                if((data as any)[0].method == 'in3_validatorlist') {
-                  const response = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist_' + test.chainId + '.json', 'utf8').toString())
-                  const validatorResponse = mockValidatorList(response, (data as any)[0].params)
+        handle(url: string, data: RPCRequest | RPCRequest[], timeout?: number): Promise<RPCResponse | RPCResponse[]> {
+            if ((data as any)[0].method == 'in3_validatorlist') {
+                const response = JSON.parse(readFileSync(process.cwd() + '/test/util/in3_validatorlist_' + test.chainId + '.json', 'utf8').toString())
+                const validatorResponse = mockValidatorList(response, (data as any)[0].params)
 
-                  validatorResponse.id = (data as any)[0].id
-                  validatorResponse.jsonrpc = (data as any)[0].jsonrpc
+                validatorResponse.id = (data as any)[0].id
+                validatorResponse.jsonrpc = (data as any)[0].jsonrpc
 
-                  return Promise.resolve([validatorResponse])
-                }
-                test.response[res].id = (data as any)[0].id
-                return Promise.resolve([test.response[res++]])
-            },
-            isOnline(): Promise<boolean> {
-                return Promise.resolve(true)
-            },
-            random(count: number): number[] {
-                const r = []
-                for (let i = 0; i < count; i++) r[i] = i / count
-                return r
+                return Promise.resolve([validatorResponse])
             }
-        })
+            test.response[res].id = (data as any)[0].id
+            return Promise.resolve([test.response[res++]])
+        },
+        isOnline(): Promise<boolean> {
+            return Promise.resolve(true)
+        },
+        random(count: number): number[] {
+            const r = []
+            for (let i = 0; i < count; i++) r[i] = i / count
+            return r
+        }
+    })
     for (const chainId of Object.keys(client.defConfig.servers))
         client.defConfig.servers[chainId].needsUpdate = false
 
@@ -112,14 +146,14 @@ async function runSingleTest(test: any, c: number) {
 
     //quick hack for validatorProof verification - Magic Code
     if (client.defConfig.chainId === '0x44d') {
-      const ctx = client.getChainContext('0x44d')
-      ctx.lastValidatorChange = 1216963
+        const ctx = client.getChainContext('0x44d')
+        ctx.lastValidatorChange = 1216963
     }
 
     //quick hack for transitioned POA verification - Magic Code
     if (client.defConfig.chainId === '0x2a') {
-      const ctx = client.getChainContext('0x2a')
-      ctx.lastValidatorChange = 10994697
+        const ctx = client.getChainContext('0x2a')
+        ctx.lastValidatorChange = 10994697
     }
 
     let s = false, error = null
@@ -137,20 +171,20 @@ async function runSingleTest(test: any, c: number) {
     return result
 }
 
-function mockValidatorList(response, params?){
+function mockValidatorList(response, params?) {
     const states = response.result.states
 
-    const startIndex: number = (params && params.length > 0)? util.toNumber(params[0]):0
-    const limit: number = (params && params.length > 1)? util.toNumber(params[1]):2
+    const startIndex: number = (params && params.length > 0) ? util.toNumber(params[0]) : 0
+    const limit: number = (params && params.length > 1) ? util.toNumber(params[1]) : 2
 
     return ({
-      id: 0,
-      result: {
-        states: limit? response.result.states.slice(startIndex, startIndex + limit + 1): response.result.states.slice(startIndex),
-        lastCheckedBlock: response.result.lastCheckedBlock
-      },
-      jsonrpc: '2.0',
-      in3: response.in3
+        id: 0,
+        result: {
+            states: limit ? response.result.states.slice(startIndex, startIndex + limit + 1) : response.result.states.slice(startIndex),
+            lastCheckedBlock: response.result.lastCheckedBlock
+        },
+        jsonrpc: '2.0',
+        in3: response.in3
     } as RPCResponse)
 }
 
