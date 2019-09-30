@@ -25,66 +25,74 @@ build-in3:
     paths:
       - js/
 
+test-in3:
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - sh /prepare.sh
+    - npm install
+    - npm test
 
-test-in3-parity:
-  stage: test
-  tags:
-    - short-jobs
-  variables:
-    RPCURL: http://parity:8545
-    IPFS_URL: http://ipfs:5001
-  services:
-    - name: jbenet/go-ipfs:latest
-      command:
-        - daemon
-        - --offline
-      alias: ipfs
-    - name: docker.slock.it/core-technology/parity-timemachine:master
-      alias: parity
-  script:
-    - sh /prepare.sh
-    - npm install
-    - npm run build
-    - npm test
-    - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b develop --single-branch
-    - cd in3-server
-    - npm install
-    - cd node_modules
-    - rm -rf in3
-    - ln -s ../../ in3
-    - cd ..
-    - npm run build
-    - npm test
-  
-test-in3-geth:
-  stage: test
-  tags:
-    - short-jobs
-  variables:
-    RPCURL: http://geth:8545
-    IPFS_URL: http://ipfs:5001
-  services:
-    - name: jbenet/go-ipfs:latest
-      command:
-        - daemon
-        - --offline
-      alias: ipfs
-    - name: docker.slock.it/core-technology/geth-timemachine:master
-      alias: geth
-  script:
-    - sh /prepare.sh
-    - npm install
-    - npm run build
-    - npm test
-    - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b develop --single-branch
-    - cd in3-server
-    - npm install
-    - cd node_modules
-    - rm -rf in3
-    - ln -s ../../ in3
-    - cd ..
-    - npm run build
-    - npm test
+  # test-in3-parity:
+  #   stage: test
+  #   tags:
+  #     - short-jobs
+  #   variables:
+  #     RPCURL: http://parity:8545
+  #     IPFS_URL: http://ipfs:5001
+  #   services:
+  #     - name: jbenet/go-ipfs:latest
+  #       command:
+  #         - daemon
+  #         - --offline
+  #       alias: ipfs
+  #     - name: docker.slock.it/core-technology/parity-timemachine:master
+  #       alias: parity
+  #   script:
+  #     - sh /prepare.sh
+  #     - npm install
+  #     - npm run build
+  #     - npm test
+  #     - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b develop --single-branch
+  #     - cd in3-server
+  #     - npm install
+  #     - cd node_modules
+  #     - rm -rf in3
+  #     - ln -s ../../ in3
+  #     - cd ..
+  #     - npm run build
+  #     - npm test
+
+  # test-in3-geth:
+  #   stage: test
+  #   tags:
+  #     - short-jobs
+  #   variables:
+  #     RPCURL: http://geth:8545
+  #     IPFS_URL: http://ipfs:5001
+  #   services:
+  #     - name: jbenet/go-ipfs:latest
+  #       command:
+  #         - daemon
+  #         - --offline
+  #       alias: ipfs
+  #     - name: docker.slock.it/core-technology/geth-timemachine:master
+  #       alias: geth
+  #   script:
+  #     - sh /prepare.sh
+  #     - npm install
+  #     - npm run build
+  #     - npm test
+  #     - rm -rf in3-server; git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/ts/in3-server.git -b develop --single-branch
+  #     - cd in3-server
+  #     - npm install
+  #     - cd node_modules
+  #     - rm -rf in3
+  #     - ln -s ../../ in3
+  #     - cd ..
+  #     - npm run build
+  #     - npm test
 
   artifacts:
     name: "test-reports-$CI_JOB_NAME"
@@ -163,22 +171,22 @@ test-usn-lib:
     - cd ..
     - rm -rf usn-testing
 
-pages:
-  stage: deploy
-  tags:
-    - short-jobs
-  environment:
-    name: test-results
-    url: http://in3.git-pages.slock.it/in3
-  dependencies:
-    - test-in3-parity
-    - test-in3-geth
-  script:
-    - mkdir -p public/
-    - cp -r test/report/* public/
-  artifacts:
-    paths:
-      - public
+# pages:
+#   stage: deploy
+#   tags:
+#     - short-jobs
+#   environment:
+#     name: test-results
+#     url: http://in3.git-pages.slock.it/in3
+#   dependencies:
+#     - test-in3-parity
+#     - test-in3-geth
+#   script:
+#     - mkdir -p public/
+#     - cp -r test/report/* public/
+#   artifacts:
+#     paths:
+#       - public
 
 deploy-to-slockit-npm:
   stage: deploy

@@ -2,10 +2,7 @@
     {
         "descr": " get code on mainnet using bin-format",
         "binaryFormat": true,
-        "verification": "proofWithSignature",
-        "signatures": [
-            "0x784bfa9eb182C3a02DbeB5285e3dBa92d717E07a"
-        ],
+        "verification": "proof",
         "request": {
             "method": "eth_getCode",
             "params": [
@@ -22,16 +19,6 @@
                     "proof": {
                         "type": "accountProof",
                         "block": "0xf90214a0525cf7d91b9d9c9e7d02d77d8ff774fea42a75e7bcfce82c000b651a8046e89ba01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794ea674fdde714fd979de3edf0f56aa9716b898ec8a0ac0c2f56f0123dc26a48a8e928f1c50e296e9a8811693540713b8fd5e8626700a0773448f42f41dc30fb0f28795790c103554849df51aa939d7ca964bed33227caa0ae9216e66d4b48f35c1b4bd1dc8b8aee3df5f3a4c7d714bbcc199c856534afd5b9010000802003664010488444000002088301128544009010054a38420120100e0b6ac6c006110081004021080429030060c80002140032490161c0288a0200bcb0b80190f8220300042320c12218200fca004080a4099a1a0080104150098824402c02a000000a015f2345400208110208054400112242c01408d01a001581080240101b100b0080000200061004c102845000533da002890a4f000b5400ac10000182246b10100008004820190038088c641440049000a1b112809000201900094a863882034285181695520000d622498f043060e580ac41182000910121c2350802102240218003010104c240a580a8a4c024000200d00240044048010c101188870848dc48c4aa07836ab3ae837a121d8379e2bf845c2ba0b99365746865726d696e652d6177732d7573312d33a0a575a2f410491ab3a6bec27cf166e22d5f5787056a506c02fee5472292e1599088953497d01375ba43",
-                        "signatures": [
-                            {
-                                "blockHash": "0xf4dce48c054bd3e1bbe94a7cbbd3658f095b9d17016a8a21b9c211029b5c0f04",
-                                "block": 6992814,
-                                "r": "0x57e7c03defd3b8822490fb0c79ce484c7530d2d9380921571bd5e73687dec0a5",
-                                "s": "0x58a5a3ec6ddb804f461510431416b84352f28774b658326e2f35b5917d6e2b15",
-                                "v": 27,
-                                "msgHash": "0xfebfeeeccca45b719af381e5e2b69f644af009c1a1ba20b17196265d7be060ca"
-                            }
-                        ],
                         "accounts": {
                             "0x03cb0021808442Ad5EFb61197966aef72a1deF96": {
                                 "accountProof": [
@@ -63,10 +50,7 @@
     {
         "descr": " get code on mainnet",
         "fuzzer": true,
-        "verification": "proofWithSignature",
-        "signatures": [
-            "0x784bfa9eb182C3a02DbeB5285e3dBa92d717E07a"
-        ],
+        "verification": "proof",
         "request": {
             "method": "eth_getCode",
             "params": [
@@ -83,16 +67,6 @@
                     "proof": {
                         "type": "accountProof",
                         "block": "0xf90214a0525cf7d91b9d9c9e7d02d77d8ff774fea42a75e7bcfce82c000b651a8046e89ba01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794ea674fdde714fd979de3edf0f56aa9716b898ec8a0ac0c2f56f0123dc26a48a8e928f1c50e296e9a8811693540713b8fd5e8626700a0773448f42f41dc30fb0f28795790c103554849df51aa939d7ca964bed33227caa0ae9216e66d4b48f35c1b4bd1dc8b8aee3df5f3a4c7d714bbcc199c856534afd5b9010000802003664010488444000002088301128544009010054a38420120100e0b6ac6c006110081004021080429030060c80002140032490161c0288a0200bcb0b80190f8220300042320c12218200fca004080a4099a1a0080104150098824402c02a000000a015f2345400208110208054400112242c01408d01a001581080240101b100b0080000200061004c102845000533da002890a4f000b5400ac10000182246b10100008004820190038088c641440049000a1b112809000201900094a863882034285181695520000d622498f043060e580ac41182000910121c2350802102240218003010104c240a580a8a4c024000200d00240044048010c101188870848dc48c4aa07836ab3ae837a121d8379e2bf845c2ba0b99365746865726d696e652d6177732d7573312d33a0a575a2f410491ab3a6bec27cf166e22d5f5787056a506c02fee5472292e1599088953497d01375ba43",
-                        "signatures": [
-                            {
-                                "blockHash": "0xf4dce48c054bd3e1bbe94a7cbbd3658f095b9d17016a8a21b9c211029b5c0f04",
-                                "block": 6992814,
-                                "r": "0x57e7c03defd3b8822490fb0c79ce484c7530d2d9380921571bd5e73687dec0a5",
-                                "s": "0x58a5a3ec6ddb804f461510431416b84352f28774b658326e2f35b5917d6e2b15",
-                                "v": 27,
-                                "msgHash": "0xfebfeeeccca45b719af381e5e2b69f644af009c1a1ba20b17196265d7be060ca"
-                            }
-                        ],
                         "accounts": {
                             "0x03cb0021808442Ad5EFb61197966aef72a1deF96": {
                                 "accountProof": [
@@ -124,10 +98,7 @@
     {
         "descr": " get code on mainnet",
         "fuzzer": true,
-        "verification": "proofWithSignature",
-        "signatures": [
-            "0x784bfa9eb182C3a02DbeB5285e3dBa92d717E07a"
-        ],
+        "verification": "proof",
         "request": {
             "method": "eth_getCode",
             "params": [
@@ -144,16 +115,6 @@
                     "proof": {
                         "type": "accountProof",
                         "block": "0xf90214a0525cf7d91b9d9c9e7d02d77d8ff774fea42a75e7bcfce82c000b651a8046e89ba01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794ea674fdde714fd979de3edf0f56aa9716b898ec8a0ac0c2f56f0123dc26a48a8e928f1c50e296e9a8811693540713b8fd5e8626700a0773448f42f41dc30fb0f28795790c103554849df51aa939d7ca964bed33227caa0ae9216e66d4b48f35c1b4bd1dc8b8aee3df5f3a4c7d714bbcc199c856534afd5b9010000802003664010488444000002088301128544009010054a38420120100e0b6ac6c006110081004021080429030060c80002140032490161c0288a0200bcb0b80190f8220300042320c12218200fca004080a4099a1a0080104150098824402c02a000000a015f2345400208110208054400112242c01408d01a001581080240101b100b0080000200061004c102845000533da002890a4f000b5400ac10000182246b10100008004820190038088c641440049000a1b112809000201900094a863882034285181695520000d622498f043060e580ac41182000910121c2350802102240218003010104c240a580a8a4c024000200d00240044048010c101188870848dc48c4aa07836ab3ae837a121d8379e2bf845c2ba0b99365746865726d696e652d6177732d7573312d33a0a575a2f410491ab3a6bec27cf166e22d5f5787056a506c02fee5472292e1599088953497d01375ba43",
-                        "signatures": [
-                            {
-                                "blockHash": "0xf4dce48c054bd3e1bbe94a7cbbd3658f095b9d17016a8a21b9c211029b5c0f04",
-                                "block": 6992814,
-                                "r": "0x57e7c03defd3b8822490fb0c79ce484c7530d2d9380921571bd5e73687dec0a5",
-                                "s": "0x58a5a3ec6ddb804f461510431416b84352f28774b658326e2f35b5917d6e2b15",
-                                "v": 27,
-                                "msgHash": "0xfebfeeeccca45b719af381e5e2b69f644af009c1a1ba20b17196265d7be060ca"
-                            }
-                        ],
                         "accounts": {
                             "0x13CB0021808442aD5efB61197966AEf72A1Def96": {
                                 "accountProof": [

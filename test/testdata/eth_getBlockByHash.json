@@ -3,10 +3,9 @@
         "descr": "mainnet block with transactions",
         "success": true,
         "fuzzer": true,
+        "verification": "proof",
         "chainId": "0x1",
-        "signatures": [
-            "0x784bfa9eb182C3a02DbeB5285e3dBa92d717E07a"
-        ],
+        "signatures": [],
         "request": {
             "method": "eth_getBlockByHash",
             "params": [
@@ -92,17 +91,7 @@
                 "id": 77,
                 "in3": {
                     "proof": {
-                        "type": "blockProof",
-                        "signatures": [
-                            {
-                                "blockHash": "0x4c45aaaf983de4bd6cd81fb0a63f93d1eed148242e1a08fe477d4803d9181372",
-                                "block": 6970454,
-                                "r": "0x117ee2ddfef738327102a2d9c6d6b0a900ab5c2abb913b679c4350d13bbbf593",
-                                "s": "0x07d948c93a567f7940e4fbb5c2ec09fc3ae4c4d1dc97c2db25fc88860554d5f4",
-                                "v": 28,
-                                "msgHash": "0x938d95f07305c71f1473270c857a1e6fc85f2c6fdd5b3a285c23117ec6481067"
-                            }
-                        ]
+                        "type": "blockProof"
                     },
                     "currentBlock": 6985211,
                     "lastNodeList": 6619795,
