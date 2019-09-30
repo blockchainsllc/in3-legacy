@@ -1,31 +1,25 @@
-All rights reserved to Slock.it GmbH.
-You may use this code for testing only.
-Any commercial use of this license is prohibited.
-For a proprietary license for commercial use, please contact info@slock.it.
+COMMERCIAL LICENSE 
 
-A more open license is currently under development and will be applied soon.
-For information about liability, maintenance etc. also refer to the contract concluded with Slock.it GmbH.
+Licensees holding a valid commercial license may use this software in accordance 
+with the commercial license agreement provided with the Software or, alternatively, 
+in accordance with the terms contained in a written agreement between you and 
+slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+information please contact slock.it at in3@slock.it.
+	
+Alternatively, this software may be used under the AGPL license as follows:
+   
+AGPL LICENSE 
 
-
-Disclaimer of Warranty.
-
-  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
-APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
-HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
-OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
-IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
-ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
-
-Limitation of Liability.
-
-  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
-THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
-GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
-USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
-DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
-PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
-EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
+This program is free software: you can redistribute it and/or modify it under the 
+terms of the GNU Affero General Public License as published by the Free Software 
+Foundation, either version 3 of the License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+[Permissions of this strong copyleft license are conditioned on making available 
+complete source code of licensed works and modifications, which include larger 
+works using a licensed work, under the same license. Copyright and license notices 
+must be preserved. Contributors provide an express grant of patent rights.]
+You should have received a copy of the GNU Affero General Public License along 
+with this program. If not, see <https://www.gnu.org/licenses/>.

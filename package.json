@@ -35,7 +35,7 @@
     "url": "git+https://github.com/slockit/in3.git"
   },
   "author": "Simon Jentzsch",
-  "license": "in3",
+  "license": ["AGPL-3.0-or-later","custom"],
   "bugs": {
     "url": "https://github.com/slockit/in3/issues"
   },
