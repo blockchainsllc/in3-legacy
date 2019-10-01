@@ -18,18 +18,31 @@ of low-performance IoT and mobile devices.
 
 ![in3_image](in3_image.png)
 
+A more detailed explanation of in3 can be found in the concept on [readthedocs](https://in3.readthedocs.io/en/develop/intro.html).
 
-A more detailed explanation of in3 can be found [here](https://in3.readthedocs.io/en/develop/intro.html).
 
- For information on the in3-node, please go [here](https://github.com/slockit/in3-server).
+# Platforms
 
-For information on the in3 C client, please go [here](https://github.com/slockit/in3-c).
+INCUBED can be used in different ways
+
+| Stack                 | Size | Code Base | Use Case |
+|-----------------------|------|-----------|----------|
+| [TS/ JavaScript](#typescriptjavascript)        | 2.7MB  | https://github.com/slockit/in3 |   WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications |
+| [C/C++](#c---implementation)                 | 200kB| https://github.com/slockit/in3-core | IoT-Devices, can be integrated nicely on many micro controllers (like [zephyr-supported boards] (https://docs.zephyrproject.org/latest/boards/index.html) ) or anny other C/C++ -Application  |
+| [Java](#java)                  | 705kB| https://github.com/slockit/in3-c    | Java-Implementation of a native-wrapper |
+| [Docker](#docker)                | 2.6MB | https://github.com/slockit/in3 | For replacing existing clients with this docker and connect to incubed via localhost:8545 without the need to change the architecture |
+| [bash](#commandline-tool)                  | 400kB | https://github.com/slockit/in3-core | the in3-commandline utils can be used directly as executable within bash-script or on the shell |
+
+other Languages (like C#, Python, Go, Rust) will be supported soon (until then you can simply use the shared library directly).
+
+For information on the in3-node, [sources on github](https://github.com/slockit/in3-server) or [readthedocs](https://in3.readthedocs.io/en/develop/api-node-server.html) will help you.
+
+For information on the in3 client implementation in C, please go [in3-c](https://github.com/slockit/in3-c) or [API Documentation](https://in3.readthedocs.io/en/develop/api-c.html).
 
 ## Installation and Usage
-|         | package manager           | Link  | Use case |
-| ------------- |:-------------:| -----:| :----:|
-| in3(ts)| npm | [![npm](https://img.shields.io/badge/npm-package-blue)](https://www.npmjs.com/package/in3 ) | WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications
 
+[![npm](https://img.shields.io/badge/npm-package-blue)](https://www.npmjs.com/package/in3 )
+ 
 Installing the in3-client is as easy as installing other modules:
 
 ```npm install --save in3```
@@ -44,16 +57,19 @@ Import incubed with:
 import In3Client from 'in3'
 import * as web3 from 'web3'
 
-// use the In3Client as Http-Provider
-const web3 = new Web3(new In3Client({
-    proof         : 'standard',
-    signatureCount: 1,
-    requestCount  : 2,
-    chainId       : 'mainnet'
-}).createWeb3Provider())
+async function demo() {
 
-// use the web3
-const block = await web.eth.getBlockByNumber('latest')
+    // use the In3Client as Http-Provider
+    const web3 = new Web3(new In3Client({
+        proof         : 'standard',
+        signatureCount: 1,
+        requestCount  : 2,
+        chainId       : 'mainnet'
+    }).createWeb3Provider())
+
+    // use the web3
+    const block = await web.eth.getBlockByNumber('latest')
+}
 ```
 Detailed examples with usage of in3 in typescript programs can be found [here](https://in3.readthedocs.io/en/develop/api-ts.html).
 
