@@ -54,7 +54,7 @@
       "args": [
         "-t",
         "1",
-        "test/testdata/eth_getBlockByHash.json"
+        "test/testdata/eth_getBlockByNumber.json"
       ]
     },
     {

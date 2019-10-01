@@ -35,7 +35,7 @@
     "url": "git+https://github.com/slockit/in3.git"
   },
   "author": "Simon Jentzsch",
-  "license": "in3",
+  "license": "(AGPL-3.0-or-later OR commercial)",
   "bugs": {
     "url": "https://github.com/slockit/in3/issues"
   },
@@ -79,7 +79,7 @@
     "ethereumjs-util": "6.1.0",
     "ethereumjs-vm": "4.1.0",
     "ethjs-util": "0.1.4",
-    "in3-common": "^2.0.0-beta.2",
+    "in3-common": "^2.0.0",
     "merkle-patricia-tree": "^2.3.1",
     "multihashing-async": "^0.5.1",
     "protons": "^1.0.1"
