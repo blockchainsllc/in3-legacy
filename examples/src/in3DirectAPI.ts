@@ -8,10 +8,11 @@ export async function in3DirectAPI() {
 
     //creating in3 instance
     const in3 = new In3Client({
-        proof: 'standard',
-        signatureCount: 1,
+        proof: 'standard',  //‘none’ for no verification, ‘standard’ for verifying all important fields, ‘full’ veryfying all fields even if this means a high payloaad 
+        signatureCount: 2,
         requestCount: 2,
-        chainId: 'mainnet'
+        chainId: 'mainnet',
+        replaceLatestBlock: 6
     })
 
     //getting genesis block using in3
@@ -27,13 +28,13 @@ export async function in3DirectAPI() {
     console.log(txReceipt)
 
     // getting log using in3
-    /*var logFilter = {
+    var logFilter = {
         fromBlock: 8604535,
         toBlock: 8604535,
         address: '0xdac17f958d2ee523a2206206994597c13d831ec7'
     } as LogFilter
     const log = await in3.eth.getLogs(logFilter)
-    console.log(log)*/
+    console.log(log)
 
     // getting balance
     const bal = await in3.eth.getBalance('0x2819c144d5946404c0516b6f817a960db37d4929')
@@ -45,3 +46,7 @@ export async function in3DirectAPI() {
     const myBalance = await in3.eth.callFn(tokenContractAddr, 'balanceOf(address):uint', acct)
     console.log(myBalance.toString())
 }
+
+
+//calling examples
+in3DirectAPI();

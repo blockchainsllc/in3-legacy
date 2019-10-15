@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc -p .",
-    "start": "npm run build; node js/index.js"
+    "start": "npm run build; node js/in3AsHttpProvider.js; node js/in3DirectAPI.js"
   },
   "author": "Slock.it Developer",
   "license": "MIT",
