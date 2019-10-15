@@ -12,6 +12,7 @@ export async function in3DirectAPI() {
         signatureCount: 2,
         requestCount: 2,
         chainId: 'mainnet',
+        timeout: 30000,
         replaceLatestBlock: 6
     })
 
