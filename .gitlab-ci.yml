@@ -214,7 +214,7 @@ deploy-docker:
     - short-jobs
   services:
     - docker:dind
-  image: jonaskello/docker-and-compose:latest
+  image: docker.slock.it/build-images/deployment
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build -t $COMMIT_IMAGE_TAG .
