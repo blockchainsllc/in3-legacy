@@ -97,7 +97,7 @@ definitions:
                 description: IN3 protocol version that client can specify explicitly in request
                 type: string
                 example: "1.0.0"
-                
+
     RPCResponse:
         type: object
         description: a JSONRPC-Responset with N3-Extension
@@ -208,14 +208,14 @@ definitions:
                 description: the type of the proof
                 type: string
                 enum:
-                    [
-                        transactionProof,
-                        receiptProof,
-                        blockProof,
-                        accountProof,
-                        callProof,
-                        logProof
-                    ]
+                  [
+                      transactionProof,
+                      receiptProof,
+                      blockProof,
+                      accountProof,
+                      callProof,
+                      logProof
+                  ]
                 example: accountProof
             block:
                 type: string
@@ -225,9 +225,9 @@ definitions:
                 type: array
                 description: the serialized blockheader as hex, required in case of finality asked
                 example:
-                    [
-                        "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
-                    ]
+                  [
+                      "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
+                  ]
             transactions:
                 type: array
                 description: the list of transactions of the block
@@ -240,11 +240,11 @@ definitions:
                 type: array
                 description: the serialized merle-noodes beginning with the root-node
                 exmaple:
-                    [
-                        "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
-                        "0x01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1",
-                        "0xcf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbd",
-                    ]
+                  [
+                      "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
+                      "0x01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1",
+                      "0xcf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbd",
+                  ]
                 items:
                     type: string
                     pattern: ^0x[0-9a-fA-F]+$
@@ -252,11 +252,11 @@ definitions:
                 type: array
                 description: the serialized merkle-noodes beginning with the root-node of the previous entry (only for full proof of receipts)
                 exmaple:
-                    [
-                        "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
-                        "0x01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1",
-                        "0xcf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbd",
-                    ]
+                  [
+                      "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
+                      "0x01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1",
+                      "0xcf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbd",
+                  ]
                 items:
                     type: string
                     pattern: ^0x[0-9a-fA-F]+$
@@ -331,15 +331,15 @@ definitions:
         type: object
         description: the Proof-for a single Account
         required:
-            [
-                accountProof,
-                address,
-                balance,
-                codeHash,
-                nonce,
-                storageHash,
-                storageProof,
-            ]
+          [
+              accountProof,
+              address,
+              balance,
+              codeHash,
+              nonce,
+              storageHash,
+              storageProof,
+          ]
         properties:
             accountProof:
                 type: array
@@ -579,6 +579,16 @@ definitions:
             rpc:
                 type: string
                 description: url of one or more rpc-endpoints to use. (list can be comma seperated)
+            whiteList:
+                description: a list of in3 server addresses which are whitelisted manually by client
+                type: array
+                example:
+                  [
+                      "0xe36179e2286ef405e929C90ad3E70E649B22a945",
+                      "0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1"
+                  ]
+                items:
+                    type: string
             servers:
                 type: object
                 description: the nodelist per chain
@@ -600,10 +610,10 @@ definitions:
                             description: a list of addresses which should always be part of the nodelist when getting an update
                             type: array
                             example:
-                                [
-                                    "0xe36179e2286ef405e929C90ad3E70E649B22a945",
-                                    "0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1",
-                                ]
+                              [
+                                  "0xe36179e2286ef405e929C90ad3E70E649B22a945",
+                                  "0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1",
+                              ]
                             items:
                                 type: string
                         lastBlock:
@@ -630,10 +640,10 @@ definitions:
                             description: the list of authority nodes for handling conflicts
                             type: array
                             example:
-                                [
-                                    "0xe36179e2286ef405e929C90ad3E70E649B22a945",
-                                    "0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1",
-                                ]
+                              [
+                                  "0xe36179e2286ef405e929C90ad3E70E649B22a945",
+                                  "0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1",
+                              ]
                             items:
                                 type: string
                         weights:
@@ -721,9 +731,9 @@ definitions:
                 type: array
                 description: the serialized blockheader as hex, required in case of finality asked
                 example:
-                    [
-                        "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
-                    ]
+                  [
+                      "0x72804cfa0179d648ccbe6a65b01a6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b86d8f42c92bbda6463a8f1ebb14f3aff6b19cb91acf2b8ec1ffee98c0437b4ac839d8a2ece1b18166da704b",
+                  ]
 
     IN3RPCConfig:
         type: object

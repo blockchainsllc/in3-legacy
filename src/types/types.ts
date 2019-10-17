@@ -1,40 +1,40 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
 /**
-* the Proof-for a single Account
-*/
+ * the Proof-for a single Account
+ */
 export interface AccountProof {
     /**
      * the serialized merle-noodes beginning with the root-node
@@ -265,6 +265,11 @@ export interface IN3Config {
      * url of one or more rpc-endpoints to use. (list can be comma seperated)
      */
     rpc?: string
+    /**
+     * a list of in3 server addresses which are whitelisted manually by client
+     * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945,0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1
+     */
+    whiteList?: string[]
     /**
      * the nodelist per chain
      */
@@ -761,12 +766,12 @@ export interface Proof {
     finalityBlocks?: any[]
     /**
      * the list of transactions of the block
-     * example: 
+     * example:
      */
     transactions?: any[]
     /**
      * the list of uncle-headers of the block
-     * example: 
+     * example:
      */
     uncles?: any[]
     /**

@@ -677,6 +677,10 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
       throw new Error('No nodes found that fullfill the filter criteria ')
   }
 
+  if(config.whiteList){
+    const whiteNodeSet = new Set(config.whiteList);
+    nodes = nodes.filter((node)=> whiteNodeSet.has(node.address));}
+
   // in case we don't have enough nodes to randomize, we just need to accept the list as is
   if (nodes.length <= count)
     return nodes
