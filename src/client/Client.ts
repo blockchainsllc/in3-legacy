@@ -677,9 +677,20 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
       throw new Error('No nodes found that fullfill the filter criteria ')
   }
 
+  //filter nodes based on whitelist provided
   if(config.whiteList){
     const whiteNodeSet = new Set(config.whiteList);
     nodes = nodes.filter((node)=> whiteNodeSet.has(node.address));}
+
+  //filter nodes based on capabilities
+  nodes = nodes.filter( ( node ) =>
+      (config.proofNodes      ?  (node.props & 1)  > 0 : true ) &&
+      (config.multichainNodes ?  (node.props & 2)  > 0 : true ) &&
+      (config.archiveNodes    ?  (node.props & 4)  > 0 : true ) &&
+      (config.httpNodes       ?  (node.props & 8)  > 0 : true ) &&
+      (config.binaryNodes     ?  (node.props & 16) > 0 : true ) &&
+      (config.torNodes        ?  (node.props & 32) > 0 : true )
+  );
 
   // in case we don't have enough nodes to randomize, we just need to accept the list as is
   if (nodes.length <= count)
