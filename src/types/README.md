@@ -437,7 +437,17 @@ const iN3Config:types.IN3Config = {
   chainId: '0x1',
   chainRegistry: '0xe36179e2286ef405e929C90ad3E70E649B22a945',
   mainChain: '0x1',
-  autoUpdateList: true
+  autoUpdateList: true,
+  whiteList: [
+    '0xe36179e2286ef405e929C90ad3E70E649B22a945',
+    '0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1'
+  ],
+  proofNodes: true,
+  multichainNodes: true,
+  archiveNodes: true,
+  httpNodes: true,
+  binaryNodes: true,
+  torNodes: true
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -470,6 +480,13 @@ const iN3Config:types.IN3Config = {
 *  **cacheStorage** [{"description":"a cache handler offering 2 functions ( setItem(string,string), getItem(string) )"}](#{"description":"a cache handler offering 2 functions ( setitem(string,string), getitem(string) )"}) - a cache handler offering 2 functions ( setItem(string,string), getItem(string) )   
 *  **loggerUrl** `string` - a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }   
 *  **rpc** `string` - url of one or more rpc-endpoints to use. (list can be comma seperated)   
+*  **whiteList** `string[]` - a list of in3 server addresses which are whitelisted manually by client   
+*  **proofNodes** `boolean` - if true the in3 client will filter out nodes which are providing no proof   
+*  **multichainNodes** `boolean` - if true the in3 client will filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains   
+*  **archiveNodes** `boolean` - if true the in3 client will filter out non archive supporting nodes   
+*  **httpNodes** `boolean` - if true the in3 client will include http nodes   
+*  **binaryNodes** `boolean` - if true the in3 client will only include nodes that support binary encording   
+*  **torNodes** `boolean` - if true the in3 client will filter out non tor nodes   
 *  **servers** `object` - the nodelist per chain   
     each key in this object will structure its value like: 
     *  **verifier** `string` - name of the module responsible for handling the verification   

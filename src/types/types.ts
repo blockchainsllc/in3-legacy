@@ -271,6 +271,36 @@ export interface IN3Config {
      */
     whiteList?: string[]
     /**
+     * if true the in3 client will filter out nodes which are providing no proof
+     * example: true
+     */
+    proofNodes?: boolean
+    /**
+     * if true the in3 client will filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains
+     * example: true
+     */
+    multichainNodes?: boolean
+    /**
+     * if true the in3 client will filter out non archive supporting nodes
+     * example: true
+     */
+    archiveNodes?: boolean
+    /**
+     * if true the in3 client will include http nodes
+     * example: true
+     */
+    httpNodes?: boolean
+    /**
+     * if true the in3 client will only include nodes that support binary encording
+     * example: true
+     */
+    binaryNodes?: boolean
+    /**
+     * if true the in3 client will filter out non tor nodes
+     * example: true
+     */
+    torNodes?: boolean
+    /**
      * the nodelist per chain
      */
     servers?: {
