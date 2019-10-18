@@ -589,6 +589,30 @@ definitions:
                   ]
                 items:
                     type: string
+            proofNodes:
+                type: boolean
+                description: if true the in3 client will filter out nodes which are providing no proof
+                example: true
+            multichainNodes:
+                type: boolean
+                description: if true the in3 client will filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains
+                example: true
+            archiveNodes:
+                type: boolean
+                description: if true the in3 client will filter out non archive supporting nodes
+                example: true
+            httpNodes:
+                type: boolean
+                description: if true the in3 client will include http nodes
+                example: true
+            binaryNodes:
+                type: boolean
+                description: if true the in3 client will only include nodes that support binary encording
+                example: true
+            torNodes:
+                type: boolean
+                description: if true the in3 client will filter out non tor nodes
+                example: true
             servers:
                 type: object
                 description: the nodelist per chain
