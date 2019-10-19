@@ -562,8 +562,13 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // verify the values of the proof
   for (const n of nl.nodes) {
-
-    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4), bytes32("0x" + (n as any).proofHash), 'wrong proof ')
+    let proofHash = (n as any).proofHash
+    if (proofHash && !proofHash.startsWith('0x')) proofHash = '0x' + proofHash
+    if (proofHash)
+      checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4), bytes32(proofHash), 'wrong proof ')
+    else
+      proofHash = in3util.toHex(getStorageValue(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4)))
+    if (!proofHash) throw new Error('missing proofHash')
 
     const calcProofHash = ethUtil.keccak(
       Buffer.concat([
@@ -575,7 +580,8 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
         bytes(n.url)
       ])
     )
-    if (Buffer.compare(calcProofHash, bytes32("0x" + (n as any).proofHash)) !== 0) throw new Error("Wrong ProofHash")
+
+    if (Buffer.compare(calcProofHash, bytes32(proofHash)) !== 0) throw new Error("Wrong ProofHash")
   }
 }
 
