@@ -663,6 +663,11 @@ export interface IN3RPCRequestConfig {
      * example: 0x6C1a01C2aB554930A937B0a2E8105fB47946c679
      */
     signatures?: string /* address */[]
+    /**
+     * IN3 protocol version that client can specify explicitly in request
+     * example: 1.0.0
+     */
+    version?: string
 }
 /**
  * additional data returned from a IN3 Server
@@ -686,6 +691,11 @@ export interface IN3ResponseConfig {
      * example: 320126478
      */
     currentBlock?: number
+    /**
+     * IN3 protocol version
+     * example: 1.0.0
+     */
+    version?: string
 }
 /**
  * a Object holding proofs for event logs. The key is the blockNumber as hex
