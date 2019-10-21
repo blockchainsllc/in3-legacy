@@ -690,7 +690,7 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
       (config.httpNodes       ?  (node.props & 8)  > 0 : true ) &&
       (config.binaryNodes     ?  (node.props & 16) > 0 : true ) &&
       (config.torNodes        ?  (node.props & 32) > 0 : true ) &&
-      (config.timeout         ?  node.timeout >= config.timeout : true)
+      (config.depositTimeout  ?  node.timeout >= config.depositTimeout : true)
   );
 
   // in case we don't have enough nodes to randomize, we just need to accept the list as is
