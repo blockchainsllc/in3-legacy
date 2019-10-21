@@ -447,7 +447,8 @@ const iN3Config:types.IN3Config = {
   archiveNodes: true,
   httpNodes: true,
   binaryNodes: true,
-  torNodes: true
+  torNodes: true,
+  depositTimeout: 3000
 }
 ```
  See [types.yaml](../blob/develop/src/types/types.yaml)
@@ -487,6 +488,7 @@ const iN3Config:types.IN3Config = {
 *  **httpNodes** `boolean` - if true the in3 client will include http nodes   
 *  **binaryNodes** `boolean` - if true the in3 client will only include nodes that support binary encording   
 *  **torNodes** `boolean` - if true the in3 client will filter out non tor nodes   
+*  **depositTimeout** `number` - timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client   
 *  **servers** `object` - the nodelist per chain   
     each key in this object will structure its value like: 
     *  **verifier** `string` - name of the module responsible for handling the verification   

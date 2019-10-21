@@ -613,7 +613,7 @@ definitions:
                 type: boolean
                 description: if true the in3 client will filter out non tor nodes
                 example: true
-            timeout:
+            depositTimeout:
                 type: number
                 min: 1
                 default: 3000

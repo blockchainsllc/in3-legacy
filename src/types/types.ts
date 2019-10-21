@@ -301,6 +301,11 @@ export interface IN3Config {
      */
     torNodes?: boolean
     /**
+     * timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client
+     * example: 3000
+     */
+    depositTimeout?: number
+    /**
      * the nodelist per chain
      */
     servers?: {
