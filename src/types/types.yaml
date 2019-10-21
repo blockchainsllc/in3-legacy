@@ -613,6 +613,12 @@ definitions:
                 type: boolean
                 description: if true the in3 client will filter out non tor nodes
                 example: true
+            timeout:
+                type: number
+                min: 1
+                default: 3000
+                description: timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client
+                example: 3000
             servers:
                 type: object
                 description: the nodelist per chain
