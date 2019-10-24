@@ -125,6 +125,12 @@ test-in3-examples:
     - sh /prepare.sh
     - cd examples/
     - npm install
+    - rm -rf node_modules/in3
+    - cd ..
+    - npm i && npm run build
+    - mkdir examples/node_modules/in3
+    - cp -r `ls -A | grep -v "examples"` examples/node_modules/in3/
+    - cd examples/
     - npm run start
 
 test-usn-lib:
