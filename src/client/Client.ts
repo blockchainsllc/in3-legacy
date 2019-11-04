@@ -78,6 +78,7 @@ export default class Client extends EventEmitter {
   // private
   private transport: Transport
   private chains: { [key: string]: ChainContext }
+  private serverWhiteList: boolean
 
 
 
@@ -121,6 +122,8 @@ export default class Client extends EventEmitter {
     this.eth = new EthAPI(this)
     this.ipfs = new IpfsAPI(this)
     this.chains = {}
+    this.serverWhiteList = false
+    
   }
 
   //create a web3 Provider
@@ -151,6 +154,32 @@ export default class Client extends EventEmitter {
     this.defConfig = val
     verifyConfig(this.defConfig)
   }
+
+  public async getWhiteListNodes(config?: IN3Config): Promise<void>{
+
+    let conf = config?config:this.defConfig
+
+    this.emit('whiteListUpdateStarted', conf)
+
+    const wlResponse = await this.sendRPC(
+      'in3_whiteList',
+      [conf.whiteListContract],
+      conf.chainId, conf)
+
+    if(wlResponse.result.nodes && wlResponse.result.nodes.length>0){
+      if(!conf.whiteList){
+        conf.whiteList = []
+       }
+      
+      wlResponse.result.nodes.forEach(e=>{
+        conf.whiteList.push("0x"+e)  
+      })
+
+        
+    }
+    this.emit('whiteListUpdateFinished', wlResponse)
+  }
+
 
   /**
    * fetches the nodeList from the servers.
@@ -277,6 +306,7 @@ export default class Client extends EventEmitter {
 
     if (!server || server.needsUpdate) {
       server && (server.needsUpdate = false)
+      
       await this.updateNodeList(c.chainId)
     }
     const list = c.servers[c.chainId].nodeList
@@ -315,6 +345,11 @@ export default class Client extends EventEmitter {
     // check nodeList and update if needed
     await this.getNodeList(conf)
 
+    //get white list from server if specified
+    if(!this.serverWhiteList && conf.whiteListContract){
+      this.serverWhiteList = true
+      await this.getWhiteListNodes(conf)}
+
     // find some random nodes
     const nodes = getNodes(conf, conf.requestCount, this.transport)
 
@@ -351,7 +386,6 @@ export default class Client extends EventEmitter {
   }
 
 }
-
 let idCount = 1
 
 function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: Client) {
@@ -369,8 +403,21 @@ function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: 
         console.error('Error updating the nodeList!')
       })
     }
+
+    const wlBlockNumber = responses.reduce((p, c) => Math.max(util.toNumber(c.in3 && c.in3.lastWhiteList), p), 0)
+    const wlLastUpdate = conf.servers[conf.chainId].lastWhiteListBlock
+    if (wlBlockNumber > wlLastUpdate) {
+      conf.servers[conf.chainId].lastWhiteListBlock = wlBlockNumber
+      client.getWhiteListNodes(client.defConfig).catch(err => {
+        client.emit('error', err)
+        conf.servers[conf.chainId].lastWhiteListBlock = wlLastUpdate
+        console.error('Error updating the node white list!')
+      })
+    }
+
+    }
   }
-}
+
 
 /**
  * merges the results of all responses to one valid one.
@@ -677,6 +724,13 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
       throw new Error('No nodes found that fullfill the filter criteria ')
   }
 
+  //white list nodes from contract
+  if(config.whiteList){
+    if(!config.whiteList)
+      config.whiteList = config.whiteList
+    else
+      config.whiteList.push(...config.whiteList)
+  }
   //filter nodes based on whitelist provided
   if(config.whiteList){
     const whiteNodeSet = new Set(config.whiteList);

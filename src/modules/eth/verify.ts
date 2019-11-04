@@ -463,7 +463,7 @@ export function verifyTransaction(t: TransactionData) {
   if (t.standardV && in3util.toNumber(t.standardV) != v - 27) throw new Error('Invalid stanardV ')
 }
 
-/** verifies a TransactionProof */
+/** verifies a Account Proof */
 export async function verifyAccountProof(request: RPCRequest, value: string | ServerList, headerProof: BlockHeaderProof, ctx: ChainContext) {
   if (!value) throw new Error('No Accountdata!')
 
@@ -499,12 +499,22 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
       verifyNodeListData(value as ServerList, headerProof.proof, block, request)
       // the contract must be checked later in the updateList -function
       break
+      case 'in3_whiteList':
+        verifyWhiteList(accountProof, request, value)
+        break
     default:
       throw new Error('Unsupported Account-Proof for ' + request.method)
   }
 
   // verify the merkle tree of the account proof
   await verifyAccount(accountProof, block)
+}
+
+function verifyWhiteList(accountProof, request: RPCRequest, value: any ){
+  
+  const wlHash = ethUtil.keccak("0x"+value.nodes.join(''))
+  checkStorage(accountProof, bytes32(0), bytes32(wlHash))
+
 }
 
 function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request: RPCRequest) {

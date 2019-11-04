@@ -306,6 +306,10 @@ export interface IN3Config {
      */
     depositTimeout?: number
     /**
+     * White list contract address
+     */
+    whiteListContract?: string
+    /**
      * the nodelist per chain
      */
     servers?: {
@@ -361,6 +365,11 @@ export interface IN3Config {
             weights?: {
                 [name: string]: IN3NodeWeight
             }
+            /**
+             * the blockNumber of the last whitelist event in the whitelist contract
+             * example: 23498798
+             */
+            lastWhiteListBlock?: number
         }
     }
 }
@@ -723,7 +732,7 @@ export interface IN3ResponseConfig {
      */
     lastNodeList?: number
     /**
-     * the blocknumber of gthe last change of the validatorList
+     * the blocknumber of the last change of the validatorList
      */
     lastValidatorChange?: number
     /**
@@ -736,6 +745,10 @@ export interface IN3ResponseConfig {
      * example: 1.0.0
      */
     version?: string
+    /**
+     * The blocknumber of the last white list event
+     */
+    lastWhiteList?: number
 }
 /**
  * a Object holding proofs for event logs. The key is the blockNumber as hex

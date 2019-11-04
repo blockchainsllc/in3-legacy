@@ -147,6 +147,9 @@ definitions:
                 description: the in3 protocol version.
                 type: string
                 example: '1.0.0'
+            lastWhiteList:
+                description: the blocknumber of the last white list event
+                lastWhiteList: number
 
 
     IN3NodeConfig:
@@ -619,6 +622,9 @@ definitions:
                 default: 3000
                 description: timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client
                 example: 3000
+            whiteListContract:
+                type: string
+                description: White list contract address
             servers:
                 type: object
                 description: the nodelist per chain
@@ -681,6 +687,9 @@ definitions:
                             type: object
                             additionalProperties:
                                 $ref: "#/definitions/IN3NodeWeight"
+                        lastWhiteListBlock:
+                            description:  the blockNumber of the last whitelist event in the whitelist contract
+                            type: number
 
     IN3NodeWeight:
         description: a local weight of a n3-node. (This is used internally to weight the requests)
