@@ -724,28 +724,24 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
       throw new Error('No nodes found that fullfill the filter criteria ')
   }
 
-  //white list nodes from contract
-  if(config.whiteList){
-    if(!config.whiteList)
-      config.whiteList = config.whiteList
-    else
-      config.whiteList.push(...config.whiteList)
-  }
+  let allRequiredFlags = 
+  (config.proofNodes      ? 0x1  : 0) |
+  (config.multichainNodes ? 0x2  : 0) |
+  (config.archiveNodes    ? 0x4  : 0) |
+  (config.httpNodes       ? 0x8  : 0) |
+  (config.binaryNodes     ? 0x16 : 0) |
+  (config.torNodes        ? 0x32 : 0)
+
   //filter nodes based on whitelist provided
-  if(config.whiteList){
-    const whiteNodeSet = new Set(config.whiteList);
-    nodes = nodes.filter((node)=> whiteNodeSet.has(node.address));}
+  let whiteNodeSet = config.whiteList ? new Set(config.whiteList): undefined
+
+  const filterCapabilities = (n: IN3NodeConfig) =>
+    (n.props & allRequiredFlags)===allRequiredFlags &&
+    (config.depositTimeout  ?  n.timeout >= config.depositTimeout : true) &&
+    config.whiteList ?  whiteNodeSet.has(n.address) : true
 
   //filter nodes based on capabilities
-  nodes = nodes.filter( ( node ) =>
-      (config.proofNodes      ?  (node.props & 1)  > 0 : true ) &&
-      (config.multichainNodes ?  (node.props & 2)  > 0 : true ) &&
-      (config.archiveNodes    ?  (node.props & 4)  > 0 : true ) &&
-      (config.httpNodes       ?  (node.props & 8)  > 0 : true ) &&
-      (config.binaryNodes     ?  (node.props & 16) > 0 : true ) &&
-      (config.torNodes        ?  (node.props & 32) > 0 : true ) &&
-      (config.depositTimeout  ?  node.timeout >= config.depositTimeout : true)
-  );
+  nodes = nodes.filter(filterCapabilities);
 
   // in case we don't have enough nodes to randomize, we just need to accept the list as is
   if (nodes.length <= count)
