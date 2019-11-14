@@ -499,7 +499,7 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
       verifyNodeListData(value as ServerList, headerProof.proof, block, request)
       // the contract must be checked later in the updateList -function
       break
-      case 'in3_whiteList':
+    case 'in3_whiteList':
         verifyWhiteList(accountProof, request, value)
         break
     default:
@@ -512,9 +512,12 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
 
 function verifyWhiteList(accountProof, request: RPCRequest, value: any ){
   
-  const wlHash = ethUtil.keccak("0x"+value.nodes.join(''))
+  let nodes = ""
+  value.nodes.forEach(e => {
+    nodes += e.toString().replace("0x","")
+  });
+  const wlHash = ethUtil.keccak("0x"+nodes)
   checkStorage(accountProof, bytes32(0), bytes32(wlHash))
-
 }
 
 function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request: RPCRequest) {

@@ -172,7 +172,7 @@ export default class Client extends EventEmitter {
        }
       
       wlResponse.result.nodes.forEach(e=>{
-        conf.whiteList.push("0x"+e)  
+        conf.whiteList.push(e)  
       })
 
         
@@ -732,13 +732,14 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
   (config.binaryNodes     ? 0x16 : 0) |
   (config.torNodes        ? 0x32 : 0)
 
+  config.whiteList = config.whiteList.map(x => x.toLowerCase())
   //filter nodes based on whitelist provided
   let whiteNodeSet = config.whiteList ? new Set(config.whiteList): undefined
 
   const filterCapabilities = (n: IN3NodeConfig) =>
     (n.props & allRequiredFlags)===allRequiredFlags &&
     (config.depositTimeout  ?  n.timeout >= config.depositTimeout : true) &&
-    config.whiteList ?  whiteNodeSet.has(n.address) : true
+    config.whiteList ?  whiteNodeSet.has(n.address.toLowerCase()) : true
 
   //filter nodes based on capabilities
   nodes = nodes.filter(filterCapabilities);
