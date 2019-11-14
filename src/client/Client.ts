@@ -732,7 +732,8 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
   (config.binaryNodes     ? 0x16 : 0) |
   (config.torNodes        ? 0x32 : 0)
 
-  config.whiteList = config.whiteList.map(x => x.toLowerCase())
+  if(config.whiteList)
+    config.whiteList = config.whiteList.map(x => x.toLowerCase())
   //filter nodes based on whitelist provided
   let whiteNodeSet = config.whiteList ? new Set(config.whiteList): undefined
 
