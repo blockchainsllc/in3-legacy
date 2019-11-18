@@ -121,6 +121,7 @@ test-usn-lib:
   stage: test
   tags:
     - short-jobs
+  allow_failure: true
   variables:
     RPCURL: http://parity:8545
     USN_TESTMODE: parity
