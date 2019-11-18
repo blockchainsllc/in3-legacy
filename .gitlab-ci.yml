@@ -121,6 +121,7 @@ test-usn-lib:
   stage: test
   tags:
     - short-jobs
+  allow_failure: true
   variables:
     RPCURL: http://parity:8545
     USN_TESTMODE: parity
@@ -149,7 +150,7 @@ test-usn-lib:
     - rm -rf usn-testing
     - mkdir usn-testing
     - cd usn-testing
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/iotlayer/usn-lib.git -b 168-fixing-util-types-and-serialize-references --single-branch
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/iotlayer/usn-lib.git --single-branch
     - cd usn-lib
     - npm install
     - rm -rf node_modules/in3
