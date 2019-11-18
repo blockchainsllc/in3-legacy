@@ -157,10 +157,10 @@ test-usn-lib:
     - cd node_modules
     - ln -s /builds/in3/ts/in3 in3
     - cd ..
-    - npm run build
-    - npm test; echo "done"
-    - cd ..
-    - rm -rf usn-testing
+#    - npm run build
+#    - npm test; echo "done"
+#    - cd ..
+#    - rm -rf usn-testing
 
 # pages:
 #   stage: deploy
