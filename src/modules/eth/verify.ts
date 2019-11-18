@@ -386,15 +386,11 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
         throw new Error('The Uncles are missing or wrong size!')
 
       // we only verify uncles for full proof
-      const trie = new Trie()
-      await Promise.all(headerProof.proof.uncles.map((b, i) => {
-        const header = in3util.toBuffer(b)
-        if (!hash(header).equals(in3util.toBuffer(bd.uncles[i])))
-          throw new Error('The uncle hash of uncle ' + i + ' is wrong')
-        return in3util.promisify(trie, trie.put, util.rlp.encode(i), header)
-      }))
-      if (!trie.root.equals(block.uncleHash))
+      if (!util.rlphash(headerProof.proof.uncles.map(_ => rlp.decode(in3util.toBuffer(_)))).equals(in3util.toBuffer(block.uncleHash)))
         throw new Error('The UncleRoot do not match uncles!')
+
+      if (headerProof.proof.uncles.find((h, i) => !util.keccak256(in3util.toBuffer(h)).equals(in3util.toBuffer(bd.uncles[i]))))
+        throw new Error('The uncle hashes do not match the headers!')
     }
   }
 
