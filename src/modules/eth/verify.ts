@@ -508,11 +508,7 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
 
 function verifyWhiteList(accountProof, request: RPCRequest, value: any ){
   
-  let nodes = ""
-  value.nodes.forEach(e => {
-    nodes += e.toString().replace("0x","")
-  });
-  const wlHash = ethUtil.keccak("0x"+nodes)
+  const wlHash = ethUtil.keccak(Buffer.concat( values.nodes.map(address) ))
   checkStorage(accountProof, bytes32(0), bytes32(wlHash))
 }
 
