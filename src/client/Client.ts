@@ -155,7 +155,7 @@ export default class Client extends EventEmitter {
     verifyConfig(this.defConfig)
   }
 
-  public async getWhiteListNodes(config?: IN3Config): Promise<void>{
+  public async updateWhiteListNodes(config?: IN3Config): Promise<void>{
 
     let conf = config?config:this.defConfig
 
@@ -355,7 +355,7 @@ export default class Client extends EventEmitter {
     //get white list from server if specified
     if(!this.serverWhiteList && conf.whiteListContract){
       this.serverWhiteList = true
-      await this.getWhiteListNodes(conf)}
+      await this.updateWhiteListNodes(conf)}
 
     // find some random nodes
     const nodes = getNodes(conf, conf.requestCount, this.transport)
@@ -416,7 +416,7 @@ function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: 
       const wlLastUpdate = conf.servers[conf.chainId].lastWhiteListBlock
       if (wlBlockNumber > wlLastUpdate) {
         conf.servers[conf.chainId].lastWhiteListBlock = wlBlockNumber
-        client.getWhiteListNodes(client.defConfig).catch(err => {
+        client.updateWhiteListNodes(client.defConfig).catch(err => {
           client.emit('error', err)
           conf.servers[conf.chainId].lastWhiteListBlock = wlLastUpdate
           console.error('Error updating the node white list!')
