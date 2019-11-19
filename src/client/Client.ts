@@ -79,7 +79,7 @@ export default class Client extends EventEmitter {
   private transport: Transport
   private chains: { [key: string]: ChainContext }
   private serverWhiteList: boolean
-
+  private contractWhiteList: string[]
 
 
   /**
@@ -123,7 +123,7 @@ export default class Client extends EventEmitter {
     this.ipfs = new IpfsAPI(this)
     this.chains = {}
     this.serverWhiteList = false
-    
+    this.contractWhiteList = []
   }
 
   //create a web3 Provider
@@ -171,11 +171,18 @@ export default class Client extends EventEmitter {
         conf.whiteList = []
        }
       
-      wlResponse.result.nodes.forEach(e=>{
-        conf.whiteList.push(e)  
-      })
+      conf.whiteList = conf.whiteList.filter(e => this.contractWhiteList.indexOf(e)==-1)
 
-        
+      this.contractWhiteList = []
+      wlResponse.result.nodes.forEach(e=>{
+
+        if(conf.whiteList.indexOf(e)==-1)
+          conf.whiteList.push(e)
+
+        this.contractWhiteList.push(e)  
+      })
+      
+ 
     }
     this.emit('whiteListUpdateFinished', wlResponse)
   }
@@ -404,16 +411,17 @@ function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: 
       })
     }
 
-    const wlBlockNumber = responses.reduce((p, c) => Math.max(util.toNumber(c.in3 && c.in3.lastWhiteList), p), 0)
-    const wlLastUpdate = conf.servers[conf.chainId].lastWhiteListBlock
-    if (wlBlockNumber > wlLastUpdate) {
-      conf.servers[conf.chainId].lastWhiteListBlock = wlBlockNumber
-      client.getWhiteListNodes(client.defConfig).catch(err => {
-        client.emit('error', err)
-        conf.servers[conf.chainId].lastWhiteListBlock = wlLastUpdate
-        console.error('Error updating the node white list!')
-      })
-    }
+    if(conf.whiteListContract!== undefined){
+      const wlBlockNumber = responses.reduce((p, c) => Math.max(util.toNumber(c.in3 && c.in3.lastWhiteList), p), 0)
+      const wlLastUpdate = conf.servers[conf.chainId].lastWhiteListBlock
+      if (wlBlockNumber > wlLastUpdate) {
+        conf.servers[conf.chainId].lastWhiteListBlock = wlBlockNumber
+        client.getWhiteListNodes(client.defConfig).catch(err => {
+          client.emit('error', err)
+          conf.servers[conf.chainId].lastWhiteListBlock = wlLastUpdate
+          console.error('Error updating the node white list!')
+        })
+      }}
 
     }
   }
