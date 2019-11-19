@@ -36,11 +36,11 @@ import { util as _util } from 'in3-common'
 export const util = _util
 
 import Client, { aliases } from './client/Client'
-import EthAPI_ from './modules/eth/api'
+import * as _ethapi from './modules/eth/api'
 import { validate as validateOb } from 'in3-common'
 export default Client
 
-export const EthAPI = EthAPI_
+export const EthAPI = _ethapi.default
 
 export type IN3Client = Client
 
@@ -90,6 +90,14 @@ export type TransactionData = _serialize.TransactionData
 export type IN3RPCConfig = types.IN3RPCConfig
 export type IN3RPCHandlerConfig = types.IN3RPCHandlerConfig
 export type ChainSpec = types.ChainSpec
+
+// EthAPI types
+export type ABI = _ethapi.ABI
+export type BlockType = _ethapi.BlockType
+export type Log = _ethapi.Log
+export type TransactionReceipt = _ethapi.TransactionReceipt
+export type Transaction = _ethapi.Transaction
+// TODO could be more?
 
 export const AxiosTransport = transport.AxiosTransport
 export const typeDefs = types.validationDef
