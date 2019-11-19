@@ -166,7 +166,7 @@ export default class Client extends EventEmitter {
       [conf.whiteListContract],
       conf.chainId, conf)
 
-    if(wlResponse.result.nodes && wlResponse.result.nodes.length>0){
+    if(wlResponse.error === undefined && wlResponse.result !== undefined && wlResponse.result.nodes && wlResponse.result.nodes.length>0){
       if(!conf.whiteList){
         conf.whiteList = []
        }
