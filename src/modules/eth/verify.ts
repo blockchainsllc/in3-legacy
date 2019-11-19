@@ -386,15 +386,11 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
         throw new Error('The Uncles are missing or wrong size!')
 
       // we only verify uncles for full proof
-      const trie = new Trie()
-      await Promise.all(headerProof.proof.uncles.map((b, i) => {
-        const header = in3util.toBuffer(b)
-        if (!hash(header).equals(in3util.toBuffer(bd.uncles[i])))
-          throw new Error('The uncle hash of uncle ' + i + ' is wrong')
-        return in3util.promisify(trie, trie.put, util.rlp.encode(i), header)
-      }))
-      if (!trie.root.equals(block.uncleHash))
+      if (!util.rlphash(headerProof.proof.uncles.map(_ => rlp.decode(in3util.toBuffer(_)))).equals(in3util.toBuffer(block.uncleHash)))
         throw new Error('The UncleRoot do not match uncles!')
+
+      if (headerProof.proof.uncles.find((h, i) => !util.keccak256(in3util.toBuffer(h)).equals(in3util.toBuffer(bd.uncles[i]))))
+        throw new Error('The uncle hashes do not match the headers!')
     }
   }
 
@@ -575,8 +571,13 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
 
   // verify the values of the proof
   for (const n of nl.nodes) {
-
-    checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4), bytes32("0x" + (n as any).proofHash), 'wrong proof ')
+    let proofHash = (n as any).proofHash
+    if (proofHash && !proofHash.startsWith('0x')) proofHash = '0x' + proofHash
+    if (proofHash)
+      checkStorage(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4), bytes32(proofHash), 'wrong proof ')
+    else
+      proofHash = in3util.toHex(getStorageValue(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4)))
+    if (!proofHash) throw new Error('missing proofHash')
 
     const calcProofHash = ethUtil.keccak(
       Buffer.concat([
@@ -588,7 +589,8 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
         bytes(n.url)
       ])
     )
-    if (Buffer.compare(calcProofHash, bytes32("0x" + (n as any).proofHash)) !== 0) throw new Error("Wrong ProofHash")
+
+    if (Buffer.compare(calcProofHash, bytes32(proofHash)) !== 0) throw new Error("Wrong ProofHash")
   }
 }
 
