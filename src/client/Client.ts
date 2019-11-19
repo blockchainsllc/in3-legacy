@@ -157,7 +157,7 @@ export default class Client extends EventEmitter {
 
   public async getWhiteListNodes(config?: IN3Config): Promise<void>{
 
-    let conf = config?config:this.defConfig
+    const conf = config || this.defConfig
 
     this.emit('whiteListUpdateStarted', conf)
 
