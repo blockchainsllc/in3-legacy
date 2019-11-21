@@ -79,7 +79,7 @@ export default class Client extends EventEmitter {
   private transport: Transport
   private chains: { [key: string]: ChainContext }
   private serverWhiteList: boolean
-  private contractWhiteList: string[]
+  private whiteNodesSet: Set<string>
 
 
   /**
@@ -123,7 +123,7 @@ export default class Client extends EventEmitter {
     this.ipfs = new IpfsAPI(this)
     this.chains = {}
     this.serverWhiteList = false
-    this.contractWhiteList = []
+    this.whiteNodesSet = new Set()
   }
 
   //create a web3 Provider
@@ -170,16 +170,18 @@ export default class Client extends EventEmitter {
       if(!conf.whiteList){
         conf.whiteList = []
        }
-      
-      conf.whiteList = conf.whiteList.filter(e => this.contractWhiteList.indexOf(e)==-1)
 
-      this.contractWhiteList = []
+      //whiteNodesSet only have list from contract
+      conf.whiteList = conf.whiteList.filter(e => !this.whiteNodesSet.has(e))
+      this.whiteNodesSet.clear()
+
+      //conf.whiteList have nodes list manually added plus coming from whitelist list contract
       wlResponse.result.nodes.forEach(e=>{
 
         if(conf.whiteList.indexOf(e)==-1)
           conf.whiteList.push(e)
 
-        this.contractWhiteList.push(e)  
+        this.whiteNodesSet.add(e.toLowerCase())  
       })
       
  
@@ -742,13 +744,11 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
 
   if(config.whiteList)
     config.whiteList = config.whiteList.map(x => x.toLowerCase())
-  //filter nodes based on whitelist provided
-  let whiteNodeSet = config.whiteList ? new Set(config.whiteList): undefined
 
   const filterCapabilities = (n: IN3NodeConfig) =>
     (n.props & allRequiredFlags)===allRequiredFlags &&
     (config.depositTimeout  ?  n.timeout >= config.depositTimeout : true) &&
-    config.whiteList ?  whiteNodeSet.has(n.address.toLowerCase()) : true
+    config.whiteList ?  this.whiteNodesSet.has(n.address.toLowerCase()) : true
 
   //filter nodes based on capabilities
   nodes = nodes.filter(filterCapabilities);
