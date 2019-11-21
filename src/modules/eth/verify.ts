@@ -508,7 +508,7 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
 
 function verifyWhiteList(accountProof, request: RPCRequest, value: any ){
   
-  const wlHash = ethUtil.keccak(Buffer.concat( values.nodes.map(address) ))
+  const wlHash = ethUtil.keccak(Buffer.concat( value.nodes.map(address) ))
   checkStorage(accountProof, bytes32(0), bytes32(wlHash))
 }
 
