@@ -97,6 +97,9 @@ definitions:
                 description: IN3 protocol version that client can specify explicitly in request
                 type: string
                 example: "1.0.0"
+            whiteList:
+                description: address of whitelist contract if added in3 server will register it in watch and will notify client the whitelist event block number in reponses it depends on cahce settings
+                type: string
 
     RPCResponse:
         type: object

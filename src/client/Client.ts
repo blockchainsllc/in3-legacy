@@ -514,6 +514,9 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       if (conf.replaceLatestBlock)
         in3.latestBlock = conf.replaceLatestBlock
 
+      if(conf.whiteListContract)
+        in3.whiteList = conf.whiteListContract
+
       // if we request proof and the node can handle it ...
       if (conf.proof && conf.proof != 'none' && canProof(node) && r.params.indexOf('pending') < 0) {
 
