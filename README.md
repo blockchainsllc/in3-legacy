@@ -45,7 +45,7 @@ For information on the in3 client implementation in C, please go [in3-c](https:/
  
 Installing the in3-client is as easy as installing other modules:
 
-```npm install --save in3 web3 @types/web3```
+```npm install --save in3```
 
 Import incubed with:
 
