@@ -1,40 +1,40 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
 /**
-* the Proof-for a single Account
-*/
+ * the Proof-for a single Account
+ */
 export interface AccountProof {
     /**
      * the serialized merle-noodes beginning with the root-node
@@ -266,6 +266,50 @@ export interface IN3Config {
      */
     rpc?: string
     /**
+     * a list of in3 server addresses which are whitelisted manually by client
+     * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945,0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1
+     */
+    whiteList?: string[]
+    /**
+     * if true the in3 client will filter out nodes which are providing no proof
+     * example: true
+     */
+    proofNodes?: boolean
+    /**
+     * if true the in3 client will filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains
+     * example: true
+     */
+    multichainNodes?: boolean
+    /**
+     * if true the in3 client will filter out non archive supporting nodes
+     * example: true
+     */
+    archiveNodes?: boolean
+    /**
+     * if true the in3 client will include http nodes
+     * example: true
+     */
+    httpNodes?: boolean
+    /**
+     * if true the in3 client will only include nodes that support binary encording
+     * example: true
+     */
+    binaryNodes?: boolean
+    /**
+     * if true the in3 client will filter out non tor nodes
+     * example: true
+     */
+    torNodes?: boolean
+    /**
+     * timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client
+     * example: 3000
+     */
+    depositTimeout?: number
+    /**
+     * White list contract address
+     */
+    whiteListContract?: string
+    /**
      * the nodelist per chain
      */
     servers?: {
@@ -321,6 +365,11 @@ export interface IN3Config {
             weights?: {
                 [name: string]: IN3NodeWeight
             }
+            /**
+             * the blockNumber of the last whitelist event in the whitelist contract
+             * example: 23498798
+             */
+            lastWhiteListBlock?: number
         }
     }
 }
@@ -668,6 +717,11 @@ export interface IN3RPCRequestConfig {
      * example: 1.0.0
      */
     version?: string
+    /**
+     * address of whitelist contract if added in3 server will register it in watch 
+     * and will notify client the whitelist event block number in reponses it depends on cahce settings
+     */
+    whiteList?: string
 }
 /**
  * additional data returned from a IN3 Server
@@ -683,7 +737,7 @@ export interface IN3ResponseConfig {
      */
     lastNodeList?: number
     /**
-     * the blocknumber of gthe last change of the validatorList
+     * the blocknumber of the last change of the validatorList
      */
     lastValidatorChange?: number
     /**
@@ -696,6 +750,10 @@ export interface IN3ResponseConfig {
      * example: 1.0.0
      */
     version?: string
+    /**
+     * The blocknumber of the last white list event
+     */
+    lastWhiteList?: number
 }
 /**
  * a Object holding proofs for event logs. The key is the blockNumber as hex
@@ -761,12 +819,12 @@ export interface Proof {
     finalityBlocks?: any[]
     /**
      * the list of transactions of the block
-     * example: 
+     * example:
      */
     transactions?: any[]
     /**
      * the list of uncle-headers of the block
-     * example: 
+     * example:
      */
     uncles?: any[]
     /**
