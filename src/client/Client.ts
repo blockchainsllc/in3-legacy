@@ -189,6 +189,7 @@ export default class Client extends EventEmitter {
 
     // create a random seed which ensures the deterministic nature of even a partly list.
     const seed = '0x' + keccak256('0x' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)).toString('hex')
+    if (chain == '0x7d0') config.proof = 'none' // ipfs does not need proof
 
     const nlResponse = await this.sendRPC(
       'in3_nodeList',
@@ -483,12 +484,13 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       }
 
       // only if there is something to set, we will add the in3-key and merge it
-      if (Object.keys(in3).length){
+      if (Object.keys(in3).length) {
         //tell server that IN3 Client want to talk on in3 protocol version level 2.0.0
         //hardcoding , needs discussion, if we want to move this to defaultconfig, but that is in in3-common
         in3.version = In3ProtocolVersion
-        
-        r.in3 = { ...in3, ...r.in3 }}
+
+        r.in3 = { ...in3, ...r.in3 }
+      }
 
       // sign it?
       if (r.in3 && conf.key) {
