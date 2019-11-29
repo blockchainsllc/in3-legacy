@@ -47,6 +47,7 @@ import { HttpProvider } from './provider'
 
 import EthAPI from '../modules/eth/api'
 import IpfsAPI from '../modules/ipfs/api'
+import { In3ProtocolVersion } from '../types/Constants'
 
 const defaultConfig = require('in3-common/js/defaultConfig.json')
 const CACHEABLE = ['ipfs_get', 'web3_clientVersion', 'web3_sha3', 'net_version', 'eth_protocolVersion', 'eth_coinbase', 'eth_gasPrice', 'eth_accounts', 'eth_getBalance', 'eth_getStorageAt', 'eth_getTransactionCount', 'eth_getBlockTransactionCountByHash', 'eth_getBlockTransactionCountByNumber',
@@ -77,7 +78,6 @@ export default class Client extends EventEmitter {
   // private
   private transport: Transport
   private chains: { [key: string]: ChainContext }
-
 
 
   /**
@@ -151,6 +151,29 @@ export default class Client extends EventEmitter {
     verifyConfig(this.defConfig)
   }
 
+  public async updateWhiteListNodes(config?: IN3Config): Promise<void> {
+
+    const conf = config || this.defConfig
+    const wl = getWhiteListFromContract(conf)
+    wl.needsUpdate = false
+
+    this.emit('whiteListUpdateStarted', conf)
+
+    const wlResponse = await this.sendRPC(
+      'in3_whiteList',
+      [wl.address],
+      conf.chainId, conf)
+
+    if (wlResponse.result && wlResponse.result.nodes) {
+      wl.lastBlock = parseInt(wlResponse.result.lastBlockNumber || 0)
+      wl.nodes = wlResponse.result.nodes.map(_ => _.toLowerCase())
+    }
+    else if (wlResponse.error)
+      this.emit('error', new Error('Could not update the whitelist : ' + JSON.stringify(wlResponse.error)))
+    this.emit('whiteListUpdateFinished', { wlResponse })
+  }
+
+
   /**
    * fetches the nodeList from the servers.
    * @param chainId if given, the list for the given chainId will be updated otherwise the chainId is taken from the config
@@ -188,6 +211,7 @@ export default class Client extends EventEmitter {
 
     // create a random seed which ensures the deterministic nature of even a partly list.
     const seed = '0x' + keccak256('0x' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)).toString('hex')
+    if (chain == '0x7d0') config.proof = 'none' // ipfs does not need proof
 
     const nlResponse = await this.sendRPC(
       'in3_nodeList',
@@ -314,6 +338,10 @@ export default class Client extends EventEmitter {
     // check nodeList and update if needed
     await this.getNodeList(conf)
 
+    //get white list from server if specified
+    if (conf.whiteListContract && getWhiteListFromContract(conf).needsUpdate)
+      await this.updateWhiteListNodes(conf)
+
     // find some random nodes
     const nodes = getNodes(conf, conf.requestCount, this.transport)
 
@@ -350,7 +378,6 @@ export default class Client extends EventEmitter {
   }
 
 }
-
 let idCount = 1
 
 function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: Client) {
@@ -368,8 +395,24 @@ function checkForAutoUpdates(conf: IN3Config, responses: RPCResponse[], client: 
         console.error('Error updating the nodeList!')
       })
     }
+
+    const wl = getWhiteListFromContract(conf)
+    if (wl.address) {
+      const wlBlockNumber = responses.reduce((p, c) => Math.max(util.toNumber(c.in3 && c.in3.lastWhiteList), p), 0)
+      if (wlBlockNumber > wl.lastBlock) {
+        const wlLastUpdate = wl.lastBlock
+        wl.lastBlock = wlBlockNumber
+        client.updateWhiteListNodes(client.defConfig).catch(err => {
+          client.emit('error', err)
+          conf.servers[conf.chainId].lastWhiteListBlock = wlLastUpdate
+          console.error('Error updating the node white list!')
+        })
+      }
+    }
+
   }
 }
+
 
 /**
  * merges the results of all responses to one valid one.
@@ -456,6 +499,9 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       if (conf.replaceLatestBlock)
         in3.latestBlock = conf.replaceLatestBlock
 
+      if (conf.whiteListContract)
+        in3.whiteList = conf.whiteListContract
+
       // if we request proof and the node can handle it ...
       if (conf.proof && conf.proof != 'none' && canProof(node) && r.params.indexOf('pending') < 0) {
 
@@ -482,8 +528,13 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       }
 
       // only if there is something to set, we will add the in3-key and merge it
-      if (Object.keys(in3).length)
+      if (Object.keys(in3).length) {
+        //tell server that IN3 Client want to talk on in3 protocol version level 2.0.0
+        //hardcoding , needs discussion, if we want to move this to defaultconfig, but that is in in3-common
+        in3.version = In3ProtocolVersion
+
         r.in3 = { ...in3, ...r.in3 }
+      }
 
       // sign it?
       if (r.in3 && conf.key) {
@@ -651,11 +702,26 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
   // get the current chain-configuration, which was previously updated
   const chain = config.servers[config.chainId]
 
+  let allRequiredFlags =
+    (config.proofNodes ? 0x1 : 0) |
+    (config.multichainNodes ? 0x2 : 0) |
+    (config.archiveNodes ? 0x4 : 0) |
+    (config.httpNodes ? 0x8 : 0) |
+    (config.binaryNodes ? 0x16 : 0) |
+    (config.torNodes ? 0x32 : 0)
+
+  const wl = new Set<string>()
+  if (config.whiteList) config.whiteList.forEach(_ => wl.add(_.toLowerCase()))
+  if (config.whiteListContract) getWhiteListFromContract(config).nodes.forEach(_ => wl.add(_.toLowerCase()))
+
   // filter-function for the nodeList
   const filter = (n: IN3NodeConfig) =>
     n.deposit >= config.minDeposit &&  // check deposit
     (!excludes || excludes.indexOf(n.address) === -1) && // check excluded addresses (because of recursive calls)
-    (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now)
+    (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now) &&
+    (n.props & allRequiredFlags) === allRequiredFlags &&
+    (config.depositTimeout ? n.timeout >= config.depositTimeout : true) &&
+    (wl.size == 0 || wl.has(n.address.toLowerCase()))
 
   // prefilter for minDeposit && excludes && blacklisted
   let nodes = chain.nodeList.filter(filter) // check blacklist
@@ -726,3 +792,9 @@ function verifyConfig(conf: Partial<IN3Config>): Partial<IN3Config> {
   else throw new Error('the chain ' + conf.chainId + ' can not be resolved')
   return conf
 }
+
+export function getWhiteListFromContract(config: IN3Config): { lastBlock: number, nodes: string[], address: string, needsUpdate: boolean } {
+  let r = (config as any).whiteListFromContract
+  return r || ((config as any).whiteListFromContract = { lastBlock: -1, node: [], address: config.whiteListContract, needsUpdate: true })
+}
+

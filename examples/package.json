@@ -1,0 +1,18 @@
+{
+  "name": "in3-examples",
+  "version": "1.0.0",
+  "description": "Incubed Examples",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "npm run build; node js/in3AsHttpProvider.js; node js/in3DirectAPI.js"
+  },
+  "author": "Slock.it Developer",
+  "license": "MIT",
+  "dependencies": {
+    "ethereumjs-util": "^6.1.0",
+    "in3": "^2.0.3-RC1",
+    "typescript": "^3.6.3",
+    "web3": "^1.2.0"
+  }
+}

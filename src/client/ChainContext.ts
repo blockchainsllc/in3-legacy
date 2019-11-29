@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-import Client from './Client'
+import Client, { getWhiteListFromContract } from './Client'
 import { RPCRequest, RPCResponse, ChainSpec } from '../types/types';
 import { getModule, Module } from './modules'
 
@@ -66,6 +66,7 @@ export default class ChainContext {
     catch (x) { }
     this.initCache()
     client.addListener('nodeUpdateFinished', () => this.updateCache())
+    client.addListener('whiteListUpdateFinished', e => this.updateCache())
   }
 
   /**
@@ -88,6 +89,8 @@ export default class ChainContext {
 
   initCache() {
     const chainId = this.chainId;
+    const wl = getWhiteListFromContract(this.client.defConfig)
+
     if (this.client.defConfig.cacheStorage && chainId) {
 
       // read nodeList
@@ -98,6 +101,22 @@ export default class ChainContext {
       }
       catch (ex) {
         this.client.defConfig.cacheStorage.setItem('in3.nodeList.' + chainId, '')
+      }
+
+      if (wl.address) {
+        // read whiteList
+        const w = this.client.defConfig.cacheStorage.getItem('in3.whiteList.' + this.client.defConfig.whiteListContract)
+        try {
+          if (w) {
+            const whiteListData = JSON.parse(w)
+            wl.nodes = whiteListData.nodes
+            wl.lastBlock = whiteListData.lastBlock
+            wl.needsUpdate = false
+          }
+        }
+        catch (ex) {
+          this.client.defConfig.cacheStorage.setItem('in3.whiteList.' + this.client.defConfig.whiteListContract, '')
+        }
       }
 
       // read cache
@@ -112,9 +131,12 @@ export default class ChainContext {
     }
   }
 
-  updateCache() {
+  updateCache(whiteList?: Set<string>, whiteListContract?: string) {
     if (this.client.defConfig.cacheStorage && this.chainId && this.client.defConfig.servers[this.chainId]) {
       this.client.defConfig.cacheStorage.setItem('in3.nodeList.' + this.chainId, JSON.stringify(this.client.defConfig.servers[this.chainId]))
+      const wl = getWhiteListFromContract(this.client.defConfig)
+      if (wl.address && wl.nodes.length)
+        this.client.defConfig.cacheStorage.setItem('in3.whiteList.' + whiteListContract, JSON.stringify(wl))
     }
   }
 

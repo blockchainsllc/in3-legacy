@@ -55,7 +55,7 @@ Import incubed with:
 ```
 // import in3-Module
 import In3Client from 'in3'
-import * as web3 from 'web3'
+import Web3 from 'web3'
 
 async function demo() {
 
@@ -64,11 +64,15 @@ async function demo() {
         proof         : 'standard',
         signatureCount: 1,
         requestCount  : 2,
-        chainId       : 'mainnet'
+        chainId       : 'mainnet',
+        replaceLatestBlock: 10
     }).createWeb3Provider())
 
     // use the web3
-    const block = await web.eth.getBlockByNumber('latest')
+    const block = await web3.eth.getBlock('latest')
+    console.log(`Incubed signed block hash ${block.hash}`)
+}
+...
 }
 ```
 Detailed examples with usage of in3 in typescript programs can be found [here](https://in3.readthedocs.io/en/develop/api-ts.html).
