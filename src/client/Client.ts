@@ -274,7 +274,7 @@ export default class Client extends EventEmitter {
         this.emit('afterRequest', { request, result: Array.isArray(request) ? _ : _[0] })
         callback(null, Array.isArray(request) ? _ : _[0])
       }, err => {
-        this.emit('error', { request, err })
+        this.emit('error', { request, err, message: err.message })
         callback(err, null)
       })
     else
@@ -442,8 +442,8 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   // do we have responses with proofes?
   const verifiedResponse = responses.find(_ => _.in3 && !!_.in3.proof)
 
-  // TODO, what if we get different verified responses (like somebody signed a different blockhash)
-  // if we have different result and none if them has a proof, we may want to ask the authorities
+  // TODO, what if we get different verified responses (like somebody signed a different blockhash)?
+  // if we have different result and none of them has a proof, we may want to ask the authorities
   if (Object.keys(groups).length > 1 && !verifiedResponse) {
     // there are more then one answer!
     // how are we going to handle the conflict?
