@@ -294,7 +294,7 @@ export default class Client extends EventEmitter {
    * @param chain (optional) chainId (default: `chainId` from config)
    * @param config (optional) config-params overridnig the client config (just to get the `chainId`)
    */
-  public async verifyOnTheFly(request: RPCRequest, response: RPCResponse, chain?: string, config?: Partial<IN3Config>): Promise<boolean> {
+  public async verifyResponse(request: RPCRequest, response: RPCResponse, chain?: string, config?: Partial<IN3Config>): Promise<boolean> {
     return verifyProof(
       request,
       response,
