@@ -451,6 +451,11 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   if (request.method === 'eth_blockNumber')
     return { ...responses[0], result: '0x' + Math.max(...responses.map(_ => parseInt(_.result))).toString(16) }
 
+  if (request.method === 'in3_nodeList') {
+    const maxLBN = Math.max(...responses.map(_ => parseInt((_.result && _.result.lastBlockNumber) || 0)))
+    responses.filter(_ => _.result).forEach(r => r.result.lastBlockNumber = maxLBN)
+  }
+
   // how many different results do we have?
   const groups = responses.reduce((g, r) => {
     const k = JSON.stringify(r.result || (r.error && 'error'))
@@ -519,8 +524,8 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       if (conf.replaceLatestBlock)
         in3.latestBlock = conf.replaceLatestBlock
 
-        if (conf.whiteListContract)
-          in3.whiteList = conf.whiteListContract
+      if (conf.whiteListContract)
+        in3.whiteList = conf.whiteListContract
 
       // if we request proof and the node can handle it ...
       if (conf.proof && conf.proof != 'none' && canProof(node) && r.params.indexOf('pending') < 0) {
