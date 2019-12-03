@@ -285,6 +285,26 @@ export default class Client extends EventEmitter {
   }
 
   /**
+   * Verify the response of a request without any effect on the state of the client.
+   * Note: The node-list will not be updated.
+   * The method will either return `true` if its inputs could be verified. 
+   *  Or else, it will throw an exception with a helpful message.
+   * @param request request object
+   * @param response response object
+   * @param chain (optional) chainId (default: `chainId` from config)
+   * @param config (optional) config-params overridnig the client config (just to get the `chainId`)
+   */
+  public async verifyResponse(request: RPCRequest, response: RPCResponse, chain?: string, config?: Partial<IN3Config>): Promise<boolean> {
+    return verifyProof(
+      request,
+      response,
+      // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
+      // maybe we can still deliver a proof, but without data
+      !request.in3 || (request.in3.verification || 'never') === 'never',
+      this.getChainContext(chain || (config ? config.chainId : null) || this.defConfig.chainId))
+  }
+
+  /**
    * clears all stats and weights, like blocklisted nodes
    */
   public clearStats() {
@@ -499,8 +519,8 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       if (conf.replaceLatestBlock)
         in3.latestBlock = conf.replaceLatestBlock
 
-      if (conf.whiteListContract)
-        in3.whiteList = conf.whiteListContract
+        if (conf.whiteListContract)
+          in3.whiteList = conf.whiteListContract
 
       // if we request proof and the node can handle it ...
       if (conf.proof && conf.proof != 'none' && canProof(node) && r.params.indexOf('pending') < 0) {
