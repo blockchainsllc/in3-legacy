@@ -36,7 +36,6 @@ import { util as _util } from 'in3-common'
 export const util = _util
 
 import Client, { aliases } from './client/Client'
-import { verifyOnTheFly as _verifyOnTheFly } from './client/modules'
 import * as _ethapi from './modules/eth/api'
 import { validate as validateOb } from 'in3-common'
 export default Client
@@ -104,4 +103,3 @@ export const AxiosTransport = transport.AxiosTransport
 export const typeDefs = types.validationDef
 export const validate = validateOb.validate 
 export const chainAliases = aliases
-export const verifyOnTheFly = _verifyOnTheFly

@@ -286,7 +286,9 @@ export default class Client extends EventEmitter {
 
   /**
    * Verify the response of a request without any effect on the state of the client.
-   * Note: The node-list will not be updated
+   * Note: The node-list will not be updated.
+   * The method will either return `true` if its inputs could be verified. 
+   *  Or else, it will throw an exception with a helpful message.
    * @param request request object
    * @param response response object
    * @param chain (optional) chainId (default: `chainId` from config)

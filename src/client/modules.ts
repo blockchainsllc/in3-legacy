@@ -38,8 +38,6 @@ import Client from "./Client"
 
 const modules: { [name: string]: Module } = {}
 
-const defaultConfig = require('in3-common/js/defaultConfig.json')
-
 export interface Module {
     name: string
 
@@ -68,23 +66,6 @@ export function getModule(name: string): Module {
 export async function verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof: boolean, ctx: ChainContext): Promise<boolean> {
     return await ctx.module.verifyProof(request, response, allowWithoutProof, ctx)
         || Promise.all(Object.keys(modules).filter(_ => _ !== ctx.module.name).map(m => modules[m].verifyProof(request, response, allowWithoutProof, ctx))).then(a => a.find(_ => !!_))
-}
-
-/**
- * Verify the response of a request without any effect on the state of the client.
- * Note: The node-list will not be updated
- * @param request request object
- * @param response response object
- * @param chain chain Id
- */
-export async function verifyOnTheFly(request: RPCRequest, response: RPCResponse, chainId?: string): Promise<boolean> {
-  return verifyProof(
-    request,
-    response,
-    // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
-    // maybe we can still deliver a proof, but without data
-    !request.in3 || (request.in3.verification || 'never') === 'never',
-    new Client().getChainContext(chainId || defaultConfig.chainId));
 }
 
 export function register(module: Module) {
