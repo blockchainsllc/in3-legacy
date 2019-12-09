@@ -54,7 +54,7 @@ export async function executeCall(args: {
 
   // create new state for a vm
   const state = new Trie()
-  const vm = new VM({ state })
+  const vm = new VM({ state, chain: 'mainnet', hardfork: 'istanbul' })
 
   // set all storage values from the proof in the state
   await setStorageFromProof(state, accounts)
