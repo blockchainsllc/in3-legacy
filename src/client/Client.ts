@@ -202,7 +202,7 @@ export default class Client extends EventEmitter {
 
       // in the beginning we take the bootnodes as nodelist, but they will overridden after the update
       servers.nodeList = chainData.bootNodes.map(_ => ({
-        address: toChecksumAddress(_.split(':')[0]),
+        address: _.split(':')[0].toLowerCase(),
         chainIds: [chain],
         url: _.substr(_.indexOf(':') + 1),
         deposit: 0
@@ -545,7 +545,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         in3.verification = conf.signatureCount ? 'proofWithSignature' : 'proof'
         if (conf.signatureCount)
           // if signatures are requested, we choose some random nodes and create a list of their addresses
-          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => toChecksumAddress(_.address))
+          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => _.address)
 
         // ask the server to include the code
         if (conf.includeCode)
@@ -659,7 +659,8 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         excludes.splice(n, 1)
 
       err.addresses.forEach(adr => {
-        conf.servers[conf.chainId].weights[adr].blacklistedUntil = Date.now() + 3600000 * 2
+        const w = conf.servers[conf.chainId].weights[adr.toLowerCase()] || (conf.servers[conf.chainId].weights[adr.toLowerCase()] = {})
+        w.blacklistedUntil = Date.now() + 3600000 * 2
       })
     }
     else if (err.message.indexOf('cannot sign') >= 0 && err.message.indexOf('blockHeight') > 0) {
