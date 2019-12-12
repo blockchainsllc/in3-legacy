@@ -96,8 +96,11 @@ export default class ChainContext {
       // read nodeList
       const nl = this.client.defConfig.cacheStorage.getItem('in3.nodeList.' + chainId)
       try {
-        if (nl)
-          this.client.defConfig.servers[chainId] = JSON.parse(nl)
+        if (nl) {
+          const nodeList = JSON.parse(nl)
+          if (nodeList.nodeList) nodeList.nodeList.forEach(_ => _.address = _.address ? _.address.toLowerCase() : undefined)
+          this.client.defConfig.servers[chainId] = nodeList
+        }
       }
       catch (ex) {
         this.client.defConfig.cacheStorage.setItem('in3.nodeList.' + chainId, '')
