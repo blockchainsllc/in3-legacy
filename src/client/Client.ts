@@ -202,7 +202,7 @@ export default class Client extends EventEmitter {
 
       // in the beginning we take the bootnodes as nodelist, but they will overridden after the update
       servers.nodeList = chainData.bootNodes.map(_ => ({
-        address: toChecksumAddress(_.split(':')[0]),
+        address: _.split(':')[0].toLowerCase(),
         chainIds: [chain],
         url: _.substr(_.indexOf(':') + 1),
         deposit: 0
@@ -274,7 +274,7 @@ export default class Client extends EventEmitter {
         this.emit('afterRequest', { request, result: Array.isArray(request) ? _ : _[0] })
         callback(null, Array.isArray(request) ? _ : _[0])
       }, err => {
-        this.emit('error', { request, err })
+        this.emit('error', { request, err, message: err.message })
         callback(err, null)
       })
     else
@@ -282,6 +282,26 @@ export default class Client extends EventEmitter {
         this.emit('afterRequest', { request, result })
         return result
       })
+  }
+
+  /**
+   * Verify the response of a request without any effect on the state of the client.
+   * Note: The node-list will not be updated.
+   * The method will either return `true` if its inputs could be verified. 
+   *  Or else, it will throw an exception with a helpful message.
+   * @param request request object
+   * @param response response object
+   * @param chain (optional) chainId (default: `chainId` from config)
+   * @param config (optional) config-params overridnig the client config (just to get the `chainId`)
+   */
+  public async verifyResponse(request: RPCRequest, response: RPCResponse, chain?: string, config?: Partial<IN3Config>): Promise<boolean> {
+    return verifyProof(
+      request,
+      response,
+      // TODO if we ask for a proof of a transactionHash, which does exist, we will not get a proof, which means, this would fail.
+      // maybe we can still deliver a proof, but without data
+      !request.in3 || (request.in3.verification || 'never') === 'never',
+      this.getChainContext(chain || (config ? config.chainId : null) || this.defConfig.chainId))
   }
 
   /**
@@ -431,6 +451,11 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   if (request.method === 'eth_blockNumber')
     return { ...responses[0], result: '0x' + Math.max(...responses.map(_ => parseInt(_.result))).toString(16) }
 
+  if (request.method === 'in3_nodeList') {
+    const maxLBN = Math.max(...responses.map(_ => parseInt((_.result && _.result.lastBlockNumber) || 0)))
+    responses.filter(_ => _.result).forEach(r => r.result.lastBlockNumber = maxLBN)
+  }
+
   // how many different results do we have?
   const groups = responses.reduce((g, r) => {
     const k = JSON.stringify(r.result || (r.error && 'error'))
@@ -442,8 +467,8 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
   // do we have responses with proofes?
   const verifiedResponse = responses.find(_ => _.in3 && !!_.in3.proof)
 
-  // TODO, what if we get different verified responses (like somebody signed a different blockhash)
-  // if we have different result and none if them has a proof, we may want to ask the authorities
+  // TODO, what if we get different verified responses (like somebody signed a different blockhash)?
+  // if we have different result and none of them has a proof, we may want to ask the authorities
   if (Object.keys(groups).length > 1 && !verifiedResponse) {
     // there are more then one answer!
     // how are we going to handle the conflict?
@@ -520,7 +545,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         in3.verification = conf.signatureCount ? 'proofWithSignature' : 'proof'
         if (conf.signatureCount)
           // if signatures are requested, we choose some random nodes and create a list of their addresses
-          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => toChecksumAddress(_.address))
+          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => _.address)
 
         // ask the server to include the code
         if (conf.includeCode)
@@ -634,7 +659,8 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         excludes.splice(n, 1)
 
       err.addresses.forEach(adr => {
-        conf.servers[conf.chainId].weights[adr].blacklistedUntil = Date.now() + 3600000 * 2
+        const w = conf.servers[conf.chainId].weights[adr.toLowerCase()] || (conf.servers[conf.chainId].weights[adr.toLowerCase()] = {})
+        w.blacklistedUntil = Date.now() + 3600000 * 2
       })
     }
     else if (err.message.indexOf('cannot sign') >= 0 && err.message.indexOf('blockHeight') > 0) {

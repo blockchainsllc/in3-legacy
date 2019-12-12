@@ -47,7 +47,8 @@ import { verifyIPFSHash } from '../ipfs/ipfs'
 import { checkBlockSignatures, getChainSpec } from './header'
 import { BlackListError } from '../../client/Client'
 import BN = require('bn.js')
-import { toBN } from 'in3-common/js/src/util/util';
+import { toBN, toBuffer } from 'in3-common/js/src/util/util';
+import { IN3NodeConfig } from '../..';
 
 // these method are accepted without proof
 const allowedWithoutProof = ['ipfs_get', 'ipfs_put', 'eth_blockNumber', 'web3_clientVersion', 'web3_sha3', 'net_version', 'net_peerCount', 'net_listening', 'eth_protocolVersion', 'eth_syncing', 'eth_coinbase', 'eth_mining', 'eth_hashrate', 'eth_gasPrice', 'eth_accounts', 'eth_sign', 'eth_sendRawTransaction', 'eth_estimateGas', 'eth_getCompilers', 'eth_compileLLL', 'eth_compileSolidity', 'eth_compileSerpent', 'eth_getWork', 'eth_submitWork', 'eth_submitHashrate']
@@ -94,7 +95,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
     // if the blockhash is already verified, we don't need a signature
     if (existing) return
 
-    throw new BlackListError('No signatures found for block ', proof.expectedSigners.map(_ => ethUtil.toChecksumAddress(in3util.toHex(_))))
+    throw new BlackListError('No signatures found for block ', proof.expectedSigners.map(_ => in3util.toHex(_).toLowerCase()))
   }
 
 
@@ -103,7 +104,7 @@ export async function verifyBlock(b: Block, proof: BlockHeaderProof, ctx: ChainC
   if (!signaturesForBlock.reduce((p, signature, i) => {
 
     if (!messageHash.equals(bytes32(signature.msgHash)))
-      throw new BlackListError('The signature signed the wrong message!', proof.expectedSigners.map(_ => ethUtil.toChecksumAddress(in3util.toHex(_))))
+      throw new BlackListError('The signature signed the wrong message!', proof.expectedSigners.map(_ => in3util.toHex(_).toLowerCase()))
 
     // recover the signer from the signature
     const signer: Buffer = util.pubToAddress(util.ecrecover(messageHash, in3util.toNumber(signature.v), bytes(signature.r), bytes(signature.s)))
@@ -496,8 +497,8 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
       // the contract must be checked later in the updateList -function
       break
     case 'in3_whiteList':
-        verifyWhiteList(accountProof, request, value)
-        break
+      verifyWhiteList(accountProof, request, value)
+      break
     default:
       throw new Error('Unsupported Account-Proof for ' + request.method)
   }
@@ -506,9 +507,9 @@ export async function verifyAccountProof(request: RPCRequest, value: string | Se
   await verifyAccount(accountProof, block)
 }
 
-function verifyWhiteList(accountProof, request: RPCRequest, value: any ){
-  
-  const wlHash = ethUtil.keccak(Buffer.concat( value.nodes.map(address) ))
+function verifyWhiteList(accountProof, request: RPCRequest, value: any) {
+
+  const wlHash = ethUtil.keccak(Buffer.concat(value.nodes.map(address)))
   checkStorage(accountProof, bytes32(0), bytes32(wlHash))
 }
 
@@ -575,19 +576,31 @@ function verifyNodeListData(nl: ServerList, proof: Proof, block: Block, request:
       proofHash = in3util.toHex(getStorageValue(accountProof, storage.getStorageArrayKey(0, n.index, 5, 4)))
     if (!proofHash) throw new Error('missing proofHash')
 
-    const calcProofHash = ethUtil.keccak(
-      Buffer.concat([
-        bytes32(n.deposit),
-        uint64(n.timeout),
-        uint64(n.registerTime),
-        uint128(n.props),
-        address(n.address),
-        bytes(n.url)
-      ])
-    )
-
-    if (Buffer.compare(calcProofHash, bytes32(proofHash)) !== 0) throw new Error("Wrong ProofHash")
+    if (!calcProofHash(n).equals(bytes32(proofHash)) && !calcProofHash(n, true).equals(bytes32(proofHash))) throw new Error("Wrong ProofHash")
+    n.address = n.address.toLowerCase()
   }
+}
+
+function calcProofHash(n: IN3NodeConfig, oldNodeList = false) {
+  return ethUtil.keccak(
+    Buffer.concat(
+      oldNodeList ?
+        [
+          bytes32(n.deposit),
+          uint64(n.timeout),
+          uint64(n.registerTime),
+          uint128(n.props),
+          address(n.address),
+          bytes(n.url)
+        ] : [
+          bytes32(n.deposit),
+          uint64(n.registerTime),
+          toBuffer(n.props, 24),
+          uint64((n as any).weight),
+          address(n.address),
+          bytes(n.url)
+        ])
+  )
 }
 
 function checkStorage(ap: AccountProof, key: Buffer, value: Buffer, msg?: string) {
