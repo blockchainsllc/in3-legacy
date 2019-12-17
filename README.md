@@ -28,6 +28,7 @@ INCUBED can be used in different ways
 | Stack                 | Size | Code Base | Use Case |
 |-----------------------|------|-----------|----------|
 | [TS/ JavaScript](#typescriptjavascript)        | 2.7MB  | https://github.com/slockit/in3 |   WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications |
+| [TS/ JS with WASM](#typescriptjavascript)      | 330kB  | https://github.com/slockit/in3-c |   WebApplication (decentralized RPC-Client in the Browser) or Mobile Applications |
 | [C/C++](#c---implementation)                 | 200kB| https://github.com/slockit/in3-c | IoT-Devices, can be integrated nicely on many micro controllers (like [zephyr-supported boards] (https://docs.zephyrproject.org/latest/boards/index.html) ) or anny other C/C++ -Application  |
 | [Java](#java)                  | 705kB| https://github.com/slockit/in3-c    | Java-Implementation of a native-wrapper |
 | [Docker](#docker)                | 2.6MB | https://github.com/slockit/in3 | For replacing existing clients with this docker and connect to incubed via localhost:8545 without the need to change the architecture |
@@ -52,6 +53,31 @@ Import incubed with:
 ```import In3Client from "in3"```
 
 ## Example 
+
+```
+// import in3-Module
+import In3Client from 'in3'
+
+async function demo() {
+
+    // use the In3Client as Http-Provider
+    const in3 = new In3Client({
+        proof         : 'standard',
+        signatureCount: 1,
+        requestCount  : 2,
+        chainId       : 'mainnet',
+        replaceLatestBlock: 10
+    })
+
+    // use the web3
+    const block = await in3.eth.getBlock('latest')
+    console.log(`Incubed signed block hash ${block.hash}`)
+}
+...
+}
+```
+
+## Example with Web3 (as Provider)
 ```
 // import in3-Module
 import In3Client from 'in3'
@@ -75,6 +101,8 @@ async function demo() {
 ...
 }
 ```
+
+
 Detailed examples with usage of in3 in typescript programs can be found [here](https://in3.readthedocs.io/en/develop/api-ts.html).
 
 ## Features
