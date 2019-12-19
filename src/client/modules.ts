@@ -46,18 +46,8 @@ export interface Module {
     verifyProof(request: RPCRequest, response: RPCResponse, allowWithoutProof: boolean, ctx: ChainContext): Promise<boolean>
 }
 
-function tryLoadModule(path: string, name: string) {
-    try {
-        require(path)
-        return modules[name]
-    }
-    catch {
-        return null
-    }
-}
-
 export function getModule(name: string): Module {
-    const m = modules[name] || tryLoadModule('../modules/' + name, name) || tryLoadModule(name, name)
+    const m = modules[name]
     if (!m) throw new Error('Could not find the module ' + name + ' please ensure it was loaded before!')
     return m
 }
@@ -74,3 +64,6 @@ export function register(module: Module) {
 
 // we are always importing the eth-modules because it is needed in order to verify the nodelist
 import '../modules/eth'
+
+// Import all other modules as well.
+import '../modules/ipfs'
