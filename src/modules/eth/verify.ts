@@ -444,15 +444,15 @@ export async function verifyBlockProof(request: RPCRequest, data: string | Block
 export function verifyTransaction(t: TransactionData) {
   const raw = toTransaction(t)
   let rawHash: Buffer, v = ethUtil.bufferToInt(bytes(t.v))
-  if (t.chainId) {  // use  EIP155 spec
-    rawHash = hash([...raw.slice(0, 6), uint(t.chainId), Buffer.allocUnsafe(0), Buffer.allocUnsafe(0)])
-    v -= in3util.toNumber(t.chainId) * 2 + 8
-  }
+  let chainId = in3util.toNumber(t.chainId || (v > 35 ? Math.floor((v - 35) / 2) : 0))
+  if (chainId)   // use  EIP155 spec
+    rawHash = hash([...raw.slice(0, 6), uint(chainId), Buffer.allocUnsafe(0), Buffer.allocUnsafe(0)])
   else
     rawHash = hash(raw.slice(0, 6))
 
   if (toBN(t.s).cmp(N_DIV_2) === 1) throw new Error('Invalid signature')
-  const senderPubKey = ethUtil.ecrecover(rawHash, v, bytes(t.r), bytes(t.s))
+  const senderPubKey = ethUtil.ecrecover(rawHash, v, bytes(t.r), bytes(t.s), chainId)
+  if (chainId) v -= chainId * 2 + 8
 
   if (t.publicKey) if (!bytes(t.publicKey).equals(senderPubKey)) throw new Error('Invalid public key')
   if (!address(t.from).equals(ethUtil.publicToAddress(senderPubKey))) throw new Error('Invalid from')
