@@ -683,7 +683,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
 
       // are we online?
       if (! await transport.isOnline())
-        throw new Error('Currently there is no online-connection!')
+        throw new Error('Currently there is no online-connection! (' + err.message + ':' + (request.map(_ => _.method + '(' + _.params.map(__ => JSON.stringify(__)).join() + ')').join()) + ')')
 
       // locally blacklist this node for one hour if it did not respond within the timeout or could not be verified
       stats.blacklistedUntil = Date.now() + 3600000
