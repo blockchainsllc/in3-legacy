@@ -232,7 +232,7 @@ export async function verifyTransactionReceiptProof(txHash: Buffer, headerProof:
   // verify the blockhash and the signatures
   await verifyBlock(block, { ...headerProof, expectedBlockHash: bytes32(receipt.blockHash) }, ctx)
 
-  if (headerProof.proof.txIndex === 0 && receipt.cumulativeGasUsed !== receipt.gasUsed)
+  if (headerProof.proof.txIndex === 0 && in3util.toNumber(receipt.cumulativeGasUsed) !== in3util.toNumber(receipt.gasUsed))
     throw new Error('gasUsed must match cumulativeGasUsed')
 
   // since the blockhash is verified, we have the correct transaction root
