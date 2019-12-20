@@ -92,6 +92,7 @@ export default class Client extends EventEmitter {
     this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
       ...defaultConfig,
+      timeout: 10000,
       ...config,
       servers: {
         ...defaultConfig.servers,
