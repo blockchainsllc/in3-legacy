@@ -92,6 +92,7 @@ export default class Client extends EventEmitter {
     this.transport = transport || new AxiosTransport(config.format || 'json')
     this.defConfig = {
       ...defaultConfig,
+      timeout: 10000,
       ...config,
       servers: {
         ...defaultConfig.servers,
@@ -647,6 +648,8 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
     return allResponses
   }
   catch (err) {
+    const reqMsg = request.map(_ => _.method + '(' + (_.params || []).map(p => JSON.stringify(p)).join() + ')').join() + (node ? (' to ' + node.url) : '')
+
     // log errors
     if (conf.loggerUrl)
       axios.post(conf.loggerUrl, { level: 'error', message: 'error handling request for ' + node.url + ' : ' + err.message + ' (' + err.stack + ') ', meta: request })
@@ -683,7 +686,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
 
       // are we online?
       if (! await transport.isOnline())
-        throw new Error('Currently there is no online-connection! (' + err.message + ':' + (request.map(_ => _.method + '(' + _.params.map(__ => JSON.stringify(__)).join() + ')').join()) + ')')
+        throw new Error('Currently there is no online-connection! (' + err.message + ':' + reqMsg + ')')
 
       // locally blacklist this node for one hour if it did not respond within the timeout or could not be verified
       stats.blacklistedUntil = Date.now() + 3600000
@@ -697,13 +700,13 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       otherNodes = getNodes(conf, 1, transport, [...excludes, node.address])
     } catch (x) {
       // if we can't get nodes, it's because there none left to ask
-      throw new Error('tried ' + request.map(_ => _.method).join() + ' but failed and can not recover (' + x.message + ') from wrong response of node ' + node.url + ' did not respond correctly : ' + err)
+      throw new Error('tried ' + reqMsg + ' but failed and can not recover (' + x.message + ') from wrong response  : ' + err)
     }
 
     if (!otherNodes.length)
-      throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
+      throw new Error('The  ' + reqMsg + ' did not respond correctly (' + err + ') but there is no other node to ask now!')
     else if (!retryCount)
-      throw new Error('The node ' + node.url + ' did not respond correctly (' + err + ') but we reached the max number of attempts!')
+      throw new Error('The ' + reqMsg + ' did not respond correctly (' + err + ') but we reached the max number of attempts!')
     // and we retry but keep a list of excludes to make sure we won't run into loops
     return handleRequest(request, otherNodes[0], conf, transport, ctx, [...excludes, node.address, otherNodes[0].address], retryCount - 1)
   }
