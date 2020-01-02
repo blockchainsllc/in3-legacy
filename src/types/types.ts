@@ -300,6 +300,15 @@ export interface IN3Config {
      * example: true
      */
     torNodes?: boolean
+    /* If set, the node will filter out non-signing blockhashes nodes
+     */
+    signerNodes?: boolean
+    /** If set, the client will filter for nodes that will provide rpc responses (at least without proof). */
+    dataNodes?: boolean
+    /** If set, the client will filter to have nodes that will provide and endpoint for delivering metrics, which is usually the /metrics- endpoint, which can be used by prometheus to fetch statistics. */
+    statsNodes?: boolean
+    /** The client will filter for the min number of blocks that nodes are willing to sign*/
+    minBlockHeight?: number
     /**
      * timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client
      * example: 3000
