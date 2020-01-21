@@ -736,8 +736,11 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
     (config.multichainNodes ? 0x2 : 0) |
     (config.archiveNodes ? 0x4 : 0) |
     (config.httpNodes ? 0x8 : 0) |
-    (config.binaryNodes ? 0x16 : 0) |
-    (config.torNodes ? 0x32 : 0)
+    (config.binaryNodes ? 0x10 : 0) |
+    (config.torNodes ? 0x20 : 0) |
+    (config.signerNodes ? 0x40 : 0) |
+    (config.dataNodes ? 0x80 : 0) |
+    (config.statsNodes ? 0x100 : 0)
 
   const wl = new Set<string>()
   if (config.whiteList) config.whiteList.forEach(_ => wl.add(_.toLowerCase()))
@@ -749,6 +752,7 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
     (!excludes || excludes.indexOf(n.address) === -1) && // check excluded addresses (because of recursive calls)
     (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now) &&
     (n.props & allRequiredFlags) === allRequiredFlags &&
+    (config.minBlockHeight ? ( (n.props >> 32 & 0xFF) >= config.minBlockHeight ) : true) &&
     (config.depositTimeout ? n.timeout >= config.depositTimeout : true) &&
     (wl.size == 0 || wl.has(n.address.toLowerCase()))
 
