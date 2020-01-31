@@ -364,7 +364,7 @@ export default class Client extends EventEmitter {
       await this.updateWhiteListNodes(conf)
 
     // find some random nodes
-    const nodes = getNodes(conf, conf.requestCount, this.transport)
+    const nodes = getNodes({ ...conf, dataNodes: true }, conf.requestCount, this.transport)
 
     // merge the given excludes with the choosen nodes, so we know, we will ask them again later.
     const excludes = [...(prevExcludes || []), ...nodes.map(_ => _.address)].filter((e, i, a) => a.indexOf(e) === i)
@@ -457,6 +457,8 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
     responses.filter(_ => _.result).forEach(r => r.result.lastBlockNumber = maxLBN)
   }
 
+  if (conf.proof != 'none') return responses[0]
+
   // how many different results do we have?
   const groups = responses.reduce((g, r) => {
     const k = JSON.stringify(r.result || (r.error && 'error'))
@@ -546,7 +548,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         in3.verification = conf.signatureCount ? 'proofWithSignature' : 'proof'
         if (conf.signatureCount)
           // if signatures are requested, we choose some random nodes and create a list of their addresses
-          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => _.address)
+          in3.signatures = getNodes({ ...conf, signerNodes: true }, conf.signatureCount, transport).map(_ => _.address)
 
         // ask the server to include the code
         if (conf.includeCode)
@@ -743,6 +745,7 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
     (config.statsNodes ? 0x100 : 0)
 
   const wl = new Set<string>()
+  const minBlockHeight = config.signerNodes ? (config.minBlockHeight || config.replaceLatestBlock) : 0
   if (config.whiteList) config.whiteList.forEach(_ => wl.add(_.toLowerCase()))
   if (config.whiteListContract) getWhiteListFromContract(config).nodes.forEach(_ => wl.add(_.toLowerCase()))
 
@@ -752,7 +755,7 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
     (!excludes || excludes.indexOf(n.address) === -1) && // check excluded addresses (because of recursive calls)
     (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now) &&
     (n.props & allRequiredFlags) === allRequiredFlags &&
-    (config.minBlockHeight ? ( (n.props >> 32 & 0xFF) >= config.minBlockHeight ) : true) &&
+    (minBlockHeight ? ((n.props >> 32 & 0xFF) <= minBlockHeight) : true) &&
     (config.depositTimeout ? n.timeout >= config.depositTimeout : true) &&
     (wl.size == 0 || wl.has(n.address.toLowerCase()))
 
