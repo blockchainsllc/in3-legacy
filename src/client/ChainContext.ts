@@ -59,12 +59,30 @@ export default class ChainContext {
     this.module = getModule(s && s.verifier || 'eth')
 
     try {
-      // if we are running in the browser we use to localStorage as cache
-      if (client.defConfig.cacheStorage === undefined && window && window.localStorage)
-        client.defConfig.cacheStorage = window.localStorage
+      if (!client.defConfig.cacheStorage) {
+        const isNodeJs = Object.prototype.toString.call(typeof process !== 'undefined' ? process : 0) === '[object process]'
+        if (isNodeJs) {
+          const fs = require('' + 'fs')
+          try { fs.mkdirSync('.in3') } catch (x) { }
+          client.defConfig.cacheStorage = {
+            getItem(key: string) {
+              try {
+                return fs.readFileSync('.in3/' + key, 'utf8');
+              } catch (x) { }
+              return null
+            },
+            setItem(key: string, value: string) {
+              fs.writeFileSync('.in3/' + key, value.toString())
+            }
+          }
+        }
+        else if (window && window.localStorage)
+          client.defConfig.cacheStorage = window.localStorage
+      }
     }
     catch (x) { }
     this.initCache()
+    client.addListener('weightsChanged', () => this.updateCache())
     client.addListener('nodeUpdateFinished', () => this.updateCache())
     client.addListener('whiteListUpdateFinished', e => this.updateCache())
   }
