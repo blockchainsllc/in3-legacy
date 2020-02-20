@@ -82,6 +82,7 @@ export default class ChainContext {
     }
     catch (x) { }
     this.initCache()
+    client.addListener('weightsChanged', () => this.updateCache())
     client.addListener('nodeUpdateFinished', () => this.updateCache())
     client.addListener('whiteListUpdateFinished', e => this.updateCache())
   }
