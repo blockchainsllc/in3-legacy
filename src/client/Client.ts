@@ -726,7 +726,20 @@ function getWeight(weight: IN3NodeWeight, node: IN3NodeConfig) {
     * (node.capacity || 1)
     * (500 / (weight.avgResponseTime || 500))
 }
-
+function props(p: string, mv = 0) {
+  let val = parseInt(p)
+  if (mv) {
+    if (typeof (p) === 'string' && p.startsWith('0x')) {
+      if (p.length < 0) val = 0
+      else val = parseInt(p.substr(0, p.length - 8))
+    }
+    else
+      val = val >> mv
+  } else if (typeof (p) === 'string' && p.startsWith('0x') && p.length > 10) {
+    val = parseInt('0x' + p.substr(p.length - 8))
+  }
+  return val
+}
 /**
  * finds nodes based on the config
  */
@@ -757,8 +770,8 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
     n.deposit >= config.minDeposit &&  // check deposit
     (!excludes || excludes.indexOf(n.address) === -1) && // check excluded addresses (because of recursive calls)
     (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now) &&
-    (n.props & allRequiredFlags) === allRequiredFlags &&
-    (minBlockHeight ? ((n.props >> 32 & 0xFF) <= minBlockHeight) : true) &&
+    (props(n.props as any) & allRequiredFlags) === allRequiredFlags &&
+    (minBlockHeight ? ((props(n.props as any, 32) & 0xFF) <= minBlockHeight) : true) &&
     (config.depositTimeout ? n.timeout >= config.depositTimeout : true) &&
     (wl.size == 0 || wl.has(n.address.toLowerCase()))
 
