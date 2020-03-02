@@ -489,9 +489,10 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
 
     // hmmm. what else can we do now?
     // TODO maybe we can support a simple consenus and go with the majority.
-    throw new Error('The nodes responded with ' + Object.keys(groups).length + ' different answers and there is no authroityNode to resolve the conflict! ')
+    //throw new Error('The nodes responded with ' + Object.keys(groups).length + ' different answers and there is no authroityNode to resolve the conflict! ')
   }
 
+  //incase of different responses in3 client will just return first response instead of exception
   // if we have a verified Response, we return this, if not, we simply take the first.
   return verifiedResponse || responses[0]
 }
