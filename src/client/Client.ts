@@ -269,7 +269,10 @@ export default class Client extends EventEmitter {
    * This function supports callback so it can be used as a Provider for the web3.
    */
   public send(request: RPCRequest[] | RPCRequest, callback?: (err: Error, response: RPCResponse | RPCResponse[]) => void, config?: Partial<IN3Config>): Promise<RPCResponse | RPCResponse[]> {
-    const p = this.sendIntern(Array.isArray(request) ? request : [request], config ? { ...this.defConfig, ...verifyConfig(config) } : { ...this.defConfig })
+    const conf = config ? { ...this.defConfig, ...verifyConfig(config) } : { ...this.defConfig }
+    const p = this.sendIntern(Array.isArray(request) ? request : [request], conf)
+    this.emit('weightsChanged', {})
+
     if (callback)
       p.then(_ => {
         this.emit('afterRequest', { request, result: Array.isArray(request) ? _ : _[0] })
@@ -364,7 +367,7 @@ export default class Client extends EventEmitter {
       await this.updateWhiteListNodes(conf)
 
     // find some random nodes
-    const nodes = getNodes(conf, conf.requestCount, this.transport)
+    const nodes = getNodes({ ...conf, dataNodes: true }, conf.requestCount, this.transport)
 
     // merge the given excludes with the choosen nodes, so we know, we will ask them again later.
     const excludes = [...(prevExcludes || []), ...nodes.map(_ => _.address)].filter((e, i, a) => a.indexOf(e) === i)
@@ -457,6 +460,8 @@ async function mergeResults(request: RPCRequest, responses: RPCResponse[], conf:
     responses.filter(_ => _.result).forEach(r => r.result.lastBlockNumber = maxLBN)
   }
 
+  if (conf.proof != 'none') return responses[0]
+
   // how many different results do we have?
   const groups = responses.reduce((g, r) => {
     const k = JSON.stringify(r.result || (r.error && 'error'))
@@ -546,7 +551,7 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
         in3.verification = conf.signatureCount ? 'proofWithSignature' : 'proof'
         if (conf.signatureCount)
           // if signatures are requested, we choose some random nodes and create a list of their addresses
-          in3.signatures = getNodes(conf, conf.signatureCount, transport).map(_ => _.address)
+          in3.signatures = getNodes({ ...conf, signerNodes: true }, conf.signatureCount, transport).map(_ => _.address)
 
         // ask the server to include the code
         if (conf.includeCode)
@@ -721,7 +726,20 @@ function getWeight(weight: IN3NodeWeight, node: IN3NodeConfig) {
     * (node.capacity || 1)
     * (500 / (weight.avgResponseTime || 500))
 }
-
+function props(p: string, mv = 0) {
+  let val = parseInt(p)
+  if (mv) {
+    if (typeof (p) === 'string' && p.startsWith('0x')) {
+      if (p.length < 0) val = 0
+      else val = parseInt(p.substr(0, p.length - 8))
+    }
+    else
+      val = val >> mv
+  } else if (typeof (p) === 'string' && p.startsWith('0x') && p.length > 10) {
+    val = parseInt('0x' + p.substr(p.length - 8))
+  }
+  return val
+}
 /**
  * finds nodes based on the config
  */
@@ -736,10 +754,14 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
     (config.multichainNodes ? 0x2 : 0) |
     (config.archiveNodes ? 0x4 : 0) |
     (config.httpNodes ? 0x8 : 0) |
-    (config.binaryNodes ? 0x16 : 0) |
-    (config.torNodes ? 0x32 : 0)
+    (config.binaryNodes ? 0x10 : 0) |
+    (config.torNodes ? 0x20 : 0) |
+    (config.signerNodes ? 0x40 : 0) |
+    (config.dataNodes ? 0x80 : 0) |
+    (config.statsNodes ? 0x100 : 0)
 
   const wl = new Set<string>()
+  const minBlockHeight = config.signerNodes ? (config.minBlockHeight || config.replaceLatestBlock) : 0
   if (config.whiteList) config.whiteList.forEach(_ => wl.add(_.toLowerCase()))
   if (config.whiteListContract) getWhiteListFromContract(config).nodes.forEach(_ => wl.add(_.toLowerCase()))
 
@@ -748,7 +770,8 @@ function getNodes(config: IN3Config, count: number, transport: Transport, exclud
     n.deposit >= config.minDeposit &&  // check deposit
     (!excludes || excludes.indexOf(n.address) === -1) && // check excluded addresses (because of recursive calls)
     (!chain.weights || ((chain.weights[n.address] || {}).blacklistedUntil || 0) < now) &&
-    (n.props & allRequiredFlags) === allRequiredFlags &&
+    (props(n.props as any) & allRequiredFlags) === allRequiredFlags &&
+    (minBlockHeight ? ((props(n.props as any, 32) & 0xFF) <= minBlockHeight) : true) &&
     (config.depositTimeout ? n.timeout >= config.depositTimeout : true) &&
     (wl.size == 0 || wl.has(n.address.toLowerCase()))
 

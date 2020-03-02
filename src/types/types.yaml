@@ -619,6 +619,22 @@ definitions:
                 type: boolean
                 description: if true the in3 client will filter out non tor nodes
                 example: true
+            signerNodes:
+                type: boolean
+                description: If set, the client will filter for nodes that will provide rpc responses (at least without proof).
+                example: true
+            dataNodes:
+                type: boolean
+                description: If set, the client will filter to have nodes that will provide and endpoint for delivering metrics, which is usually the /metrics- endpoint, which can be used by prometheus to fetch statistics.
+                example: true
+            statsNodes:
+                type: boolean
+                description: The client will filter for the min number of blocks that nodes are willing to sign
+                example: true
+            minBlockHeight:
+                type: number
+                description: The client will filter for the min number of blocks that nodes are willing to sign
+                example: 8
             depositTimeout:
                 type: number
                 min: 1
