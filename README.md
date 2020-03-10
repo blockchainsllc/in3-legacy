@@ -70,7 +70,6 @@ async function demo() {
     const in3 = new In3Client({
         proof         : 'standard',
         signatureCount: 1,
-        requestCount  : 2,
         chainId       : 'mainnet',
         replaceLatestBlock: 10
     })
@@ -95,7 +94,6 @@ async function demo() {
     const web3 = new Web3(new In3Client({
         proof         : 'standard',
         signatureCount: 1,
-        requestCount  : 2,
         chainId       : 'mainnet',
         replaceLatestBlock: 10
     }).createWeb3Provider())
