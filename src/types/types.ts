@@ -167,6 +167,9 @@ export interface IN3Config {
      * example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
      */
     key?: any
+
+    /** if false, the requests will not be included in the public metrics, but handled as internal */
+    stats?: boolean
     /**
      * if true the config will be adjusted depending on the request
      */

@@ -518,6 +518,10 @@ async function handleRequest(request: RPCRequest[], node: IN3NodeConfig, conf: I
       // append the in3-config
       const in3: IN3RPCRequestConfig = {} as any
 
+      // handle as internal?
+      if (typeof (conf.stats) === 'boolean' && !conf.stats)
+        (in3 as any).noStats = true
+
       // only if the node supports chainId, we add it, because if the node is a simple remote-server it might refuse the request with additional keys
       if (conf.chainId && canMultiChain(node))
         in3.chainId = conf.chainId
