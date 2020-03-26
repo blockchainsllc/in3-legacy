@@ -6,6 +6,8 @@ variables:
 stages:
   - build
   - test
+  - package
+  - analysis
   - deploy
 
 cache:
@@ -195,6 +197,38 @@ test-usn-lib:
 #     paths:
 #       - public
 
+deploy-docker:
+  stage: package
+  tags:
+    - short-jobs
+  services:
+    - docker:dind
+  image: docker.slock.it/build-images/deployment
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t $COMMIT_IMAGE_TAG .
+    - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
+    - docker push $RELEASE_IMAGE_TAG
+    - docker push $COMMIT_IMAGE_TAG
+
+vulnerabilities:
+  stage: analysis
+  tags:
+    - short-jobs
+  dependencies:
+    - deploy-docker
+  allow_failure: true
+  image: docker.slock.it/build-images/vulnerability-testing-tools
+  script:
+    - export TRIVY_AUTH_URL=$CI_REGISTRY
+    - export TRIVY_USERNAME=gitlab-ci-token
+    - export TRIVY_PASSWORD=$CI_JOB_TOKEN
+    - trivy -f json -o vulnerability_analysis.json --exit-code 1 $COMMIT_IMAGE_TAG
+  artifacts:
+    paths:
+      - vulnerability_analysis.json
+
+
 deploy-to-slockit-npm:
   stage: deploy
   tags:
@@ -225,16 +259,3 @@ deploy-to-slockit-public_npm:
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish --registry https://registry.npmjs.org
 
-deploy-docker:
-  stage: deploy
-  tags:
-    - short-jobs
-  services:
-    - docker:dind
-  image: docker.slock.it/build-images/deployment
-  script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker build -t $COMMIT_IMAGE_TAG .
-    - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
-    - docker push $RELEASE_IMAGE_TAG
-    - docker push $COMMIT_IMAGE_TAG
