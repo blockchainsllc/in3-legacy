@@ -3,7 +3,7 @@
  [![Stars](https://img.shields.io/github/stars/slockit/in3)](https://github.com/slockit/in3/watchers)
   [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://github.com/slockit/in3/blob/master/LICENSE.AGPL)
 
-** Important: This will be replaced soon with `in3-wasm`or `in3-asmjs` ! So please use them ( https://in3.readthedocs.io/en/develop/api-wasm.html ), since this will include far more features, with a similiar API.
+**Important: This will be replaced soon with `in3-wasm`or `in3-asmjs` ! So please use them ( https://in3.readthedocs.io/en/develop/api-wasm.html ), since this will include far more features, with a similiar API.**
 
 
 The **Incubed** client is a
