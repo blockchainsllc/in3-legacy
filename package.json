@@ -1,8 +1,9 @@
 {
-  "name": "in3",
+  "name": "in3-legacy",
   "version": "2.0.0-beta.5",
-  "description": "Typescript-version of the incubed client",
+  "description": "Typescript-version of the incubed client (deprecated for the wasm implementation)",
   "main": "js/src/index.js",
+  "private": true,
   "scripts": {
     "build": "tsc -p .",
     "test": "CI=true nyc mocha --timeout 5000 -R $(pwd)/node_modules/in3-common/js/test/util/mochaReporter --require ts-node/register --require source-map-support/register  --full-trace --bail  test/*.ts && cp -r coverage test/report/",
