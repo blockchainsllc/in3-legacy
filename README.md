@@ -3,6 +3,9 @@
  [![Stars](https://img.shields.io/github/stars/slockit/in3)](https://github.com/slockit/in3/watchers)
   [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://github.com/slockit/in3/blob/master/LICENSE.AGPL)
 
+**Important: This will be replaced soon with `in3-wasm`or `in3-asmjs` ! So please use them ( https://in3.readthedocs.io/en/develop/api-wasm.html ), since this will include far more features, with a similiar API.**
+
+
 The **Incubed** client is a
 * Crypto-Economic 
 * Non-syncronizing and stateless, but fully verifying
@@ -52,17 +55,17 @@ For information on the in3 client implementation in C, please go [in3-c](https:/
  
 Installing the in3-client is as easy as installing other modules:
 
-```npm install --save in3```
+```npm install --save in3-wasm```
 
 Import incubed with:
 
-```import In3Client from "in3"```
+```import In3Client from "in3-wasm"```
 
 ## Example 
 
 ```
 // import in3-Module
-import In3Client from 'in3'
+import In3Client from 'in3-wasm'
 
 async function demo() {
 
@@ -86,8 +89,8 @@ async function demo() {
 ## Example with Web3 (as Provider)
 ```
 // import in3-Module
-import In3Client from 'in3'
-import Web3 from 'web3'
+import In3Client from 'in3-wasm'
+import Web3 from 'web3-wasm'
 
 async function demo() {
 
